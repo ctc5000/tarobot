@@ -1,0 +1,214 @@
+/* Анимации для Telegram и веб-версии */
+
+/* Анимация печатающегося текста */
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+@keyframes blink {
+    50% { border-color: transparent; }
+}
+
+.typing-animation {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid var(--accent-violet);
+    animation: typing 2s steps(40, end), blink 0.75s step-end infinite;
+}
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Анимация мерцания */
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.flicker {
+    animation: flicker 1.5s infinite;
+}
+
+/* Анимация вращения */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 10s linear infinite;
+}
+
+/* Анимация плавающего элемента */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 1s ease-out;
+}
+
+/* Анимация дрожания */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.3s ease-in-out;
+}
+
+/* Анимация для "живого расчета" */
+@keyframes calculatePulse {
+    0% { box-shadow: 0 0 5px var(--accent-violet); }
+    50% { box-shadow: 0 0 20px var(--accent-violet), 0 0 30px var(--gold); }
+    100% { box-shadow: 0 0 5px var(--accent-violet); }
+}
+
+.calculating {
+    animation: calculatePulse 1.5s infinite;
+    position: relative;
+}
+
+.calculating::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--accent-violet), var(--gold), var(--accent-violet));
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.5;
+    animation: calculatePulse 1.5s infinite;
+}
+
+/* Анимация для кристалла */
+.crystal-ball {
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), rgba(155,107,192,0.2));
+    border-radius: 50%;
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    filter: blur(30px);
+    opacity: 0.4;
+    animation: crystalFloat 8s infinite, crystalGlow 4s infinite;
+}
+
+@keyframes crystalFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(10px, -10px) scale(1.1); }
+    50% { transform: translate(-5px, 5px) scale(0.95); }
+    75% { transform: translate(-15px, -5px) scale(1.05); }
+}
+
+@keyframes crystalGlow {
+    0%, 100% { opacity: 0.4; filter: blur(30px); }
+    50% { opacity: 0.7; filter: blur(20px); }
+}
+
+/* Анимация для звезд */
+.stars {
+    animation: starsTwinkle 4s infinite alternate;
+}
+
+@keyframes starsTwinkle {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Анимация для луны (загрузка) */
+@keyframes moonOrbit {
+    0% { transform: rotate(0deg) translateX(0); }
+    25% { transform: rotate(90deg) translateX(15px); }
+    50% { transform: rotate(180deg) translateX(0); }
+    75% { transform: rotate(270deg) translateX(-15px); }
+    100% { transform: rotate(360deg) translateX(0); }
+}
+
+.moon {
+    animation: moonOrbit 3s infinite;
+}
+
+/* Анимация для карточек */
+.practice-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.practice-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(155, 107, 192, 0.3) inset;
+}
+
+/* Анимация для магического круга */
+.magic-circle {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    border: 2px solid var(--accent-violet);
+    border-radius: 50%;
+    box-shadow: 0 0 50px var(--glow-color);
+    animation: magicRotate 20s linear infinite;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+}
+
+.magic-circle.active {
+    display: block;
+}
+
+@keyframes magicRotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Анимация для искр */
+.spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkFly 1s ease-out forwards;
+}
+
+@keyframes sparkFly {
+    0% {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty));
+        opacity: 0;
+    }
+}

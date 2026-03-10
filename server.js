@@ -43,7 +43,28 @@ const services = {
     astropsychology: new AstropsychologyService(),
     runes: new RunesService()
 };
+// Определение версии (Telegram или Web)
+app.use((req, res, next) => {
+    // Проверяем заголовок от Telegram
+    const isTelegram = req.headers['x-telegram-init-data'] ||
+        req.headers['user-agent']?.includes('Telegram');
 
+    // Сохраняем в locals для использования в шаблонах
+    res.locals.isTelegram = isTelegram;
+
+    // Добавляем заголовок для клиента
+    res.setHeader('X-App-Version', isTelegram ? 'telegram' : 'web');
+
+    next();
+});
+
+// Специальный маршрут для определения версии на клиенте
+app.get('/api/version', (req, res) => {
+    res.json({
+        version: res.locals.isTelegram ? 'telegram' : 'web',
+        timestamp: Date.now()
+    });
+});
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
