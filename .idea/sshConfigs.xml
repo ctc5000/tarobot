@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="91.218.229.216" id="0b118abb-d3d5-4035-bb7c-b7491e2d9b9a" port="22" customName="BashFarmServer" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
+        <option name="customName" value="BashFarmServer" />
+      </sshConfig>
+    </configs>
+  </component>
+</project>

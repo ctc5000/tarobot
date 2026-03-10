@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="30750684-801e-41b3-b405-60c6a31e2d74" name="BashServer">
+        <fileTransfer rootFolder="/var/www/taro" accessType="SFTP" host="91.218.229.216" port="22" sshConfigId="0b118abb-d3d5-4035-bb7c-b7491e2d9b9a" sshConfig="BashFarmServer">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зоар | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="ЗОАР">ЗОАР</h1>
+        <p class="subtitle">Книга Сияния — Древо Жизни и 10 сефирот</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link active">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Познайте свою сефиру</h2>
+            <form id="zoarForm">
+                <div class="form-group">
+                    <label for="question">❓ Ваш вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="О чем вы хотите спросить у Древа Жизни?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="sefiraNumber">🌳 Номер сефиры (1-10)</label>
+                    <input type="number" id="sefiraNumber" name="sefiraNumber" min="1" max="10" placeholder="Например: 6">
+                    <small class="form-hint">Если не указано, определится по дате</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthDate">📅 Ваша дата рождения</label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                </div>
+
+                <div class="form-group">
+                    <label for="name">📛 Ваше имя (необязательно)</label>
+                    <input type="text" id="name" name="name" placeholder="Имя">
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Открыть Зоар</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Книга Сияния открывается...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>📜 КНИГА СИЯНИЯ</h2>
+
+                <div class="zoar-section sefira-header">
+                    <h3 id="sefiraName">Кетер (Корона)</h3>
+                    <div class="sefira-number" id="sefiraNumber">1</div>
+                </div>
+
+                <div class="zoar-section">
+                    <h4>📖 ОПИСАНИЕ</h4>
+                    <p id="sefiraDescription"></p>
+                </div>
+
+                <div class="zoar-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Цвет:</span>
+                        <span class="detail-value" id="sefiraColor"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Планета:</span>
+                        <span class="detail-value" id="sefiraPlanet"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Архангел:</span>
+                        <span class="detail-value" id="sefiraArchangel"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Добродетель:</span>
+                        <span class="detail-value" id="sefiraVirtue"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Порок:</span>
+                        <span class="detail-value" id="sefiraVice"></span>
+                    </div>
+                </div>
+
+                <div class="zoar-section">
+                    <h4>🛤️ ПУТИ К СЕФИРЕ</h4>
+                    <div id="pathsInfo"></div>
+                </div>
+
+                <div class="zoar-section">
+                    <h4>⚖️ БАЛАНС СЕФИРОТ</h4>
+                    <div id="balanceInfo"></div>
+                </div>
+
+                <div class="zoar-section">
+                    <h4>👼 АРХАНГЕЛЫ-ПОКРОВИТЕЛИ</h4>
+                    <div id="archangelsInfo"></div>
+                </div>
+
+                <div class="zoar-section meditation-section">
+                    <h4>🧘 МЕДИТАЦИЯ</h4>
+                    <div id="meditationText"></div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📖 ТОЛКОВАНИЕ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новое познание</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Зоар — основная книга каббалы, раскрывающая тайны мироздания</p>
+    </footer>
+</div>
+
+<script src="/js/zoar.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>И-Цзин | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="И-ЦЗИН">И-ЦЗИН</h1>
+        <p class="subtitle">Книга Перемен — 64 гексаграммы</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link active">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Задайте вопрос Книге Перемен</h2>
+            <form id="ichingForm">
+                <div class="form-group">
+                    <label for="question">❓ Ваш вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="О чем вы хотите спросить?" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="method">🎲 Метод гадания</label>
+                    <select id="method" name="method" required>
+                        <option value="coins">Три монеты</option>
+                        <option value="random">Случайная гексаграмма</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="coinTossSection">
+                    <label>🪙 Бросок монет</label>
+                    <p class="form-hint">Для каждой линии подбросьте три монеты и выберите результат</p>
+
+                    <div class="coin-tosses" id="coinTosses">
+                        <!-- Будет заполнено JavaScript для 6 линий -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">📅 Дата (необязательно)</label>
+                    <input type="text" id="date" name="date" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Получить ответ</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Книга Перемен открывается...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 ОТВЕТ И-ЦЗИН</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Вопрос:</span>
+                        <span class="value" id="resultQuestion"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Дата:</span>
+                        <span class="value" id="resultDate"></span>
+                    </div>
+                </div>
+
+                <div class="iching-section primary-hexagram">
+                    <h3>📜 ПЕРВИЧНАЯ ГЕКСАГРАММА</h3>
+                    <div class="hexagram-number" id="primaryNumber"></div>
+                    <div class="hexagram-name" id="primaryName"></div>
+                    <div class="hexagram-chinese" id="primaryChinese"></div>
+                    <div class="hexagram-description" id="primaryDescription"></div>
+                    <div class="hexagram-meaning" id="primaryMeaning"></div>
+                    <div class="hexagram-image" id="primaryImage"></div>
+
+                    <div class="changing-lines" id="changingLines"></div>
+                </div>
+
+                <div class="iching-section secondary-hexagram" id="secondarySection" style="display: none;">
+                    <h3>🔄 ВТОРИЧНАЯ ГЕКСАГРАММА</h3>
+                    <div class="hexagram-number" id="secondaryNumber"></div>
+                    <div class="hexagram-name" id="secondaryName"></div>
+                    <div class="hexagram-description" id="secondaryDescription"></div>
+                    <div class="hexagram-meaning" id="secondaryMeaning"></div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📖 ТОЛКОВАНИЕ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый вопрос</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">И-Цзин — древнекитайская система гадания, основанная на 64 гексаграммах</p>
+    </footer>
+</div>
+
+<script src="/js/iching.js"></script>
+</body>
+</html>

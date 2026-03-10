@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "Taro",
+      "script": "npm",
+      "args": "run dev",
+      "watch": false
+    }
+  ]
+}

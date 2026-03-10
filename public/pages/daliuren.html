@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Да Лю Жэнь | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="ДА ЛЮ ЖЭНЬ">ДА ЛЮ ЖЭНЬ</h1>
+        <p class="subtitle">Великое Тайное — высшая китайская метафизика</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link active">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Введите данные для расчета</h2>
+            <form id="daliurenForm">
+                <div class="form-group">
+                    <label for="question">❓ Ваш вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="О чем вы хотите узнать?" required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="year">📆 Год</label>
+                        <input type="number" id="year" name="year" placeholder="2026" required>
+                    </div>
+
+                    <div class="form-group half">
+                        <label for="month">📆 Месяц</label>
+                        <input type="number" id="month" name="month" min="1" max="12" placeholder="3" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="day">📆 День</label>
+                        <input type="number" id="day" name="day" min="1" max="31" placeholder="15" required>
+                    </div>
+
+                    <div class="form-group half">
+                        <label for="hour">⏰ Час</label>
+                        <input type="number" id="hour" name="hour" min="0" max="23" placeholder="14">
+                        <small class="form-hint">Необязательно</small>
+                    </div>
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Рассчитать</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Вычисление небесных путей...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🌀 ДА ЛЮ ЖЭНЬ ПРОГНОЗ</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Вопрос:</span>
+                        <span class="value" id="resultQuestion"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Время:</span>
+                        <span class="value" id="resultDateTime"></span>
+                    </div>
+                </div>
+
+                <div class="daliuren-section">
+                    <h3>📜 ЧЕТЫРЕ СТОЛПА СУДЬБЫ</h3>
+                    <div class="four-pillars" id="fourPillars"></div>
+                </div>
+
+                <div class="daliuren-section">
+                    <h3>⭐ ГЕНЕРАЛ И ЗАЛ СВЕТА</h3>
+                    <div id="generalInfo"></div>
+                </div>
+
+                <div class="daliuren-section">
+                    <h3>🏯 ДВЕНАДЦАТЬ ДВОРЦОВ</h3>
+                    <div class="gongs-grid" id="gongsGrid"></div>
+                </div>
+
+                <div class="daliuren-section">
+                    <h3>⚖️ БЛАГОПРИЯТНОСТЬ</h3>
+                    <div id="auspiciousnessInfo"></div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📖 ТОЛКОВАНИЕ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Да Лю Жэнь — одна из трех высших школ китайской метафизики</p>
+    </footer>
+</div>
+
+<script src="/js/daliuren.js"></script>
+</body>
+</html>

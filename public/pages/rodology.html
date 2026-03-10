@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Родология | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="РОДОЛОГИЯ">РОДОЛОГИЯ</h1>
+        <p class="subtitle">Сила рода и память предков</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link active">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Введите данные о вашем роде</h2>
+            <form id="rodologyForm">
+                <div class="form-group">
+                    <label for="fullName">🌳 Ваше полное имя</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Иванов Иван Иванович" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthDate">📅 Ваша дата рождения</label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="gender">⚥ Ваш пол</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">Выберите...</option>
+                        <option value="мужской">Мужской</option>
+                        <option value="женский">Женский</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthOrder">👶 Порядок рождения</label>
+                    <select id="birthOrder" name="birthOrder" required>
+                        <option value="">Выберите...</option>
+                        <option value="first">Первый ребенок</option>
+                        <option value="middle">Средний ребенок</option>
+                        <option value="last">Младший ребенок</option>
+                        <option value="only">Единственный ребенок</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="siblingsCount">👥 Количество братьев и сестер</label>
+                    <input type="number" id="siblingsCount" name="siblingsCount" min="0" max="20" value="0">
+                </div>
+
+                <h3>Информация о родителях</h3>
+
+                <div class="form-group">
+                    <label for="fatherName">👨 Имя отца</label>
+                    <input type="text" id="fatherName" name="fatherName" placeholder="Петров Петр Петрович">
+                </div>
+
+                <div class="form-group">
+                    <label for="fatherBirth">📅 Дата рождения отца</label>
+                    <input type="text" id="fatherBirth" name="fatherBirth" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                </div>
+
+                <div class="form-group">
+                    <label for="motherName">👩 Имя матери</label>
+                    <input type="text" id="motherName" name="motherName" placeholder="Петрова Анна Сергеевна">
+                </div>
+
+                <div class="form-group">
+                    <label for="motherBirth">📅 Дата рождения матери</label>
+                    <input type="text" id="motherBirth" name="motherBirth" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                </div>
+
+                <h3>Информация о бабушках и дедушках (по желанию)</h3>
+
+                <div class="form-group">
+                    <label for="paternalGrandfather">👴 Дед по отцу</label>
+                    <input type="text" id="paternalGrandfather" name="paternalGrandfather" placeholder="Имя">
+                </div>
+
+                <div class="form-group">
+                    <label for="paternalGrandmother">👵 Бабушка по отцу</label>
+                    <input type="text" id="paternalGrandmother" name="paternalGrandmother" placeholder="Имя">
+                </div>
+
+                <div class="form-group">
+                    <label for="maternalGrandfather">👴 Дед по матери</label>
+                    <input type="text" id="maternalGrandfather" name="maternalGrandfather" placeholder="Имя">
+                </div>
+
+                <div class="form-group">
+                    <label for="maternalGrandmother">👵 Бабушка по матери</label>
+                    <input type="text" id="maternalGrandmother" name="maternalGrandmother" placeholder="Имя">
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Исследовать род</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Соединение с родовой памятью...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🌳 РОДОВОЕ ДРЕВО</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Имя:</span>
+                        <span class="value" id="resultFullName"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Дата рождения:</span>
+                        <span class="value" id="resultBirthDate"></span>
+                    </div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>👑 МЕСТО В РОДУ</h3>
+                    <div id="birthOrderInfo" class="info-block"></div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>🧬 РОДОВЫЕ ПРОГРАММЫ</h3>
+                    <div id="programsList" class="programs-list"></div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>⚡ СИЛЬНЫЕ СТОРОНЫ РОДА</h3>
+                    <div id="strengthsList" class="strengths-list"></div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>🌀 КАРМИЧЕСКИЕ УЗЛЫ</h3>
+                    <div id="karmicNodes" class="karmic-list"></div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>🎯 ЗАДАЧИ ПЕРЕД РОДОМ</h3>
+                    <div id="tasksList" class="tasks-list"></div>
+                </div>
+
+                <div class="rodology-section">
+                    <h3>📜 ПОСЛАНИЕ ПРЕДКОВ</h3>
+                    <div id="ancestorsMessage" class="ancestors-message"></div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>🌿 РОДОВОЙ ПОРТРЕТ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новое исследование</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Родология — наука о родовых связях и памяти предков</p>
+    </footer>
+</div>
+
+<script src="/js/rodology.js"></script>
+</body>
+</html>

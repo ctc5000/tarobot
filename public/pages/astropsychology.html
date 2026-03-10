@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Астропсихология | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="АСТРОПСИХОЛОГИЯ">АСТРОПСИХОЛОГИЯ</h1>
+        <p class="subtitle">Психологический портрет по звездам</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link active">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Введите данные для натальной карты</h2>
+            <form id="astropsychologyForm">
+                <div class="form-group">
+                    <label for="fullName">🌙 Ваше имя</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Елена Смирнова" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="birthDate">📅 Дата рождения</label>
+                        <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                    </div>
+
+                    <div class="form-group half">
+                        <label for="birthTime">⏰ Время рождения</label>
+                        <input type="text" id="birthTime" name="birthTime" placeholder="ЧЧ:ММ">
+                        <small class="form-hint">Например: 14:30</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthPlace">📍 Место рождения</label>
+                    <input type="text" id="birthPlace" name="birthPlace" placeholder="Город, страна">
+                    <small class="form-hint">Например: Москва, Россия</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="question">❓ Ваш вопрос (необязательно)</label>
+                    <textarea id="question" name="question" rows="3" placeholder="Что вас интересует?"></textarea>
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Построить натальную карту</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Звезды выстраиваются в вашу карту...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🌞 АСТРОПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Имя:</span>
+                        <span class="value" id="resultFullName"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Дата:</span>
+                        <span class="value" id="resultBirthDate"></span>
+                    </div>
+                </div>
+
+                <div class="astro-section ascendant">
+                    <h3>🌅 АСЦЕНДЕНТ</h3>
+                    <div class="astro-sign" id="ascendantSign"></div>
+                    <p id="ascendantDescription"></p>
+                </div>
+
+                <div class="astro-grid">
+                    <div class="astro-item sun">
+                        <h4>☀️ СОЛНЦЕ</h4>
+                        <div class="astro-sign" id="sunSign"></div>
+                        <p id="sunDescription"></p>
+                    </div>
+
+                    <div class="astro-item moon">
+                        <h4>🌙 ЛУНА</h4>
+                        <div class="astro-sign" id="moonSign"></div>
+                        <p id="moonDescription"></p>
+                    </div>
+                </div>
+
+                <div class="astro-section planets">
+                    <h3>🪐 ПЛАНЕТЫ В ЗНАКАХ</h3>
+                    <div class="planets-grid" id="planetsGrid"></div>
+                </div>
+
+                <div class="astro-section psychology">
+                    <h3>🧠 ПСИХОЛОГИЧЕСКИЙ АНАЛИЗ</h3>
+
+                    <div class="psychology-item">
+                        <h4>ЭГО (СОЛНЦЕ)</h4>
+                        <p id="psychEgo"></p>
+                    </div>
+
+                    <div class="psychology-item">
+                        <h4>ЭМОЦИИ (ЛУНА)</h4>
+                        <p id="psychEmotions"></p>
+                    </div>
+
+                    <div class="psychology-item">
+                        <h4>ЛИЧНОСТЬ (АСЦЕНДЕНТ)</h4>
+                        <p id="psychPersonality"></p>
+                    </div>
+                </div>
+
+                <div class="astro-strengths-weaknesses">
+                    <div class="strengths-box">
+                        <h4>🌟 СИЛЬНЫЕ СТОРОНЫ</h4>
+                        <ul id="astroStrengths"></ul>
+                    </div>
+                    <div class="weaknesses-box">
+                        <h4>🌙 ЗОНЫ РОСТА</h4>
+                        <ul id="astroChallenges"></ul>
+                    </div>
+                </div>
+
+                <div class="astro-section">
+                    <h4>🛤️ ПУТЬ РАЗВИТИЯ</h4>
+                    <p id="growthPath"></p>
+                </div>
+
+                <div class="astro-forecast">
+                    <h3>📅 КРАТКОСРОЧНЫЙ ПРОГНОЗ</h3>
+                    <div class="forecast-grid" id="forecastGrid"></div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📜 ПОЛНОЕ ТОЛКОВАНИЕ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Астропсихология — синтез астрологии и психологии для понимания личности</p>
+    </footer>
+</div>
+
+<script src="/js/astropsychology.js"></script>
+</body>
+</html>

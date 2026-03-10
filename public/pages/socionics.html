@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Соционика | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="СОЦИОНИКА">СОЦИОНИКА</h1>
+        <p class="subtitle">16 типов личности и межтипные отношения</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link active">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Определите ваш тип личности</h2>
+            <form id="socionicsForm">
+                <div class="form-group">
+                    <label for="fullName">📛 Ваше имя</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Иван Иванов" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthDate">📅 Дата рождения</label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="testType">📝 Метод определения</label>
+                    <select id="testType" name="testType" required>
+                        <option value="auto">Автоматический (по дате)</option>
+                        <option value="test">Пройти тест</option>
+                    </select>
+                </div>
+
+                <div id="testQuestions" style="display: none;">
+                    <h3>Ответьте на несколько вопросов</h3>
+
+                    <div class="form-group">
+                        <label>1. Как вы восстанавливаете энергию?</label>
+                        <select id="q1" name="q1">
+                            <option value="5">В компании людей</option>
+                            <option value="3">И так, и так</option>
+                            <option value="1">Наедине с собой</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>2. На что вы больше обращаете внимание?</label>
+                        <select id="q2" name="q2">
+                            <option value="5">На факты и детали</option>
+                            <option value="3">Зависит от ситуации</option>
+                            <option value="1">На общую картину и возможности</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>3. Как вы принимаете решения?</label>
+                        <select id="q3" name="q3">
+                            <option value="5">Логикой и анализом</option>
+                            <option value="3">И так, и так</option>
+                            <option value="1">Сердцем и чувствами</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>4. Как вы планируете?</label>
+                        <select id="q4" name="q4">
+                            <option value="5">Четко следую плану</option>
+                            <option value="3">Бывает по-разному</option>
+                            <option value="1">Импровизирую по ходу</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="question">❓ Ваш вопрос (о совместимости, карьере и т.д.)</label>
+                    <textarea id="question" name="question" rows="3" placeholder="Что вас интересует?"></textarea>
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Определить тип</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Анализ вашего типа личности...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🧠 ТИП ЛИЧНОСТИ</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Имя:</span>
+                        <span class="value" id="resultFullName"></span>
+                    </div>
+                </div>
+
+                <div class="socionics-type-header">
+                    <div class="type-code" id="typeCode">ILE</div>
+                    <div class="type-name" id="typeName">Дон Кихот</div>
+                    <div class="type-fullname" id="typeFullName">Интуитивно-логический экстраверт</div>
+                </div>
+
+                <div class="socionics-section">
+                    <h3>📖 ОПИСАНИЕ</h3>
+                    <p id="typeDescription"></p>
+                </div>
+
+                <div class="socionics-traits">
+                    <h3>🔷 КЛЮЧЕВЫЕ ЧЕРТЫ</h3>
+                    <div id="typeTraits"></div>
+                </div>
+
+                <div class="socionics-strengths-weaknesses">
+                    <div class="strengths-box">
+                        <h4>🌟 СИЛЬНЫЕ СТОРОНЫ</h4>
+                        <p id="typeStrengths"></p>
+                    </div>
+                    <div class="weaknesses-box">
+                        <h4>🌙 ЗОНЫ РОСТА</h4>
+                        <p id="typeWeaknesses"></p>
+                    </div>
+                </div>
+
+                <div class="socionics-section">
+                    <h3>💬 СТИЛЬ ОБЩЕНИЯ</h3>
+                    <p id="typeCommunication"></p>
+                </div>
+
+                <div class="socionics-section">
+                    <h3>💼 ПОДХОДЯЩИЕ ПРОФЕССИИ</h3>
+                    <p id="typeCareer"></p>
+                </div>
+
+                <div class="socionics-quadra">
+                    <h3>🌀 КВАДРА</h3>
+                    <p id="quadraInfo"></p>
+                </div>
+
+                <div class="socionics-compatibility">
+                    <h3>💞 СОВМЕСТИМОСТЬ</h3>
+                    <div class="compatibility-grid" id="compatibilityGrid"></div>
+                </div>
+
+                <div class="socionics-section">
+                    <h3>📈 РЕКОМЕНДАЦИИ ПО РАЗВИТИЮ</h3>
+                    <div id="developmentAdvice"></div>
+                </div>
+
+                <div class="socionics-forecast">
+                    <h3>🔮 ПРОГНОЗ НА СЕГОДНЯ</h3>
+                    <p id="dailyForecast"></p>
+                </div>
+
+                <div class="socionics-motto">
+                    <h3>📜 ДЕВИЗ ВАШЕГО ТИПА</h3>
+                    <p class="motto" id="typeMotto"></p>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📖 ПОЛНОЕ ТОЛКОВАНИЕ</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Соционика — наука о типах личности и информационном метаболизме</p>
+    </footer>
+</div>
+
+<script src="/js/socionics.js"></script>
+</body>
+</html>

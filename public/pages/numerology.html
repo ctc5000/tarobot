@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нумерология | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="НУМЕРОЛОГИЯ">НУМЕРОЛОГИЯ</h1>
+        <p class="subtitle">Магия чисел и коды судьбы</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link active">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Введите данные для расчета</h2>
+            <form id="numerologyForm">
+                <div class="form-group">
+                    <label for="fullName">🌙 Полное ФИО</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Например: Иванова Мария Сергеевна" required>
+                    <small class="form-hint">Укажите фамилию, имя и отчество полностью</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthDate">⭐ Дата рождения</label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                    <small class="form-hint">Например: 15.06.1987</small>
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Рассчитать судьбу</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Соединение с космосом...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 КОСМОГРАММА ЛИЧНОСТИ</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Ищущий:</span>
+                        <span class="value" id="resultFullName"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Звездная дата:</span>
+                        <span class="value" id="resultBirthDate"></span>
+                    </div>
+                </div>
+
+                <div class="numerology-grid">
+                    <div class="grid-item fate">
+                        <div class="number-large" id="fateNumber">--</div>
+                        <div class="number-label">Судьба</div>
+                    </div>
+                    <div class="grid-item name">
+                        <div class="number-large" id="nameNumber">--</div>
+                        <div class="number-label">Имя</div>
+                    </div>
+                    <div class="grid-item surname">
+                        <div class="number-large" id="surnameNumber">--</div>
+                        <div class="number-label">Род</div>
+                    </div>
+                    <div class="grid-item patronymic">
+                        <div class="number-large" id="patronymicNumber">--</div>
+                        <div class="number-label">Предки</div>
+                    </div>
+                </div>
+
+                <div class="special-numbers">
+                    <div class="special-item">
+                        <span class="special-label">Ахиллесова пята</span>
+                        <span class="special-value" id="achillesNumber">--</span>
+                    </div>
+                    <div class="special-item">
+                        <span class="special-label">Число управления</span>
+                        <span class="special-value" id="controlNumber">--</span>
+                    </div>
+                </div>
+
+                <div class="calls-section">
+                    <h3>Социальные оклики</h3>
+                    <div class="calls-grid">
+                        <div class="call-item">
+                            <div class="call-number" id="callClose">--</div>
+                            <div class="call-label">Близкий круг</div>
+                            <div class="call-desc" id="callCloseDesc"></div>
+                        </div>
+                        <div class="call-item">
+                            <div class="call-number" id="callSocial">--</div>
+                            <div class="call-label">Социум</div>
+                            <div class="call-desc" id="callSocialDesc"></div>
+                        </div>
+                        <div class="call-item">
+                            <div class="call-number" id="callWorld">--</div>
+                            <div class="call-label">Дальний круг</div>
+                            <div class="call-desc" id="callWorldDesc"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="additional-info">
+                    <div class="tab-container">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="zodiac">♈ Гороскоп</button>
+                            <button class="tab-btn" data-tab="fengshui">🌀 Фен-шуй</button>
+                            <button class="tab-btn" data-tab="tarot">🎴 Таро</button>
+                            <button class="tab-btn" data-tab="psychology">🧠 Психология</button>
+                            <button class="tab-btn" data-tab="patterns">🔍 Паттерны</button>
+                        </div>
+
+                        <div class="tab-content active" id="tabZodiac">
+                            <div class="zodiac-card">
+                                <div class="zodiac-header">
+                                    <div class="zodiac-symbol" id="zodiacSymbol">♈</div>
+                                    <div class="zodiac-name">
+                                        <h3 id="zodiacName">Знак зодиака</h3>
+                                        <p class="zodiac-element" id="zodiacElement">Стихия</p>
+                                    </div>
+                                </div>
+
+                                <div class="zodiac-details">
+                                    <p><strong>Качество:</strong> <span id="zodiacQuality">Кардинальный</span></p>
+                                    <p><strong>Планета-управитель:</strong> <span id="zodiacPlanet">Марс</span></p>
+                                </div>
+
+                                <div class="zodiac-description">
+                                    <p id="zodiacDescription">Описание знака зодиака...</p>
+                                </div>
+
+                                <div class="zodiac-strengths">
+                                    <h4>🌟 Сильные стороны</h4>
+                                    <p id="zodiacStrengths">Смелость, решительность, оптимизм</p>
+                                </div>
+
+                                <div class="zodiac-weaknesses">
+                                    <h4>🌙 Зоны роста</h4>
+                                    <p id="zodiacWeaknesses">Импульсивность, нетерпение</p>
+                                </div>
+
+                                <div class="zodiac-mission">
+                                    <h4>🎯 Жизненная миссия</h4>
+                                    <p id="zodiacMission">Миссия знака...</p>
+                                </div>
+
+                                <div class="zodiac-deep">
+                                    <h4>🔮 Глубинная истина</h4>
+                                    <p id="zodiacDeepInsight">Истина...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tabFengshui">
+                            <div class="fengshui-card">
+                                <div class="fengshui-header">
+                                    <div class="element-symbol" id="fengshuiElementSymbol">🌊</div>
+                                    <div class="element-name">
+                                        <h3 id="fengshuiElementName">Элемент</h3>
+                                    </div>
+                                </div>
+
+                                <div class="fengshui-details">
+                                    <p><strong>🎨 Цвет силы:</strong> <span id="fengshuiColor">Синий</span></p>
+                                    <p><strong>🧭 Направление удачи:</strong> <span id="fengshuiDirection">Север</span></p>
+                                    <p><strong>⏰ Время активации:</strong> <span id="fengshuiSeason">Зима</span></p>
+                                    <p><strong>🔷 Форма:</strong> <span id="fengshuiShape">Волнистые, асимметричные</span></p>
+                                </div>
+
+                                <div class="fengshui-meaning">
+                                    <p><strong>📿 Значение:</strong> <span id="fengshuiMeaning">Мудрость, интуиция, глубина</span></p>
+                                </div>
+
+                                <div class="fengshui-description">
+                                    <p id="fengshuiDescription">Описание вашего элемента...</p>
+                                </div>
+
+                                <div class="fengshui-activation">
+                                    <h4>✨ Активация энергии</h4>
+                                    <p id="fengshuiActivation">Как активировать ваш элемент...</p>
+                                </div>
+
+                                <div class="fengshui-personal">
+                                    <h4>🔑 Персональная рекомендация</h4>
+                                    <p id="fengshuiPersonalAdvice">Рекомендация на основе года рождения...</p>
+                                </div>
+
+                                <div class="fengshui-affirmation">
+                                    <h4>🕯️ Аффирмация</h4>
+                                    <p class="affirmation" id="fengshuiAffirmation">Я в гармонии с потоками вселенной</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tabTarot">
+                            <div class="tarot-grid">
+                                <div class="tarot-card">
+                                    <div class="tarot-number" id="tarotFateNumber">X</div>
+                                    <div class="tarot-name" id="tarotFateName">Карта Судьбы</div>
+                                    <div class="tarot-keywords" id="tarotFateKeywords">ключевые слова</div>
+                                    <div class="tarot-description" id="tarotFateDescription">Описание карты судьбы...</div>
+                                    <div class="tarot-advice" id="tarotFateAdvice">Совет...</div>
+                                </div>
+                                <div class="tarot-card">
+                                    <div class="tarot-number" id="tarotPersonalityNumber">X</div>
+                                    <div class="tarot-name" id="tarotPersonalityName">Карта Личности</div>
+                                    <div class="tarot-keywords" id="tarotPersonalityKeywords">ключевые слова</div>
+                                    <div class="tarot-description" id="tarotPersonalityDescription">Описание карты личности...</div>
+                                    <div class="tarot-advice" id="tarotPersonalityAdvice">Совет...</div>
+                                </div>
+                                <div class="tarot-card">
+                                    <div class="tarot-number" id="tarotControlNumber">X</div>
+                                    <div class="tarot-name" id="tarotControlName">Карта Пути</div>
+                                    <div class="tarot-keywords" id="tarotControlKeywords">ключевые слова</div>
+                                    <div class="tarot-description" id="tarotControlDescription">Описание карты пути...</div>
+                                    <div class="tarot-advice" id="tarotControlAdvice">Совет...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tabPsychology">
+                            <div class="psychology-card">
+                                <h3>🧠 НЛП-ПРОФИЛЬ</h3>
+                                <div class="modality-section">
+                                    <h4 id="modalityTitle">Визуал</h4>
+                                    <p id="modalityDescription">Описание модальности...</p>
+                                    <p><strong>🎯 Предикаты:</strong> <span id="modalityPredicates">вижу, смотрю, ясно, ярко</span></p>
+                                    <p><strong>🔑 Ключи доступа:</strong> <span id="modalityAccessKeys">Ключи к подсознанию...</span></p>
+                                </div>
+
+                                <div class="archetype-section">
+                                    <h3>🏛️ АРХЕТИП ЛИЧНОСТИ</h3>
+                                    <h4 id="archetypeName">Творец</h4>
+                                    <p id="archetypeDescription">Описание архетипа...</p>
+                                    <p><strong>🎁 Дар:</strong> <span id="archetypeGift">Способность создавать новое</span></p>
+                                    <p><strong>⚔️ Вызов:</strong> <span id="archetypeChallenge">Синдром самозванца</span></p>
+                                    <p><strong>📿 Мантра:</strong> <span class="mantra" id="archetypeMantra">Я имею право творить так, как чувствую</span></p>
+                                </div>
+
+                                <div class="attachment-section">
+                                    <h3>🤝 ТИП ПРИВЯЗАННОСТИ</h3>
+                                    <h4 id="attachmentName">Надежный</h4>
+                                    <p id="attachmentDescription">Описание типа привязанности...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tabPatterns">
+                            <div class="patterns-container">
+                                <h3>🔍 КЛЮЧЕВЫЕ ПАТТЕРНЫ ЛИЧНОСТИ</h3>
+                                <div class="patterns-list" id="patternsList">
+                                    <p>Индивидуальные паттерны формируются в момент вашего запроса</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📜 СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text" id="interpretationText">
+                        <p>Ваш личный свиток судьбы появится здесь после расчета...</p>
+                    </div>
+                </div>
+
+                <div class="deep-portrait">
+                    <h3>🌌 ГЛУБИННЫЙ ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h3>
+                    <div class="portrait-text" id="deepPortrait">
+                        <p>Портрет формируется...</p>
+                    </div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Основано на методе Локтеоновой, западной астрологии, фен-шуй и Таро</p>
+    </footer>
+</div>
+
+<script src="/js/numerology.js"></script>
+</body>
+</html>

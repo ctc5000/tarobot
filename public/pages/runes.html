@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Руны Старшего Футарка | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="РУНЫ СТАРШЕГО ФУТАРКА">РУНЫ СТАРШЕГО ФУТАРКА</h1>
+        <p class="subtitle">Древняя магия Севера — 24 руны судьбы</p>
+        <nav class="practice-nav">
+            <a href="/" class="nav-link">Главная</a>
+            <a href="/numerology" class="nav-link">Нумерология</a>
+            <a href="/rodology" class="nav-link">Родология</a>
+            <a href="/iching" class="nav-link">И-Цзин</a>
+            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
+            <a href="/hermetic" class="nav-link">Герметизм</a>
+            <a href="/zoar" class="nav-link">Зоар</a>
+            <a href="/socionics" class="nav-link">Соционика</a>
+            <a href="/astropsychology" class="nav-link">Астропсихология</a>
+            <a href="/runes" class="nav-link active">Руны</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Выберите метод гадания</h2>
+            <form id="runesForm">
+                <div class="form-group">
+                    <label for="method">🎲 Метод</label>
+                    <select id="method" name="method" required>
+                        <option value="single">Одна руна (совет)</option>
+                        <option value="three">Три руны (прошлое-настоящее-будущее)</option>
+                        <option value="birth">Руна рождения</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="questionGroup">
+                    <label for="question">❓ Ваш вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="О чем вы хотите спросить руны?"></textarea>
+                </div>
+
+                <div class="form-group" id="runeNumberGroup" style="display: none;">
+                    <label for="runeNumber">🔢 Номер руны (1-24)</label>
+                    <input type="number" id="runeNumber" name="runeNumber" min="1" max="24" placeholder="Например: 1 (Феху)">
+                </div>
+
+                <div class="form-group" id="birthDateGroup" style="display: none;">
+                    <label for="birthDate">📅 Ваша дата рождения</label>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">Открыть руны</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="moon"></div>
+                <p>Руны выстраиваются в узор судьбы...</p>
+            </div>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 РУНИЧЕСКИЙ РАСКЛАД</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Метод:</span>
+                        <span class="value" id="resultMethod"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Вопрос:</span>
+                        <span class="value" id="resultQuestion"></span>
+                    </div>
+                </div>
+
+                <div class="runes-display" id="runesDisplay">
+                    <!-- Сюда будут добавляться руны -->
+                </div>
+
+                <div class="runes-interpretation" id="runesInterpretation">
+                    <!-- Детальное толкование каждой руны -->
+                </div>
+
+                <div class="runes-layout">
+                    <h3>📐 СХЕМА РАСКЛАДА</h3>
+                    <p id="layoutDescription"></p>
+                </div>
+
+                <div class="full-interpretation">
+                    <h3>📜 ПОСЛАНИЕ РУН</h3>
+                    <div class="interpretation-text" id="interpretationText"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расклад</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
+        <p class="footer-small">Старший Футарк — древнегерманский рунический алфавит, используемый для гадания и магии</p>
+    </footer>
+</div>
+
+<script src="/js/runes.js"></script>
+</body>
+</html>
