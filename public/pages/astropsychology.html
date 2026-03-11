@@ -4,23 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Астропсихология | Древо Жизни</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Меню будет загружено через menu-loader.js -->
+<div id="menu-placeholder"></div>
 
-<div class="cosmic-bg">
-    <div class="stars"></div>
-    <div class="nebula"></div>
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">Древо Жизни</span>
+                </a>
+            </div>
+            <div id="nav-placeholder"></div>
+        </div>
+    </div>
+</header>
+
+<!-- Основной фон -->
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
 </div>
 
-<div class="container">
-    <header class="mystic-header">
-        <h1 class="glitch" data-text="АСТРОПСИХОЛОГИЯ">АСТРОПСИХОЛОГИЯ</h1>
-        <p class="subtitle">Психологический портрет по звездам</p>
-    </header>
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Астропсихология</h1>
+            <p class="page-subtitle">Психологический портрет по звездам</p>
+        </div>
 
-    <main>
         <section class="input-section glass-card">
             <h2>Введите данные для натальной карты</h2>
             <form id="astropsychologyForm">
@@ -55,7 +74,6 @@
 
                 <button type="submit" class="mystic-button">
                     <span class="button-text">Построить натальную карту</span>
-                    <span class="button-glow"></span>
                 </button>
             </form>
             <div class="loading-spinner" id="loadingSpinner" style="display: none;">
@@ -154,44 +172,31 @@
                 </button>
             </div>
         </section>
-    </main>
+    </div>
+</main>
 
-    <footer>
-        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
-        <p class="footer-small">Астропсихология — синтез астрологии и психологии для понимания личности</p>
-    </footer>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.menu-toggle');
-        const mobileMenu = document.querySelector('.mobile-menu');
-        const menuOverlay = document.querySelector('.menu-overlay');
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>Древо Жизни</span>
+                </div>
+                <p>Центр мистических практик и самопознания</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Древо Жизни. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
 
-        if (menuToggle && mobileMenu && menuOverlay) {
-            function toggleMenu() {
-                menuToggle.classList.toggle('active');
-                mobileMenu.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-            }
-
-            menuToggle.addEventListener('click', toggleMenu);
-            menuOverlay.addEventListener('click', toggleMenu);
-
-            // Закрываем меню при клике на ссылку
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', toggleMenu);
-            });
-
-            // Закрываем меню при изменении размера окна (если стали десктопными)
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
-                    toggleMenu();
-                }
-            });
-        }
-    });
-</script>
 <script src="/js/astropsychology.js"></script>
 <script src="/js/menu-loader.js"></script>
 </body>

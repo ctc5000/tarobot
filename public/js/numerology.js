@@ -926,21 +926,43 @@ function displayFengShui(fengShui) {
 function displayTarot(tarot) {
     if (!tarot) return;
 
-    const tarotElements = [
-        { prefix: 'Fate', data: tarot.fate },
-        { prefix: 'Personality', data: tarot.personality },
-        { prefix: 'Control', data: tarot.control }
-    ];
+    console.log('Отображение Таро:', tarot); // Для отладки
 
-    tarotElements.forEach(({ prefix, data }) => {
-        if (data) {
-            setElementText(`tarot${prefix}Number`, data.number);
-            setElementText(`tarot${prefix}Name`, data.name);
-            setElementText(`tarot${prefix}Keywords`, data.keywords);
-            setElementText(`tarot${prefix}Description`, data.description);
-            setElementText(`tarot${prefix}Advice`, data.advice);
-        }
-    });
+    // Карта Судьбы
+    const fateImage = document.getElementById('tarotFateImage');
+    if (fateImage) {
+        fateImage.src = tarot.fate.image || '/images/tarot/back.jpg';
+        fateImage.alt = tarot.fate.name || 'Карта Судьбы';
+    }
+    setElementText('tarotFateNumber', tarot.fate.number);
+    setElementText('tarotFateName', tarot.fate.name);
+    setElementText('tarotFateKeywords', tarot.fate.keywords);
+    setElementText('tarotFateDescription', tarot.fate.description);
+    setElementText('tarotFateAdvice', tarot.fate.advice);
+
+    // Карта Личности
+    const personalityImage = document.getElementById('tarotPersonalityImage');
+    if (personalityImage) {
+        personalityImage.src = tarot.personality.image || '/images/tarot/back.jpg';
+        personalityImage.alt = tarot.personality.name || 'Карта Личности';
+    }
+    setElementText('tarotPersonalityNumber', tarot.personality.number);
+    setElementText('tarotPersonalityName', tarot.personality.name);
+    setElementText('tarotPersonalityKeywords', tarot.personality.keywords);
+    setElementText('tarotPersonalityDescription', tarot.personality.description);
+    setElementText('tarotPersonalityAdvice', tarot.personality.advice);
+
+    // Карта Пути
+    const controlImage = document.getElementById('tarotControlImage');
+    if (controlImage) {
+        controlImage.src = tarot.control.image || '/images/tarot/back.jpg';
+        controlImage.alt = tarot.control.name || 'Карта Пути';
+    }
+    setElementText('tarotControlNumber', tarot.control.number);
+    setElementText('tarotControlName', tarot.control.name);
+    setElementText('tarotControlKeywords', tarot.control.keywords);
+    setElementText('tarotControlDescription', tarot.control.description);
+    setElementText('tarotControlAdvice', tarot.control.advice);
 }
 
 function displayPsychology(psychology) {

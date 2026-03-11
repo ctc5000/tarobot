@@ -4,46 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Нумерология | Древо Жизни</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Меню будет загружено через menu-loader.js -->
+<div id="menu-placeholder"></div>
 
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">Древо Жизни</span>
+                </a>
+            </div>
+            <div id="nav-placeholder"></div>
+        </div>
+    </div>
+</header>
 
-<div class="cosmic-bg">
-    <div class="stars"></div>
-    <div class="nebula"></div>
+<!-- Основной фон -->
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
 </div>
 
-<div class="container">
-    <header class="mystic-header">
-        <h1 class="glitch" data-text="НУМЕРОЛОГИЯ">НУМЕРОЛОГИЯ</h1>
-        <p class="subtitle">Магия чисел и коды судьбы</p>
-    </header>
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Нумерология</h1>
+            <p class="page-subtitle">Магия чисел и коды судьбы</p>
+        </div>
 
-    <main>
         <section class="input-section glass-card">
             <h2>Введите данные для расчета</h2>
             <form id="numerologyForm">
                 <div class="form-group">
-                    <label for="fullName">🌙 Полное ФИО</label>
-                    <input type="text" id="fullName" name="fullName" placeholder="Например: Иванова Мария Сергеевна" required>
+                    <label for="fullName">Полное ФИО</label>
+                    <input type="text" id="fullName" name="fullName" placeholder="Иванова Мария Сергеевна" required>
                     <small class="form-hint">Укажите фамилию, имя и отчество полностью</small>
                 </div>
 
                 <div class="form-group">
-                    <label for="birthDate">⭐ Дата рождения</label>
+                    <label for="birthDate">Дата рождения</label>
                     <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
                     <small class="form-hint">Например: 15.06.1987</small>
                 </div>
 
                 <button type="submit" class="mystic-button">
-                    <span class="button-text">Рассчитать судьбу</span>
-                    <span class="button-glow"></span>
+                    Рассчитать судьбу
                 </button>
             </form>
+
             <div class="loading-spinner" id="loadingSpinner" style="display: none;">
-                <div class="moon"></div>
+                <div class="spinner"></div>
                 <p>Соединение с космосом...</p>
             </div>
         </section>
@@ -63,6 +81,7 @@
                     </div>
                 </div>
 
+                <!-- Сетка базовых чисел -->
                 <div class="numerology-grid">
                     <div class="grid-item fate">
                         <div class="number-large" id="fateNumber">--</div>
@@ -82,6 +101,7 @@
                     </div>
                 </div>
 
+                <!-- Специальные числа -->
                 <div class="special-numbers">
                     <div class="special-item">
                         <span class="special-label">Ахиллесова пята</span>
@@ -93,6 +113,7 @@
                     </div>
                 </div>
 
+                <!-- Социальные оклики -->
                 <div class="calls-section">
                     <h3>Социальные оклики</h3>
                     <div class="calls-grid">
@@ -114,6 +135,7 @@
                     </div>
                 </div>
 
+                <!-- Табы с дополнительной информацией -->
                 <div class="additional-info">
                     <div class="tab-container">
                         <div class="tab-buttons">
@@ -124,6 +146,7 @@
                             <button class="tab-btn" data-tab="patterns">🔍 Паттерны</button>
                         </div>
 
+                        <!-- Вкладка Гороскоп -->
                         <div class="tab-content active" id="tabZodiac">
                             <div class="zodiac-card">
                                 <div class="zodiac-header">
@@ -165,6 +188,7 @@
                             </div>
                         </div>
 
+                        <!-- Вкладка Фен-шуй -->
                         <div class="tab-content" id="tabFengshui">
                             <div class="fengshui-card">
                                 <div class="fengshui-header">
@@ -206,32 +230,54 @@
                             </div>
                         </div>
 
+                        <!-- Вкладка Таро -->
                         <div class="tab-content" id="tabTarot">
                             <div class="tarot-grid">
-                                <div class="tarot-card">
-                                    <div class="tarot-number" id="tarotFateNumber">X</div>
-                                    <div class="tarot-name" id="tarotFateName">Карта Судьбы</div>
-                                    <div class="tarot-keywords" id="tarotFateKeywords">ключевые слова</div>
-                                    <div class="tarot-description" id="tarotFateDescription">Описание карты судьбы...</div>
-                                    <div class="tarot-advice" id="tarotFateAdvice">Совет...</div>
+                                <!-- Карта Судьбы -->
+                                <div class="tarot-card" id="tarotFateCard">
+                                    <div class="tarot-image-container">
+                                        <img src="/images/tarot/back.jpg" alt="Карта Судьбы" id="tarotFateImage" class="tarot-image">
+                                        <div class="tarot-number-badge" id="tarotFateNumber">0</div>
+                                    </div>
+                                    <div class="tarot-content">
+                                        <h4 class="tarot-name" id="tarotFateName">Шут</h4>
+                                        <div class="tarot-keywords" id="tarotFateKeywords">Новое начало, спонтанность</div>
+                                        <div class="tarot-description" id="tarotFateDescription">Описание карты судьбы...</div>
+                                        <div class="tarot-advice" id="tarotFateAdvice">Совет...</div>
+                                    </div>
                                 </div>
-                                <div class="tarot-card">
-                                    <div class="tarot-number" id="tarotPersonalityNumber">X</div>
-                                    <div class="tarot-name" id="tarotPersonalityName">Карта Личности</div>
-                                    <div class="tarot-keywords" id="tarotPersonalityKeywords">ключевые слова</div>
-                                    <div class="tarot-description" id="tarotPersonalityDescription">Описание карты личности...</div>
-                                    <div class="tarot-advice" id="tarotPersonalityAdvice">Совет...</div>
+
+                                <!-- Карта Личности -->
+                                <div class="tarot-card" id="tarotPersonalityCard">
+                                    <div class="tarot-image-container">
+                                        <img src="/images/tarot/back.jpg" alt="Карта Личности" id="tarotPersonalityImage" class="tarot-image">
+                                        <div class="tarot-number-badge" id="tarotPersonalityNumber">0</div>
+                                    </div>
+                                    <div class="tarot-content">
+                                        <h4 class="tarot-name" id="tarotPersonalityName">Шут</h4>
+                                        <div class="tarot-keywords" id="tarotPersonalityKeywords">Новое начало, спонтанность</div>
+                                        <div class="tarot-description" id="tarotPersonalityDescription">Описание карты личности...</div>
+                                        <div class="tarot-advice" id="tarotPersonalityAdvice">Совет...</div>
+                                    </div>
                                 </div>
-                                <div class="tarot-card">
-                                    <div class="tarot-number" id="tarotControlNumber">X</div>
-                                    <div class="tarot-name" id="tarotControlName">Карта Пути</div>
-                                    <div class="tarot-keywords" id="tarotControlKeywords">ключевые слова</div>
-                                    <div class="tarot-description" id="tarotControlDescription">Описание карты пути...</div>
-                                    <div class="tarot-advice" id="tarotControlAdvice">Совет...</div>
+
+                                <!-- Карта Пути -->
+                                <div class="tarot-card" id="tarotControlCard">
+                                    <div class="tarot-image-container">
+                                        <img src="/images/tarot/back.jpg" alt="Карта Пути" id="tarotControlImage" class="tarot-image">
+                                        <div class="tarot-number-badge" id="tarotControlNumber">0</div>
+                                    </div>
+                                    <div class="tarot-content">
+                                        <h4 class="tarot-name" id="tarotControlName">Шут</h4>
+                                        <div class="tarot-keywords" id="tarotControlKeywords">Новое начало, спонтанность</div>
+                                        <div class="tarot-description" id="tarotControlDescription">Описание карты пути...</div>
+                                        <div class="tarot-advice" id="tarotControlAdvice">Совет...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Вкладка Психология -->
                         <div class="tab-content" id="tabPsychology">
                             <div class="psychology-card">
                                 <h3>🧠 НЛП-ПРОФИЛЬ</h3>
@@ -259,6 +305,7 @@
                             </div>
                         </div>
 
+                        <!-- Вкладка Паттерны -->
                         <div class="tab-content" id="tabPatterns">
                             <div class="patterns-container">
                                 <h3>🔍 КЛЮЧЕВЫЕ ПАТТЕРНЫ ЛИЧНОСТИ</h3>
@@ -270,6 +317,7 @@
                     </div>
                 </div>
 
+                <!-- Полная интерпретация -->
                 <div class="full-interpretation">
                     <h3>📜 СВИТОК СУДЬБЫ</h3>
                     <div class="interpretation-text" id="interpretationText">
@@ -277,6 +325,7 @@
                     </div>
                 </div>
 
+                <!-- Глубинный портрет -->
                 <div class="deep-portrait">
                     <h3>🌌 ГЛУБИННЫЙ ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h3>
                     <div class="portrait-text" id="deepPortrait">
@@ -284,51 +333,39 @@
                     </div>
                 </div>
 
+                <!-- Дополнительные расчеты будут добавлены сюда через JS -->
+
                 <button class="mystic-button small" id="newCalculationBtn">
                     <span class="button-text">Новый расчет</span>
                 </button>
             </div>
         </section>
-    </main>
+    </div>
+</main>
 
-    <footer>
-        <p>© 2026 | Мистическая нумерология Древо Жизни | Все права защищены тайной</p>
-        <p class="footer-small">Основано на западной астрологии, фен-шуй и Таро</p>
-    </footer>
-</div>
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>Древо Жизни</span>
+                </div>
+                <p>Центр мистических практик и самопознания</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Древо Жизни. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
 
-<script src="/js/numerology.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.menu-toggle');
-        const mobileMenu = document.querySelector('.mobile-menu');
-        const menuOverlay = document.querySelector('.menu-overlay');
-
-        if (menuToggle && mobileMenu && menuOverlay) {
-            function toggleMenu() {
-                menuToggle.classList.toggle('active');
-                mobileMenu.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-            }
-
-            menuToggle.addEventListener('click', toggleMenu);
-            menuOverlay.addEventListener('click', toggleMenu);
-
-            // Закрываем меню при клике на ссылку
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', toggleMenu);
-            });
-
-            // Закрываем меню при изменении размера окна (если стали десктопными)
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
-                    toggleMenu();
-                }
-            });
-        }
-    });
-</script>
 <script src="/js/menu-loader.js"></script>
+<script src="/js/numerology.js"></script>
 </body>
 </html>

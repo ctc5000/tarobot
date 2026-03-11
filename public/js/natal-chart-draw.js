@@ -6,18 +6,53 @@ class NatalChartDraw {
             return;
         }
         this.ctx = this.canvas.getContext('2d');
-        this.width = 500;
-        this.height = 500;
-        this.centerX = 250;
-        this.centerY = 250;
-        this.radius = 200;
 
-        // Настройки размеров
+        // Определяем размер в зависимости от экрана
+        this.updateDimensions();
+
+        // Цвета для аспектов
+        this.aspectColors = {
+            conjunction: '#ff4d4d',
+            opposition: '#4d4dff',
+            trine: '#4dff4d',
+            square: '#ff4dff',
+            sextile: '#ffff4d'
+        };
+
+        window.addEventListener('resize', () => this.updateDimensions());
+    }
+
+    updateDimensions() {
+        const container = this.canvas.parentElement;
+        const containerWidth = container?.clientWidth || 400;
+
+        // На мобильных делаем компактнее
+        if (containerWidth < 500) {
+            this.width = 350;
+            this.height = 350;
+            this.centerX = 175;
+            this.centerY = 175;
+            this.outerRadius = 140;
+            this.signRadius = 125;
+            this.houseRadius = 115;
+            this.planetRadius = 95;
+            this.innerRadius = 35;
+        } else {
+            this.width = 700;
+            this.height = 700;
+            this.centerX = 350;
+            this.centerY = 350;
+            this.outerRadius = 280;
+            this.signRadius = 245;
+            this.houseRadius = 225;
+            this.planetRadius = 190;
+            this.innerRadius = 70;
+        }
+
         this.setCanvasSize();
     }
 
     setCanvasSize() {
-        // Устанавливаем размер канваса с учетом Retina дисплеев
         const dpr = window.devicePixelRatio || 1;
         this.canvas.width = this.width * dpr;
         this.canvas.height = this.height * dpr;
@@ -25,7 +60,6 @@ class NatalChartDraw {
         this.canvas.style.height = this.height + 'px';
         this.ctx.scale(dpr, dpr);
 
-        // Настройки для красивых линий
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
     }
@@ -33,228 +67,175 @@ class NatalChartDraw {
     draw(data) {
         if (!this.ctx) return;
 
-        // Очищаем канвас
         this.ctx.clearRect(0, 0, this.width, this.height);
 
-        // Рисуем фон
         this.drawBackground();
 
-        // Рисуем круг
-        this.drawCircle();
-
-        // Рисуем дома (линии от центра к окружности)
         if (data.houses) {
             this.drawHouses(data.houses);
         }
 
-        // Рисуем знаки зодиака
         this.drawSigns();
 
-        // Рисуем планеты
+        if (data.aspects && data.planets) {
+            this.drawAspects(data.aspects, data.planets);
+        }
+
         if (data.planets) {
             this.drawPlanets(data.planets);
         }
 
-        // Рисуем центр
         this.drawCenter();
-
-        // Добавляем метки домов
-        this.drawHouseNumbers();
     }
 
     drawBackground() {
-        // Радиальный градиент для фона
-        const gradient = this.ctx.createRadialGradient(
-            this.centerX, this.centerY, 0,
-            this.centerX, this.centerY, this.radius
-        );
-        gradient.addColorStop(0, 'rgba(45, 27, 74, 0.3)');
-        gradient.addColorStop(1, 'rgba(26, 15, 36, 0.5)');
-
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
-        this.ctx.fillStyle = gradient;
-        this.ctx.fill();
-    }
-
-    drawCircle() {
-        // Внешний круг
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
-        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
-        this.ctx.lineWidth = 2;
+        this.ctx.arc(this.centerX, this.centerY, this.outerRadius, 0, 2 * Math.PI);
+        this.ctx.strokeStyle = '#c9a54b';
+        this.ctx.lineWidth = this.width < 500 ? 1 : 1.5;
         this.ctx.stroke();
 
-        // Внутренний круг
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, this.radius * 0.2, 0, 2 * Math.PI);
-        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
-        this.ctx.lineWidth = 1;
+        this.ctx.arc(this.centerX, this.centerY, this.innerRadius, 0, 2 * Math.PI);
+        this.ctx.strokeStyle = 'rgba(201, 165, 75, 0.5)';
+        this.ctx.lineWidth = this.width < 500 ? 0.5 : 1;
         this.ctx.stroke();
 
-        // Декоративные точки по кругу
-        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.3)';
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * 30 * Math.PI) / 180;
-            const x = this.centerX + this.radius * Math.cos(angle);
-            const y = this.centerY + this.radius * Math.sin(angle);
-
+        [this.planetRadius, this.houseRadius, this.signRadius].forEach(radius => {
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 3, 0, 2 * Math.PI);
-            this.ctx.fill();
-        }
+            this.ctx.arc(this.centerX, this.centerY, radius, 0, 2 * Math.PI);
+            this.ctx.strokeStyle = 'rgba(201, 165, 75, 0.2)';
+            this.ctx.lineWidth = 0.5;
+            this.ctx.stroke();
+        });
     }
 
     drawHouses(houses) {
-        // Сортируем дома по куспидам
-        const sortedHouses = [...houses].sort((a, b) => a.cusp - b.cusp);
-
-        // Рисуем линии домов
-        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = '#c9a54b';
+        this.ctx.lineWidth = this.width < 500 ? 0.8 : 1;
 
         houses.forEach((house) => {
-            // Конвертируем угол из астрологической системы (0° = Овен) в математическую (0° = право)
-            // В астрологии 0° = Овен (на 9 часов), в математике 0° = 3 часа
             const angle = ((house.cusp - 90) * Math.PI) / 180;
 
-            const x = this.centerX + this.radius * Math.cos(angle);
-            const y = this.centerY + this.radius * Math.sin(angle);
+            const x1 = this.centerX + this.innerRadius * Math.cos(angle);
+            const y1 = this.centerY + this.innerRadius * Math.sin(angle);
+            const x2 = this.centerX + this.outerRadius * Math.cos(angle);
+            const y2 = this.centerY + this.outerRadius * Math.sin(angle);
 
-            // Рисуем линию от центра к краю
             this.ctx.beginPath();
-            this.ctx.moveTo(this.centerX, this.centerY);
-            this.ctx.lineTo(x, y);
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
             this.ctx.stroke();
 
-            // Добавляем небольшую точку на конце линии
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 4, 0, 2 * Math.PI);
-            this.ctx.fillStyle = 'rgba(212, 175, 55, 0.8)';
-            this.ctx.fill();
-        });
+            // Номер дома
+            const labelX = this.centerX + (this.outerRadius - (this.width < 500 ? 15 : 25)) * Math.cos(angle);
+            const labelY = this.centerY + (this.outerRadius - (this.width < 500 ? 15 : 25)) * Math.sin(angle);
 
-        // Рисуем дополнительную окружность для аспектов (опционально)
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, this.radius * 0.8, 0, 2 * Math.PI);
-        this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)';
-        this.ctx.setLineDash([5, 5]);
-        this.ctx.stroke();
-        this.ctx.setLineDash([]);
+            this.ctx.fillStyle = '#c9a54b';
+            this.ctx.font = this.width < 500 ? 'bold 8px "Inter"' : 'bold 11px "Inter"';
+            this.ctx.fillText(house.number.toString(), labelX - 4, labelY - 4);
+        });
     }
 
     drawSigns() {
         const signs = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
-        const signNames = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
-            'Весы', 'Скорпион', 'Стрелец', 'Козерог', 'Водолей', 'Рыбы'];
 
-        this.ctx.font = 'bold 20px "Arial", sans-serif';
-        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
-        this.ctx.shadowColor = '#d4af37';
-        this.ctx.shadowBlur = 10;
+        this.ctx.fillStyle = '#c9a54b';
+        this.ctx.font = this.width < 500 ? 'bold 12px "Arial"' : 'bold 18px "Arial"';
 
-        signs.forEach((sign, i) => {
-            // Угол для знака (каждый знак занимает 30°)
-            const angle = ((i * 30 + 15 - 90) * Math.PI) / 180; // +15 чтобы центрировать в знаке
-            const x = this.centerX + (this.radius + 30) * Math.cos(angle);
-            const y = this.centerY + (this.radius + 30) * Math.sin(angle);
+        for (let i = 0; i < 12; i++) {
+            const angle = ((i * 30 + 15 - 90) * Math.PI) / 180;
+            const x = this.centerX + (this.outerRadius + (this.width < 500 ? 10 : 20)) * Math.cos(angle);
+            const y = this.centerY + (this.outerRadius + (this.width < 500 ? 10 : 20)) * Math.sin(angle);
 
-            // Рисуем символ знака
-            this.ctx.save();
-            this.ctx.translate(x, y);
-            this.ctx.rotate(angle + Math.PI/2); // Поворачиваем текст по радиусу
-            this.ctx.fillText(sign, -10, -10);
-            this.ctx.restore();
+            this.ctx.fillText(signs[i], x - 6, y - 6);
+        }
+    }
 
-            // Добавляем маленькие точки для градусов
-            for (let d = 0; d < 30; d += 10) {
-                const degreeAngle = ((i * 30 + d - 90) * Math.PI) / 180;
-                const dotX = this.centerX + (this.radius - 5) * Math.cos(degreeAngle);
-                const dotY = this.centerY + (this.radius - 5) * Math.sin(degreeAngle);
+    drawAspects(aspects, planets) {
+        if (!aspects || aspects.length === 0) return;
 
-                this.ctx.beginPath();
-                this.ctx.arc(dotX, dotY, 1, 0, 2 * Math.PI);
-                this.ctx.fillStyle = 'rgba(212, 175, 55, 0.3)';
-                this.ctx.shadowBlur = 0;
-                this.ctx.fill();
-            }
+        const positions = {};
+        Object.entries(planets).forEach(([key, planet]) => {
+            const angle = ((planet.longitude - 90) * Math.PI) / 180;
+            positions[key] = {
+                x: this.centerX + this.planetRadius * Math.cos(angle),
+                y: this.centerY + this.planetRadius * Math.sin(angle)
+            };
         });
 
-        this.ctx.shadowBlur = 0;
+        aspects.forEach(aspect => {
+            const p1 = this.getPlanetKey(aspect.planet1);
+            const p2 = this.getPlanetKey(aspect.planet2);
+
+            if (positions[p1] && positions[p2]) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(positions[p1].x, positions[p1].y);
+                this.ctx.lineTo(positions[p2].x, positions[p2].y);
+                this.ctx.strokeStyle = this.aspectColors[aspect.type] || '#ffffff';
+                this.ctx.lineWidth = aspect.type === 'conjunction' ? 1.5 : 1;
+
+                if (aspect.type === 'opposition') {
+                    this.ctx.setLineDash([4, 3]);
+                } else {
+                    this.ctx.setLineDash([]);
+                }
+
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+        });
+    }
+
+    getPlanetKey(name) {
+        const map = {
+            'Солнце': 'sun',
+            'Луна': 'moon',
+            'Меркурий': 'mercury',
+            'Венера': 'venus',
+            'Марс': 'mars',
+            'Юпитер': 'jupiter',
+            'Сатурн': 'saturn'
+        };
+        return map[name] || name.toLowerCase();
     }
 
     drawPlanets(planets) {
-        this.ctx.font = 'bold 18px "Arial", sans-serif';
-        this.ctx.shadowColor = '#d4af37';
-        this.ctx.shadowBlur = 15;
+        const symbols = {
+            sun: '☉', moon: '☽', mercury: '☿', venus: '♀',
+            mars: '♂', jupiter: '♃', saturn: '♄'
+        };
 
-        Object.entries(planets).forEach(([name, data]) => {
-            // Конвертируем угол
-            const angle = ((data.longitude - 90) * Math.PI) / 180;
+        Object.entries(planets).forEach(([key, planet]) => {
+            const angle = ((planet.longitude - 90) * Math.PI) / 180;
+            const x = this.centerX + this.planetRadius * Math.cos(angle);
+            const y = this.centerY + this.planetRadius * Math.sin(angle);
 
-            // Планеты располагаются на разном расстоянии от центра для наглядности
-            const planetDistances = {
-                sun: 0.85, moon: 0.75, mercury: 0.7, venus: 0.65,
-                mars: 0.6, jupiter: 0.55, saturn: 0.5
-            };
-
-            const distance = this.radius * (planetDistances[name] || 0.7);
-            const x = this.centerX + distance * Math.cos(angle);
-            const y = this.centerY + distance * Math.sin(angle);
-
-            // Рисуем планету
-            this.ctx.fillStyle = '#d4af37';
-            this.ctx.fillText(data.symbol, x - 12, y - 12);
-
-            // Добавляем маленький кружок под планетой
+            // Кружок под планетой
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 12, 0, 2 * Math.PI);
-            this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
-            this.ctx.lineWidth = 1;
+            this.ctx.arc(x, y, this.width < 500 ? 6 : 9, 0, 2 * Math.PI);
+            this.ctx.fillStyle = 'rgba(18, 18, 26, 0.8)';
+            this.ctx.fill();
+            this.ctx.strokeStyle = '#c9a54b';
+            this.ctx.lineWidth = 0.5;
             this.ctx.stroke();
 
-            // Добавляем название планеты (сокращенно)
-            this.ctx.font = 'bold 10px "Arial", sans-serif';
-            this.ctx.fillStyle = 'rgba(212, 175, 55, 0.8)';
-            this.ctx.fillText(name === 'sun' ? 'Солнце' :
-                name === 'moon' ? 'Луна' :
-                    name.charAt(0).toUpperCase() + name.slice(1, 3),
-                x - 15, y + 20);
+            // Символ планеты
+            this.ctx.fillStyle = '#c9a54b';
+            this.ctx.font = this.width < 500 ? 'bold 10px "Arial"' : 'bold 16px "Arial"';
+            this.ctx.fillText(symbols[key] || '●', x - (this.width < 500 ? 5 : 8), y - (this.width < 500 ? 5 : 8));
         });
-
-        this.ctx.shadowBlur = 0;
     }
 
     drawCenter() {
-        // Рисуем центр
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 8, 0, 2 * Math.PI);
-        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
-        this.ctx.shadowBlur = 15;
+        this.ctx.arc(this.centerX, this.centerY, this.width < 500 ? 5 : 7, 0, 2 * Math.PI);
+        this.ctx.fillStyle = '#c9a54b';
         this.ctx.fill();
 
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 4, 0, 2 * Math.PI);
+        this.ctx.arc(this.centerX, this.centerY, this.width < 500 ? 2 : 3, 0, 2 * Math.PI);
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fill();
-
-        this.ctx.shadowBlur = 0;
-    }
-
-    drawHouseNumbers() {
-        this.ctx.font = 'bold 14px "Arial", sans-serif';
-        this.ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
-        this.ctx.shadowBlur = 5;
-
-        for (let i = 1; i <= 12; i++) {
-            // Каждый дом занимает 30°, ставим номер в середине дома
-            const angle = ((i * 30 - 15 - 90) * Math.PI) / 180;
-            const x = this.centerX + (this.radius - 25) * Math.cos(angle);
-            const y = this.centerY + (this.radius - 25) * Math.sin(angle);
-
-            this.ctx.fillText(i.toString(), x - 7, y - 7);
-        }
-
-        this.ctx.shadowBlur = 0;
     }
 }

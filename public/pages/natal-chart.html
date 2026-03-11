@@ -4,25 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Натальная карта | Древо Жизни</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Меню будет загружено через menu-loader.js -->
+<div id="menu-placeholder"></div>
 
-<div class="cosmic-bg">
-    <div class="stars"></div>
-    <div class="nebula"></div>
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">Древо Жизни</span>
+                </a>
+            </div>
+            <!-- Десктопная навигация будет загружена сюда -->
+            <div id="nav-placeholder"></div>
+        </div>
+    </div>
+</header>
+
+<!-- Основной фон -->
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
 </div>
 
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Натальная карта</h1>
+            <p class="page-subtitle">Астрологический портрет личности</p>
+        </div>
 
-<div class="container">
-    <header class="mystic-header">
-        <h1 class="glitch" data-text="НАТАЛЬНАЯ КАРТА">НАТАЛЬНАЯ КАРТА</h1>
-        <p class="subtitle">Магия чисел и коды судьбы</p>
-
-    </header>
-
-    <main>
         <section class="input-section glass-card">
             <h2>Введите данные рождения</h2>
             <form id="natalChartForm">
@@ -83,7 +101,6 @@
 
                 <button type="submit" class="mystic-button">
                     <span class="button-text">✨ Построить карту</span>
-                    <span class="button-glow"></span>
                 </button>
             </form>
         </section>
@@ -107,21 +124,17 @@
                     </div>
                 </div>
 
-                <!-- Канвас для отрисовки карты -->
                 <div class="natal-chart-wrapper">
-                    <canvas id="natalChartCanvas" width="500" height="500"></canvas>
+                    <canvas id="natalChartCanvas"></canvas>
                 </div>
 
-                <!-- Легенда планет -->
                 <div class="natal-legend" id="planetLegend"></div>
 
-                <!-- Таблица с позициями планет -->
                 <div class="natal-positions">
                     <h3>📊 Позиции планет</h3>
                     <div class="positions-grid" id="planetPositions"></div>
                 </div>
 
-                <!-- Аспекты -->
                 <div class="natal-aspects">
                     <h3>⚡ Аспекты</h3>
                     <div class="aspects-list" id="aspectsList"></div>
@@ -132,46 +145,33 @@
                 </button>
             </div>
         </section>
-    </main>
+    </div>
+</main>
 
-    <footer>
-        <p>© 2026 | Мистическая нумерология Древо Жизни</p>
-    </footer>
-</div>
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>Древо Жизни</span>
+                </div>
+                <p>Центр мистических практик и самопознания</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Древо Жизни. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
 
 <script src="/js/natal-chart-draw.js"></script>
 <script src="/js/natal-chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.menu-toggle');
-        const mobileMenu = document.querySelector('.mobile-menu');
-        const menuOverlay = document.querySelector('.menu-overlay');
-
-        if (menuToggle && mobileMenu && menuOverlay) {
-            function toggleMenu() {
-                menuToggle.classList.toggle('active');
-                mobileMenu.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-            }
-
-            menuToggle.addEventListener('click', toggleMenu);
-            menuOverlay.addEventListener('click', toggleMenu);
-
-            // Закрываем меню при клике на ссылку
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', toggleMenu);
-            });
-
-            // Закрываем меню при изменении размера окна (если стали десктопными)
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
-                    toggleMenu();
-                }
-            });
-        }
-    });
-</script>
 <script src="/js/menu-loader.js"></script>
 </body>
 </html>

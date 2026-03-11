@@ -10,7 +10,9 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<!-- Фиксированный хедер -->
+<!-- Меню будет загружено через menu-loader.js -->
+<div id="menu-placeholder"></div>
+
 <header class="site-header">
     <div class="container">
         <div class="header-content">
@@ -21,45 +23,13 @@
                 </a>
             </div>
 
-            <!-- Десктопная навигация -->
-            <nav class="main-nav">
-                <a href="/" class="nav-link active">Главная</a>
-                <a href="/numerology" class="nav-link">Нумерология</a>
-                <a href="/natal-chart" class="nav-link">Натальная карта</a>
-                <a href="/socionics" class="nav-link">Соционика</a>
-                <a href="/astropsychology" class="nav-link">Астропсихология</a>
-               <!-- <a href="/runes" class="nav-link">Руны</a>-->
-            </nav>
+            <!-- Десктопная навигация (будет загружена) -->
+            <div id="nav-placeholder"></div>
 
-            <!-- Кнопка меню для мобильных -->
-            <button class="mobile-menu-btn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
+            <!-- Кнопка меню для мобильных (будет загружена) -->
         </div>
     </div>
 </header>
-
-<!-- Мобильное меню (скрыто по умолчанию) -->
-<div class="mobile-menu">
-    <div class="mobile-menu-header">
-        <span class="logo-icon">⛤</span>
-        <span class="logo-text">Древо Жизни</span>
-        <button class="mobile-menu-close">&times;</button>
-    </div>
-    <nav class="mobile-nav">
-        <a href="/" class="mobile-nav-link active">Главная</a>
-        <a href="/numerology" class="mobile-nav-link">Нумерология</a>
-        <a href="/natal-chart" class="mobile-nav-link">Натальная карта</a>
-        <a href="/socionics" class="mobile-nav-link">Соционика</a>
-        <a href="/astropsychology" class="mobile-nav-link">Астропсихология</a>
-        <!--<a href="/runes" class="mobile-nav-link">Руны</a>-->
-    </nav>
-    <div class="mobile-menu-footer">
-        <p>© 2026 Древо Жизни</p>
-    </div>
-</div>
 
 <!-- Основной фон -->
 <div class="site-background">
@@ -75,7 +45,6 @@
             <p class="hero-subtitle">Нумерология, астрология, Таро и другие практики для глубокого понимания своей личности и предназначения</p>
             <div class="hero-actions">
                 <a href="#practices" class="btn btn-primary">Начать исследование</a>
-                <!--<a href="/about" class="btn btn-outline">О проекте</a>-->
             </div>
         </section>
 
@@ -133,13 +102,6 @@
                     <p>Психологический портрет по знаку зодиака и планетам.</p>
                     <span class="card-link">Узнать больше →</span>
                 </a>
-
-                <a href="/runes" class="practice-card">
-                    <div class="card-icon">ᚠ</div>
-                    <h3>Руны Старшего Футарка</h3>
-                    <p>Древняя магия Севера. Гадание и получение советов.</p>
-                    <span class="card-link">Узнать больше →</span>
-                </a>
             </div>
         </section>
 
@@ -175,6 +137,7 @@
     </div>
 </footer>
 
+<script src="/js/menu-loader.js"></script>
 <script src="/js/main.js"></script>
 </body>
 </html>

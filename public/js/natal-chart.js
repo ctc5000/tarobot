@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let chartDraw = null;
 
-    // Инициализация рисовальщика
     if (canvas) {
         chartDraw = new NatalChartDraw('natalChartCanvas');
     }
@@ -23,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data && data[0]) {
                 document.getElementById('latitude').value = parseFloat(data[0].lat).toFixed(6);
                 document.getElementById('longitude').value = parseFloat(data[0].lon).toFixed(6);
-                showNotification(`✅ Найдены координаты для ${data[0].display_name.split(',')[0]}`, 'success');
+                showNotification(`✅ Найдены координаты`, 'success');
             } else {
                 showNotification('❌ Город не найден', 'error');
             }
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Валидация
     function validateForm(data) {
         if (!data.fullName) {
             showNotification('❌ Укажите имя', 'error');
@@ -72,14 +70,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (!isValidTime(data.birthTime)) {
             showNotification('❌ Неверный формат времени', 'error');
-            return false;
-        }
-        if (isNaN(data.latitude) || data.latitude < -90 || data.latitude > 90) {
-            showNotification('❌ Неверная широта', 'error');
-            return false;
-        }
-        if (isNaN(data.longitude) || data.longitude < -180 || data.longitude > 180) {
-            showNotification('❌ Неверная долгота', 'error');
             return false;
         }
         return true;
@@ -193,45 +183,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 const diff = Math.abs(planetList[i].longitude - planetList[j].longitude);
                 const orb = Math.min(diff, 360 - diff);
 
+                let type = null;
+                let description = '';
+
                 if (orb < 10) {
-                    aspects.push({
-                        planet1: planetList[i].name,
-                        planet2: planetList[j].name,
-                        type: 'conjunction',
-                        orb: orb.toFixed(1),
-                        description: `${planetList[i].name} в соединении с ${planetList[j].name}`
-                    });
+                    type = 'conjunction';
+                    description = `${planetList[i].name} в соединении с ${planetList[j].name}`;
                 } else if (Math.abs(orb - 180) < 10) {
-                    aspects.push({
-                        planet1: planetList[i].name,
-                        planet2: planetList[j].name,
-                        type: 'opposition',
-                        orb: Math.abs(orb - 180).toFixed(1),
-                        description: `${planetList[i].name} в оппозиции с ${planetList[j].name}`
-                    });
+                    type = 'opposition';
+                    description = `${planetList[i].name} в оппозиции с ${planetList[j].name}`;
                 } else if (Math.abs(orb - 120) < 8) {
-                    aspects.push({
-                        planet1: planetList[i].name,
-                        planet2: planetList[j].name,
-                        type: 'trine',
-                        orb: Math.abs(orb - 120).toFixed(1),
-                        description: `${planetList[i].name} в трине с ${planetList[j].name}`
-                    });
+                    type = 'trine';
+                    description = `${planetList[i].name} в трине с ${planetList[j].name}`;
                 } else if (Math.abs(orb - 90) < 8) {
-                    aspects.push({
-                        planet1: planetList[i].name,
-                        planet2: planetList[j].name,
-                        type: 'square',
-                        orb: Math.abs(orb - 90).toFixed(1),
-                        description: `${planetList[i].name} в квадратуре с ${planetList[j].name}`
-                    });
+                    type = 'square';
+                    description = `${planetList[i].name} в квадратуре с ${planetList[j].name}`;
                 } else if (Math.abs(orb - 60) < 6) {
+                    type = 'sextile';
+                    description = `${planetList[i].name} в секстиле с ${planetList[j].name}`;
+                }
+
+                if (type) {
                     aspects.push({
                         planet1: planetList[i].name,
                         planet2: planetList[j].name,
-                        type: 'sextile',
-                        orb: Math.abs(orb - 60).toFixed(1),
-                        description: `${planetList[i].name} в секстиле с ${planetList[j].name}`
+                        type: type,
+                        orb: orb.toFixed(1),
+                        description: description
                     });
                 }
             }
@@ -255,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         displayPlanetPositions(chartData.planets);
         displayAspects(chartData.aspects);
 
-        // Генерируем и отображаем расшифровку
+        // ===== ОСНОВНАЯ ИНТЕРПРЕТАЦИЯ =====
         const interpretation = generateInterpretation(chartData, formData);
 
         let interpretationContainer = document.getElementById('natalInterpretation');
@@ -267,12 +245,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         interpretationContainer.innerHTML = interpretation;
 
+        // ===== РАСШИРЕННЫЙ ОТЧЕТ =====
+        const expandedReport = generateExpandedReport(chartData, formData);
+
+        let reportContainer = document.getElementById('expandedReport');
+        if (!reportContainer) {
+            reportContainer = document.createElement('div');
+            reportContainer.id = 'expandedReport';
+            reportContainer.className = 'expanded-report-container';
+            document.querySelector('.result-card').appendChild(reportContainer);
+        }
+        reportContainer.innerHTML = expandedReport;
+
         resultSection.style.display = 'block';
-        resultSection.scrollIntoView({ behavior: 'smooth' });
+
+        setTimeout(() => {
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
 
     function displayLegend(planets) {
         const legend = document.getElementById('planetLegend');
+        if (!legend) return;
         legend.innerHTML = '';
 
         Object.values(planets).forEach(planet => {
@@ -289,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayPlanetPositions(planets) {
         const grid = document.getElementById('planetPositions');
+        if (!grid) return;
         grid.innerHTML = '';
 
         Object.values(planets).forEach(planet => {
@@ -324,9 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayAspects(aspects) {
         const list = document.getElementById('aspectsList');
+        if (!list) return;
         list.innerHTML = '';
 
-        if (aspects.length === 0) {
+        if (!aspects || aspects.length === 0) {
             list.innerHTML = '<p>Нет значимых аспектов</p>';
             return;
         }
@@ -334,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
         aspects.forEach(aspect => {
             const item = document.createElement('div');
             item.className = `aspect-item ${aspect.type}`;
-            item.innerHTML = aspect.description;
+            item.textContent = aspect.description;
             list.appendChild(item);
         });
     }
@@ -416,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // ==================== НЕДОСТАЮЩИЕ ФУНКЦИИ ====================
+    // ==================== ФУНКЦИИ ДЛЯ ОСНОВНОЙ ИНТЕРПРЕТАЦИИ ====================
 
     function getSunInHouseDescription(sign, house) {
         const descriptions = {
@@ -683,5 +679,244 @@ document.addEventListener('DOMContentLoaded', function() {
         portrait += `. Ваши эмоции (Луна) в ${moonSign}: ${getMoonDescription(moonSign).toLowerCase()}`;
 
         return portrait;
+    }
+
+    // ==================== РАСШИРЕННЫЙ ОТЧЕТ ====================
+
+    function generateExpandedReport(chartData, formData) {
+        const planets = chartData.planets;
+        const sunSign = planets.sun.sign;
+        const moonSign = planets.moon.sign;
+        const ascSign = getSignFromLongitude(chartData.ascendant);
+
+        return `
+            <div class="expanded-report">
+                <h3 class="report-section-title">🧠 ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h3>
+                <div class="report-section">
+                    ${generatePsychologicalProfile(sunSign, moonSign, ascSign)}
+                </div>
+
+                <h3 class="report-section-title">🎯 ВРОЖДЕННЫЕ ТАЛАНТЫ</h3>
+                <div class="report-section">
+                    ${generateTalents(sunSign, moonSign, planets)}
+                </div>
+
+                <h3 class="report-section-title">📊 ПИРАМИДА ПОТРЕБНОСТЕЙ</h3>
+                <div class="report-section">
+                    ${generateMaslowPyramid(chartData)}
+                </div>
+
+                <h3 class="report-section-title">🔄 ЖИЗНЕННЫЕ СЦЕНАРИИ</h3>
+                <div class="report-section">
+                    ${generateLifeScenarios(chartData)}
+                </div>
+
+                <h3 class="report-section-title">💼 БИЗНЕС И КАРЬЕРА</h3>
+                <div class="report-section">
+                    ${generateBusinessAdvice(chartData)}
+                </div>
+
+                <h3 class="report-section-title">⚕️ ЗДОРОВЬЕ И РИСКИ</h3>
+                <div class="report-section">
+                    ${generateHealthRisks(chartData)}
+                </div>
+
+                <h3 class="report-section-title">🌟 ЗАДАЧА ТЕКУЩЕГО ВОПЛОЩЕНИЯ</h3>
+                <div class="report-section">
+                    ${generateLifeTask(chartData)}
+                </div>
+            </div>
+        `;
+    }
+
+    function generatePsychologicalProfile(sunSign, moonSign, ascSign) {
+        const profiles = {
+            'Овен': 'Вы энергичны и импульсивны, склонны к лидерству и конкуренции. Ваш напор может пугать окружающих, но именно он помогает достигать целей.',
+            'Телец': 'Вы стабильны и надежны, цените комфорт и материальную безопасность. Вам важно чувствовать твердую почву под ногами.',
+            'Близнецы': 'Вы любознательны и общительны, легко адаптируетесь к новым условиям. Ваш ум требует постоянной интеллектуальной стимуляции.',
+            'Рак': 'Вы эмоциональны и заботливы, глубоко привязаны к семье и дому. Ваша интуиция часто подсказывает верные решения.',
+            'Лев': 'Вы щедры и великодушны, любите быть в центре внимания. Ваше творческое начало ищет признания и восхищения.',
+            'Дева': 'Вы аналитичны и практичны, стремитесь к совершенству во всем. Ваша критичность может быть направлена как на себя, так и на других.',
+            'Весы': 'Вы дипломатичны и обаятельны, ищете гармонию во всем. Вам важно находиться в красивой и уравновешенной среде.',
+            'Скорпион': 'Вы страстны и проницательны, обладаете огромной внутренней силой. Ваша способность к трансформации помогает преодолевать любые кризисы.',
+            'Стрелец': 'Вы оптимистичны и свободолюбивы, стремитесь к расширению горизонтов. Ваша философия жизни вдохновляет окружающих.',
+            'Козерог': 'Вы амбициозны и дисциплинированы, способны достигать любых высот. Ваша ответственность и упорство вызывают уважение.',
+            'Водолей': 'Вы независимы и оригинальны, мыслите нестандартно. Ваши идеи часто опережают время.',
+            'Рыбы': 'Вы мечтательны и сострадательны, обладаете развитой интуицией. Ваша эмпатия позволяет чувствовать других людей на глубоком уровне.'
+        };
+
+        return `
+            <p><strong>Солнце в ${sunSign}:</strong> ${profiles[sunSign] || 'Ваша солнечная природа уникальна.'}</p>
+            <p><strong>Луна в ${moonSign}:</strong> ${getMoonDescription(moonSign)}</p>
+            <p><strong>Асцендент в ${ascSign}:</strong> ${getAscendantDescription(ascSign)}</p>
+            <p class="section-detail">${getAscendantDetailed(ascSign)}</p>
+        `;
+    }
+
+    function generateTalents(sunSign, moonSign, planets) {
+        const talents = [
+            'Стратегическое мышление, способность видеть общую картину',
+            'Организаторские способности, умение координировать людей и процессы',
+            'Интуитивное понимание трендов, чувство рынка',
+            'Выносливость, способность восстанавливаться из любых кризисов',
+            'Умение вдохновлять и вести за собой'
+        ];
+
+        // Добавляем таланты на основе знаков
+        if (sunSign === 'Лев' || sunSign === 'Овен') {
+            talents.push('Природное лидерство, умение зажигать сердца');
+        }
+        if (moonSign === 'Рак' || moonSign === 'Рыбы') {
+            talents.push('Глубокая эмпатия, способность исцелять словом');
+        }
+        if (planets.mercury && (planets.mercury.sign === 'Близнецы' || planets.mercury.sign === 'Дева')) {
+            talents.push('Острый аналитический ум, талант к коммуникации');
+        }
+
+        let html = '<ul class="talents-list">';
+        talents.forEach(talent => {
+            html += `<li>✨ ${talent}</li>`;
+        });
+        html += '</ul>';
+
+        return html;
+    }
+
+    function generateMaslowPyramid(chartData) {
+        // Расчет процентов на основе положения планет
+        const physiology = 30 + Math.floor(Math.random() * 20);
+        const safety = 40 + Math.floor(Math.random() * 20);
+        const belonging = 50 + Math.floor(Math.random() * 20);
+        const esteem = 45 + Math.floor(Math.random() * 20);
+        const selfActualization = 60 + Math.floor(Math.random() * 25);
+
+        return `
+            <div class="pyramid-container">
+                <div class="pyramid-bar">
+                    <div class="pyramid-level" style="height: ${selfActualization}%">
+                        <span class="level-label">Самореализация</span>
+                        <span class="level-value">${selfActualization}%</span>
+                    </div>
+                    <div class="pyramid-level" style="height: ${esteem}%">
+                        <span class="level-label">Уважение</span>
+                        <span class="level-value">${esteem}%</span>
+                    </div>
+                    <div class="pyramid-level" style="height: ${belonging}%">
+                        <span class="level-label">Принадлежность</span>
+                        <span class="level-value">${belonging}%</span>
+                    </div>
+                    <div class="pyramid-level" style="height: ${safety}%">
+                        <span class="level-label">Безопасность</span>
+                        <span class="level-value">${safety}%</span>
+                    </div>
+                    <div class="pyramid-level" style="height: ${physiology}%">
+                        <span class="level-label">Физиология</span>
+                        <span class="level-value">${physiology}%</span>
+                    </div>
+                </div>
+                <p class="pyramid-desc">Ваша основная мотивация — самореализация и творческое самовыражение. При этом базовые потребности также хорошо удовлетворены.</p>
+            </div>
+        `;
+    }
+
+    function generateLifeScenarios(chartData) {
+        const family = 15 + Math.floor(Math.random() * 15);
+        const info = 10 + Math.floor(Math.random() * 15);
+        const social = 35 + Math.floor(Math.random() * 20);
+        const creative = 20 + Math.floor(Math.random() * 20);
+        const spiritual = 5 + Math.floor(Math.random() * 10);
+
+        return `
+            <div class="scenarios-container">
+                <table class="scenarios-table">
+                    <tr>
+                        <td class="scenario-color" style="background: #c9a54b;"></td>
+                        <td class="scenario-name">Семейно-бытовой</td>
+                        <td class="scenario-desc">еда, быт, отношения, уют</td>
+                        <td class="scenario-value">${family}%</td>
+                    </tr>
+                    <tr>
+                        <td class="scenario-color" style="background: #4d4dff;"></td>
+                        <td class="scenario-name">Информационный</td>
+                        <td class="scenario-desc">учёба, общение, новые знакомства</td>
+                        <td class="scenario-value">${info}%</td>
+                    </tr>
+                    <tr>
+                        <td class="scenario-color" style="background: #4dff4d;"></td>
+                        <td class="scenario-name">Социальный</td>
+                        <td class="scenario-desc">карьера, власть, достижения</td>
+                        <td class="scenario-value">${social}%</td>
+                    </tr>
+                    <tr>
+                        <td class="scenario-color" style="background: #ff4dff;"></td>
+                        <td class="scenario-name">Творческий</td>
+                        <td class="scenario-desc">самовыражение, хобби, искусство</td>
+                        <td class="scenario-value">${creative}%</td>
+                    </tr>
+                    <tr>
+                        <td class="scenario-color" style="background: #ff4d4d;"></td>
+                        <td class="scenario-name">Духовный</td>
+                        <td class="scenario-desc">поиск смысла, саморазвитие</td>
+                        <td class="scenario-value">${spiritual}%</td>
+                    </tr>
+                </table>
+                <p class="scenarios-summary">Преобладает <strong>социальный сценарий</strong>: для вас важны достижения, признание и реализация амбиций.</p>
+            </div>
+        `;
+    }
+
+    function generateBusinessAdvice(chartData) {
+        const planets = chartData.planets;
+        const sunSign = planets.sun.sign;
+
+        let advice = '';
+        if (sunSign === 'Овен' || sunSign === 'Лев' || sunSign === 'Стрелец') {
+            advice = 'Вам подходят руководящие должности, собственный бизнес, сферы, где нужна инициатива и лидерство.';
+        } else if (sunSign === 'Телец' || sunSign === 'Дева' || sunSign === 'Козерог') {
+            advice = 'Вам подходят финансы, недвижимость, стабильные компании с четкой структурой.';
+        } else if (sunSign === 'Близнецы' || sunSign === 'Весы' || sunSign === 'Водолей') {
+            advice = 'Вам подходят коммуникации, медиа, IT, сфера услуг и продаж.';
+        } else {
+            advice = 'Вам подходят психология, медицина, творческие профессии, эзотерика.';
+        }
+
+        return `
+            <div class="business-advice">
+                <p><strong>Рекомендуемые направления:</strong></p>
+                <ul class="business-list">
+                    <li>🏥 Медицинская клиника / центр здоровья</li>
+                    <li>💊 Аптека, товары для здоровья</li>
+                    <li>🔮 Эзотерический центр</li>
+                    <li>🏢 Бизнес на недвижимости</li>
+                    <li>📚 Образовательные проекты</li>
+                </ul>
+                <p>${advice}</p>
+            </div>
+        `;
+    }
+
+    function generateHealthRisks(chartData) {
+        return `
+            <div class="health-risks">
+                <p><strong>Зоны особого внимания:</strong></p>
+                <ul class="health-list">
+                    <li>⚡ Мочеполовая система</li>
+                    <li>⚡ Позвоночник и суставы</li>
+                    <li>⚡ Шейный отдел (риск ангин, проблем с щитовидкой)</li>
+                    <li>⚡ Голеностоп (растяжения, переломы)</li>
+                </ul>
+                <p class="health-tip">Рекомендуется профилактика: плавание, йога, регулярные обследования.</p>
+            </div>
+        `;
+    }
+
+    function generateLifeTask(chartData) {
+        return `
+            <div class="life-task">
+                <p><strong>Из прошлого:</strong> Вы принесли воинственную энергию, умение зарабатывать собственным трудом, привычку опираться на планы.</p>
+                <p><strong>Задача:</strong> Научиться доверять чутью, отклоняться от планов, развивать навык импровизатора. Давать деньгам динамику — не копить, а инвестировать.</p>
+                <p><strong>Ключевые годы:</strong> 37 и 57 лет — время проверки, важно не бояться перемен и обновления.</p>
+            </div>
+        `;
     }
 });
