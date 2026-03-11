@@ -4,7 +4,7 @@ const path = require('path');
 const cors = require('cors');
 
 // Импорт сервисов
-const NumerologyService = require('./services/numerologyService');
+const NumerologyService = require('./services/numerology');
 const ZodiacService = require('./services/zodiacService');
 const FengShuiService = require('./services/fengShuiService');
 const TarotService = require('./services/tarotService');
@@ -106,7 +106,9 @@ app.get('/astropsychology', (req, res) => {
 app.get('/runes', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pages', 'runes.html'));
 });
-
+app.get('/natal-chart', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'natal-chart.html'));
+});
 // 👇 УДАЛИТЕ ЭТОТ БЛОК (строки 63-71) - он вызывает ошибку!
 // app.post('/api/calculate/numerology', (req, res) => {
 //     try {

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Натальная карта | Древо Жизни</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="cosmic-bg">
+    <div class="stars"></div>
+    <div class="nebula"></div>
+</div>
+
+
+<div class="container">
+    <header class="mystic-header">
+        <h1 class="glitch" data-text="НАТАЛЬНАЯ КАРТА">НАТАЛЬНАЯ КАРТА</h1>
+        <p class="subtitle">Магия чисел и коды судьбы</p>
+
+    </header>
+
+    <main>
+        <section class="input-section glass-card">
+            <h2>Введите данные рождения</h2>
+            <form id="natalChartForm">
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="fullName">🌙 Ваше имя</label>
+                        <input type="text" id="fullName" placeholder="Иван Иванов" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="gender">⚥ Пол</label>
+                        <select id="gender">
+                            <option value="male">Мужской</option>
+                            <option value="female">Женский</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="birthDate">📅 Дата рождения</label>
+                        <input type="text" id="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                    </div>
+                    <div class="form-group half">
+                        <label for="birthTime">⏰ Время рождения</label>
+                        <input type="text" id="birthTime" placeholder="ЧЧ:ММ" pattern="\d{2}:\d{2}" required>
+                        <small class="form-hint">Если неизвестно, укажите 12:00</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthPlace">📍 Место рождения</label>
+                    <div class="input-with-button">
+                        <input type="text" id="birthPlace" placeholder="Город" style="flex: 1;">
+                        <button type="button" id="searchCity" class="mystic-button small" style="width: auto; margin: 0;">🔍</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="latitude">🌐 Широта</label>
+                        <input type="number" id="latitude" step="0.000001" placeholder="55.7558">
+                    </div>
+                    <div class="form-group half">
+                        <label for="longitude">🌐 Долгота</label>
+                        <input type="number" id="longitude" step="0.000001" placeholder="37.6173">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="houseSystem">🏠 Система домов</label>
+                    <select id="houseSystem">
+                        <option value="placidus">Плацидус</option>
+                        <option value="koch">Кох</option>
+                        <option value="whole-sign">Целознаковая</option>
+                        <option value="equal">Равнодомная</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="mystic-button">
+                    <span class="button-text">✨ Построить карту</span>
+                    <span class="button-glow"></span>
+                </button>
+            </form>
+        </section>
+
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 ВАША НАТАЛЬНАЯ КАРТА</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Имя:</span>
+                        <span class="value" id="resultName"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Дата:</span>
+                        <span class="value" id="resultDate"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Время:</span>
+                        <span class="value" id="resultTime"></span>
+                    </div>
+                </div>
+
+                <!-- Канвас для отрисовки карты -->
+                <div class="natal-chart-wrapper">
+                    <canvas id="natalChartCanvas" width="500" height="500"></canvas>
+                </div>
+
+                <!-- Легенда планет -->
+                <div class="natal-legend" id="planetLegend"></div>
+
+                <!-- Таблица с позициями планет -->
+                <div class="natal-positions">
+                    <h3>📊 Позиции планет</h3>
+                    <div class="positions-grid" id="planetPositions"></div>
+                </div>
+
+                <!-- Аспекты -->
+                <div class="natal-aspects">
+                    <h3>⚡ Аспекты</h3>
+                    <div class="aspects-list" id="aspectsList"></div>
+                </div>
+
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 | Мистическая нумерология Древо Жизни</p>
+    </footer>
+</div>
+
+<script src="/js/natal-chart-draw.js"></script>
+<script src="/js/natal-chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.querySelector('.menu-toggle');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const menuOverlay = document.querySelector('.menu-overlay');
+
+        if (menuToggle && mobileMenu && menuOverlay) {
+            function toggleMenu() {
+                menuToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            }
+
+            menuToggle.addEventListener('click', toggleMenu);
+            menuOverlay.addEventListener('click', toggleMenu);
+
+            // Закрываем меню при клике на ссылку
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', toggleMenu);
+            });
+
+            // Закрываем меню при изменении размера окна (если стали десктопными)
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+        }
+    });
+</script>
+<script src="/js/menu-loader.js"></script>
+</body>
+</html>

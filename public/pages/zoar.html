@@ -5,37 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Зоар | Древо Жизни</title>
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;600&display=swap"
+          rel="stylesheet">
 </head>
 <body>
-<!-- Гамбургер-меню для мобильных -->
-<button class="menu-toggle">
-    <div class="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-</button>
 
-<!-- Оверлей -->
-<div class="menu-overlay"></div>
-
-<!-- Мобильное меню -->
-<div class="mobile-menu">
-    <div class="mobile-menu-header">МЕНЮ</div>
-    <nav class="mobile-nav">
-        <a href="/" class="mobile-nav-link">Главная</a>
-        <a href="/numerology" class="mobile-nav-link">Нумерология</a>
-        <a href="/rodology" class="mobile-nav-link">Родология</a>
-        <a href="/iching" class="mobile-nav-link">И-Цзин</a>
-        <a href="/daliuren" class="mobile-nav-link">Да Лю Жэнь</a>
-        <a href="/hermetic" class="mobile-nav-link">Герметизм</a>
-        <a href="/zoar" class="mobile-nav-link">Зоар</a>
-        <a href="/socionics" class="mobile-nav-link">Соционика</a>
-        <a href="/astropsychology" class="mobile-nav-link">Астропсихология</a>
-        <a href="/runes" class="mobile-nav-link">Руны</a>
-    </nav>
-</div>
 <div class="cosmic-bg">
     <div class="stars"></div>
     <div class="nebula"></div>
@@ -45,18 +19,7 @@
     <header class="mystic-header">
         <h1 class="glitch" data-text="ЗОАР">ЗОАР</h1>
         <p class="subtitle">Книга Сияния — Древо Жизни и 10 сефирот</p>
-        <nav class="practice-nav">
-            <a href="/" class="nav-link">Главная</a>
-            <a href="/numerology" class="nav-link">Нумерология</a>
-            <a href="/rodology" class="nav-link">Родология</a>
-            <a href="/iching" class="nav-link">И-Цзин</a>
-            <a href="/daliuren" class="nav-link">Да Лю Жэнь</a>
-            <a href="/hermetic" class="nav-link">Герметизм</a>
-            <a href="/zoar" class="nav-link active">Зоар</a>
-            <a href="/socionics" class="nav-link">Соционика</a>
-            <a href="/astropsychology" class="nav-link">Астропсихология</a>
-            <a href="/runes" class="nav-link">Руны</a>
-        </nav>
+
     </header>
 
     <main>
@@ -65,18 +28,21 @@
             <form id="zoarForm">
                 <div class="form-group">
                     <label for="question">❓ Ваш вопрос</label>
-                    <textarea id="question" name="question" rows="3" placeholder="О чем вы хотите спросить у Древа Жизни?"></textarea>
+                    <textarea id="question" name="question" rows="3"
+                              placeholder="О чем вы хотите спросить у Древа Жизни?"></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="sefiraNumber">🌳 Номер сефиры (1-10)</label>
-                    <input type="number" id="sefiraNumber" name="sefiraNumber" min="1" max="10" placeholder="Например: 6">
+                    <input type="number" id="sefiraNumber" name="sefiraNumber" min="1" max="10"
+                           placeholder="Например: 6">
                     <small class="form-hint">Если не указано, определится по дате</small>
                 </div>
 
                 <div class="form-group">
                     <label for="birthDate">📅 Ваша дата рождения</label>
-                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}">
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ"
+                           pattern="\d{2}\.\d{2}\.\d{4}">
                 </div>
 
                 <div class="form-group">
@@ -170,7 +136,7 @@
     </footer>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const menuToggle = document.querySelector('.menu-toggle');
         const mobileMenu = document.querySelector('.mobile-menu');
         const menuOverlay = document.querySelector('.menu-overlay');
@@ -192,7 +158,7 @@
             });
 
             // Закрываем меню при изменении размера окна (если стали десктопными)
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 if (window.innerWidth > 768 && mobileMenu.classList.contains('active')) {
                     toggleMenu();
                 }
@@ -201,5 +167,6 @@
     });
 </script>
 <script src="/js/zoar.js"></script>
+<script src="/js/menu-loader.js"></script>
 </body>
 </html>
