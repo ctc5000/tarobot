@@ -67,14 +67,15 @@ class NatalChartDraw {
     draw(data) {
         if (!this.ctx) return;
 
+        // Очищаем канвас
         this.ctx.clearRect(0, 0, this.width, this.height);
 
+        // Сохраняем состояние контекста
+        this.ctx.save();
+
+        // Рисуем в правильном порядке
         this.drawBackground();
-
-        if (data.houses) {
-            this.drawHouses(data.houses);
-        }
-
+        this.drawHouses(data.houses);  // Линии домов должны быть поверх фона
         this.drawSigns();
 
         if (data.aspects && data.planets) {
@@ -86,6 +87,9 @@ class NatalChartDraw {
         }
 
         this.drawCenter();
+
+        // Восстанавливаем состояние контекста
+        this.ctx.restore();
     }
 
     drawBackground() {
@@ -111,12 +115,24 @@ class NatalChartDraw {
     }
 
     drawHouses(houses) {
+        if (!houses || houses.length === 0) {
+            console.warn('Нет данных о домах');
+            return;
+        }
+
+        this.ctx.save();
         this.ctx.strokeStyle = '#c9a54b';
         this.ctx.lineWidth = this.width < 500 ? 0.8 : 1;
 
+        // Сортируем дома для равномерной отрисовки
+        houses.sort((a, b) => a.number - b.number);
+
         houses.forEach((house) => {
+            // Конвертируем угол: в астрологии 0° = Овен (9 часов),
+            // в математике 0° = 3 часа. Вычитаем 90° для коррекции
             const angle = ((house.cusp - 90) * Math.PI) / 180;
 
+            // Линия от внутреннего круга до внешнего
             const x1 = this.centerX + this.innerRadius * Math.cos(angle);
             const y1 = this.centerY + this.innerRadius * Math.sin(angle);
             const x2 = this.centerX + this.outerRadius * Math.cos(angle);
@@ -127,36 +143,64 @@ class NatalChartDraw {
             this.ctx.lineTo(x2, y2);
             this.ctx.stroke();
 
-            // Номер дома
-            const labelX = this.centerX + (this.outerRadius - (this.width < 500 ? 15 : 25)) * Math.cos(angle);
-            const labelY = this.centerY + (this.outerRadius - (this.width < 500 ? 15 : 25)) * Math.sin(angle);
+            // Номер дома - чуть ближе к краю
+            const labelDistance = this.outerRadius - (this.width < 500 ? 20 : 30);
+            const labelX = this.centerX + labelDistance * Math.cos(angle);
+            const labelY = this.centerY + labelDistance * Math.sin(angle);
 
             this.ctx.fillStyle = '#c9a54b';
-            this.ctx.font = this.width < 500 ? 'bold 8px "Inter"' : 'bold 11px "Inter"';
-            this.ctx.fillText(house.number.toString(), labelX - 4, labelY - 4);
+            this.ctx.font = this.width < 500 ? 'bold 9px "Inter"' : 'bold 12px "Inter"';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(house.number.toString(), labelX, labelY);
         });
+
+        this.ctx.restore();
     }
 
     drawSigns() {
         const signs = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+        const signNames = ['Овен', 'Телец', 'Близнецы', 'Рак', 'Лев', 'Дева',
+            'Весы', 'Скорпион', 'Стрелец', 'Козерог', 'Водолей', 'Рыбы'];
 
+        this.ctx.save();
         this.ctx.fillStyle = '#c9a54b';
-        this.ctx.font = this.width < 500 ? 'bold 12px "Arial"' : 'bold 18px "Arial"';
+        this.ctx.font = this.width < 500 ? 'bold 14px "Arial"' : 'bold 18px "Arial"';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
 
         for (let i = 0; i < 12; i++) {
-            const angle = ((i * 30 + 15 - 90) * Math.PI) / 180;
-            const x = this.centerX + (this.outerRadius + (this.width < 500 ? 10 : 20)) * Math.cos(angle);
-            const y = this.centerY + (this.outerRadius + (this.width < 500 ? 10 : 20)) * Math.sin(angle);
+            // Угол для символа знака (чуть дальше круга)
+            const symbolAngle = ((i * 30 + 15 - 90) * Math.PI) / 180;
+            const symbolX = this.centerX + (this.outerRadius + (this.width < 500 ? 15 : 25)) * Math.cos(symbolAngle);
+            const symbolY = this.centerY + (this.outerRadius + (this.width < 500 ? 15 : 25)) * Math.sin(symbolAngle);
 
-            this.ctx.fillText(signs[i], x - 6, y - 6);
+            // Рисуем символ
+            this.ctx.fillStyle = '#c9a54b';
+            this.ctx.font = this.width < 500 ? 'bold 14px "Arial"' : 'bold 18px "Arial"';
+            this.ctx.fillText(signs[i], symbolX, symbolY);
+
+            // Рисуем название знака внутри круга
+            const nameAngle = ((i * 30 + 15 - 90) * Math.PI) / 180;
+            const nameX = this.centerX + (this.signRadius - 10) * Math.cos(nameAngle);
+            const nameY = this.centerY + (this.signRadius - 10) * Math.sin(nameAngle);
+
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            this.ctx.font = this.width < 500 ? '8px "Inter"' : '10px "Inter"';
+            this.ctx.fillText(signNames[i].substring(0, 4), nameX, nameY);
         }
+
+        this.ctx.restore();
     }
 
     drawAspects(aspects, planets) {
         if (!aspects || aspects.length === 0) return;
 
+        this.ctx.save();
+
         const positions = {};
         Object.entries(planets).forEach(([key, planet]) => {
+            if (!planet || planet.longitude === undefined) return;
             const angle = ((planet.longitude - 90) * Math.PI) / 180;
             positions[key] = {
                 x: this.centerX + this.planetRadius * Math.cos(angle),
@@ -185,6 +229,8 @@ class NatalChartDraw {
                 this.ctx.setLineDash([]);
             }
         });
+
+        this.ctx.restore();
     }
 
     getPlanetKey(name) {
@@ -195,18 +241,26 @@ class NatalChartDraw {
             'Венера': 'venus',
             'Марс': 'mars',
             'Юпитер': 'jupiter',
-            'Сатурн': 'saturn'
+            'Сатурн': 'saturn',
+            'Уран': 'uranus',
+            'Нептун': 'neptune',
+            'Плутон': 'pluto'
         };
-        return map[name] || name.toLowerCase();
+        return map[name] || name?.toLowerCase() || '';
     }
 
     drawPlanets(planets) {
         const symbols = {
             sun: '☉', moon: '☽', mercury: '☿', venus: '♀',
-            mars: '♂', jupiter: '♃', saturn: '♄'
+            mars: '♂', jupiter: '♃', saturn: '♄',
+            uranus: '♅', neptune: '♆', pluto: '♇'
         };
 
+        this.ctx.save();
+
         Object.entries(planets).forEach(([key, planet]) => {
+            if (!planet || planet.longitude === undefined) return;
+
             const angle = ((planet.longitude - 90) * Math.PI) / 180;
             const x = this.centerX + this.planetRadius * Math.cos(angle);
             const y = this.centerY + this.planetRadius * Math.sin(angle);
@@ -222,12 +276,18 @@ class NatalChartDraw {
 
             // Символ планеты
             this.ctx.fillStyle = '#c9a54b';
-            this.ctx.font = this.width < 500 ? 'bold 10px "Arial"' : 'bold 16px "Arial"';
-            this.ctx.fillText(symbols[key] || '●', x - (this.width < 500 ? 5 : 8), y - (this.width < 500 ? 5 : 8));
+            this.ctx.font = this.width < 500 ? 'bold 12px "Arial"' : 'bold 16px "Arial"';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(symbols[key] || '●', x, y);
         });
+
+        this.ctx.restore();
     }
 
     drawCenter() {
+        this.ctx.save();
+
         this.ctx.beginPath();
         this.ctx.arc(this.centerX, this.centerY, this.width < 500 ? 5 : 7, 0, 2 * Math.PI);
         this.ctx.fillStyle = '#c9a54b';
@@ -237,5 +297,7 @@ class NatalChartDraw {
         this.ctx.arc(this.centerX, this.centerY, this.width < 500 ? 2 : 3, 0, 2 * Math.PI);
         this.ctx.fillStyle = '#ffffff';
         this.ctx.fill();
+
+        this.ctx.restore();
     }
 }

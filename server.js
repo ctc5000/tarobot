@@ -17,7 +17,8 @@ const ZoarService = require('./services/zoarService');
 const SocionicsService = require('./services/socionicsService');
 const AstropsychologyService = require('./services/astropsychologyService');
 const RunesService = require('./services/runesService');
-
+const NatalChartSimpleService = require('./services/natalChartSimpleService');
+const natalChartService = new NatalChartSimpleService();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -109,19 +110,19 @@ app.get('/runes', (req, res) => {
 app.get('/natal-chart', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pages', 'natal-chart.html'));
 });
-// 👇 УДАЛИТЕ ЭТОТ БЛОК (строки 63-71) - он вызывает ошибку!
-// app.post('/api/calculate/numerology', (req, res) => {
-//     try {
-//         const { fullName, birthDate } = req.body;
-//
-//         // ... логика расчета ...
-//
-//         res.json({ success: true, data: result });
-//     } catch (error) {
-//         console.error('Ошибка в нумерологии:', error);
-//         res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-//     }
-// });
+
+app.post('/api/calculate/natal-chart', (req, res) => {
+    try {
+        const result = natalChartService.calculate(req.body);
+        res.json(result);
+    } catch (error) {
+        console.error('Ошибка расчета натальной карты:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Внутренняя ошибка сервера'
+        });
+    }
+});
 
 // API маршруты - ЭТОТ ОСТАВЛЯЕМ
 app.post('/api/calculate/:practice', (req, res) => {
