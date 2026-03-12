@@ -2,12 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Астропсихология | Древо Жизни</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Астропсихология | АЛГОРИТМ СУДЬБЫ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <!-- Подключаем библиотеку для маски ввода -->
+    <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
 </head>
 <body>
 <!-- Меню будет загружено через menu-loader.js -->
@@ -19,7 +21,7 @@
             <div class="logo">
                 <a href="/">
                     <span class="logo-icon">⛤</span>
-                    <span class="logo-text">Древо Жизни</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
                 </a>
             </div>
             <div id="nav-placeholder"></div>
@@ -45,27 +47,36 @@
             <form id="astropsychologyForm">
                 <div class="form-group">
                     <label for="fullName">🌙 Ваше имя</label>
-                    <input type="text" id="fullName" name="fullName" placeholder="Елена Смирнова" required>
+                    <input type="text" id="fullName" name="fullName" placeholder="Смирнова Елена Петровна" required>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group half">
                         <label for="birthDate">📅 Дата рождения</label>
-                        <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                        <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" required>
+                        <small class="form-hint">Например: 15.05.1990</small>
                     </div>
 
                     <div class="form-group half">
                         <label for="birthTime">⏰ Время рождения</label>
-                        <input type="text" id="birthTime" name="birthTime" placeholder="ЧЧ:ММ">
-                        <small class="form-hint">Например: 14:30</small>
+                        <input type="time" id="birthTime" name="birthTime" value="12:00" required>
+                        <small class="form-hint">Если неизвестно, оставьте 12:00</small>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="birthPlace">📍 Место рождения</label>
-                    <input type="text" id="birthPlace" name="birthPlace" placeholder="Город, страна">
-                    <small class="form-hint">Например: Москва, Россия</small>
+                    <div class="input-with-button">
+                        <input type="text" id="birthPlace" name="birthPlace" placeholder="Введите город" style="flex: 1;" autocomplete="off">
+                        <button type="button" id="searchCity" class="mystic-button small" style="width: auto; margin: 0;" title="Найти координаты">🔍</button>
+                    </div>
+                    <div id="citySuggestions" class="suggestions-container"></div>
+                    <small class="form-hint">Начните вводить город для автоматического поиска</small>
                 </div>
+
+                <!-- Скрытые поля для координат -->
+                <input type="hidden" id="latitude" name="latitude" value="55.7558">
+                <input type="hidden" id="longitude" name="longitude" value="37.6173">
 
                 <div class="form-group">
                     <label for="question">❓ Ваш вопрос (необязательно)</label>
@@ -181,9 +192,9 @@
             <div class="footer-info">
                 <div class="footer-logo">
                     <span class="logo-icon">⛤</span>
-                    <span>Древо Жизни</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
                 </div>
-                <p>Центр мистических практик и самопознания</p>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
             </div>
             <div class="footer-links">
                 <a href="/about">О проекте</a>
@@ -192,7 +203,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2026 Древо Жизни. Все права защищены.</p>
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
         </div>
     </div>
 </footer>

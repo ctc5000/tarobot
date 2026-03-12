@@ -10,7 +10,39 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('❌ Форма с id="numerologyForm" не найдена!');
         return;
     }
+    // ==================== МАСКА ДЛЯ ДАТЫ ====================
+    const birthDateInput = document.getElementById('birthDate');
+    if (birthDateInput && typeof IMask !== 'undefined') {
+        dateMask = IMask(birthDateInput, {
+            mask: '00.00.0000',
+            blocks: {
+                dd: { // день
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 31,
+                    maxLength: 2
+                },
+                mm: { // месяц
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 12,
+                    maxLength: 2
+                },
+                yyyy: { // год
+                    mask: IMask.MaskedRange,
+                    from: 1900,
+                    to: 2100,
+                    maxLength: 4
+                }
+            },
+            lazy: false, // показывать плейсхолдер
+            autofix: true, // автоматически исправлять неверные значения
+            placeholderChar: '_'
+        });
 
+        // Оставляем поле пустым
+        birthDateInput.value = '';
+    }
     // Проверяем наличие liveCalculator
     if (typeof LiveCalculator !== 'undefined' && !window.liveCalculator) {
         window.liveCalculator = new LiveCalculator();
@@ -78,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
 
                             form.style.display = 'none';
-                            showNotification('✨ Судьба раскрыта!', 'success');
+                           // showNotification('✨ Судьба раскрыта!', 'success');
 
                             for (let i = 0; i < 5; i++) {
                                 window.liveCalculator.createSparks();

@@ -1,9 +1,183 @@
+// /js/astropsychology.js (клиентский файл)
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('astropsychologyForm');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const resultSection = document.getElementById('resultSection');
     const newCalculationBtn = document.getElementById('newCalculationBtn');
 
+    let dateMask = null;
+    let searchTimeout = null;
+
+    // ==================== МАСКА ДЛЯ ДАТЫ ====================
+    const birthDateInput = document.getElementById('birthDate');
+    if (birthDateInput && typeof IMask !== 'undefined') {
+        dateMask = IMask(birthDateInput, {
+            mask: '00.00.0000',
+            blocks: {
+                dd: { // день
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 31,
+                    maxLength: 2
+                },
+                mm: { // месяц
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 12,
+                    maxLength: 2
+                },
+                yyyy: { // год
+                    mask: IMask.MaskedRange,
+                    from: 1900,
+                    to: 2100,
+                    maxLength: 4
+                }
+            },
+            lazy: false, // показывать плейсхолдер
+            autofix: true, // автоматически исправлять неверные значения
+            placeholderChar: '_'
+        });
+
+        // Оставляем поле пустым
+        birthDateInput.value = '';
+    }
+
+    // ==================== АВТОМАТИЧЕСКИЙ ПОИСК ГОРОДА ====================
+    const birthPlaceInput = document.getElementById('birthPlace');
+    const suggestionsContainer = document.getElementById('citySuggestions');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const searchButton = document.getElementById('searchCity');
+
+    // Функция поиска города
+    async function searchCity(query) {
+        if (!query || query.length < 2) {
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                displaySuggestions(data);
+            } else {
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка поиска города:', error);
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
+            }
+        }
+    }
+
+    // Отображение подсказок
+    function displaySuggestions(cities) {
+        if (!suggestionsContainer) return;
+
+        suggestionsContainer.innerHTML = '';
+
+        cities.forEach(city => {
+            const cityName = city.display_name.split(',')[0];
+            const country = city.address?.country || '';
+            const region = city.address?.state || city.address?.region || '';
+
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                <div class="suggestion-main">${cityName}</div>
+                <div class="suggestion-detail">${region} ${country}</div>
+            `;
+
+            item.addEventListener('click', () => {
+                birthPlaceInput.value = cityName;
+                if (latitudeInput) latitudeInput.value = parseFloat(city.lat).toFixed(6);
+                if (longitudeInput) longitudeInput.value = parseFloat(city.lon).toFixed(6);
+                suggestionsContainer.style.display = 'none';
+
+                showNotification(`✅ Найден город: ${cityName}`, 'success');
+            });
+
+            suggestionsContainer.appendChild(item);
+        });
+
+        suggestionsContainer.style.display = 'block';
+    }
+
+    if (birthPlaceInput) {
+        // Обработчик ввода города с debounce
+        birthPlaceInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+
+            // Очищаем координаты при изменении города
+            if (latitudeInput) latitudeInput.value = '55.7558'; // Сбрасываем на Москву по умолчанию
+            if (longitudeInput) longitudeInput.value = '37.6173';
+
+            // Очищаем предыдущий таймаут
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Устанавливаем новый таймаут
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    searchCity(query);
+                }, 500);
+            } else {
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            }
+        });
+
+        // Закрытие подсказок при клике вне
+        document.addEventListener('click', function(e) {
+            if (suggestionsContainer &&
+                !birthPlaceInput.contains(e.target) &&
+                !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // Кнопка поиска (ручной поиск)
+    if (searchButton) {
+        searchButton.addEventListener('click', async function() {
+            const city = birthPlaceInput?.value.trim();
+            if (!city || city.length < 2) {
+                showNotification('❌ Введите название города (минимум 2 символа)', 'error');
+                return;
+            }
+
+            try {
+                showNotification('🔍 Ищем город...', 'info');
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
+                const data = await response.json();
+
+                if (data && data[0]) {
+                    if (latitudeInput) latitudeInput.value = parseFloat(data[0].lat).toFixed(6);
+                    if (longitudeInput) longitudeInput.value = parseFloat(data[0].lon).toFixed(6);
+                    showNotification(`✅ Найдены координаты для ${data[0].display_name.split(',')[0]}`, 'success');
+                    if (suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                } else {
+                    showNotification('❌ Город не найден', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка поиска города:', error);
+                showNotification('❌ Ошибка при поиске города', 'error');
+            }
+        });
+    }
+
+    // ==================== ОБРАБОТКА ФОРМЫ ====================
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -12,13 +186,12 @@ document.addEventListener('DOMContentLoaded', function() {
             birthDate: document.getElementById('birthDate').value,
             birthTime: document.getElementById('birthTime').value,
             birthPlace: document.getElementById('birthPlace').value,
+            latitude: parseFloat(document.getElementById('latitude').value) || 55.7558,
+            longitude: parseFloat(document.getElementById('longitude').value) || 37.6173,
             question: document.getElementById('question').value
         };
 
-        if (!isValidDate(formData.birthDate)) {
-            alert('Пожалуйста, введите корректную дату рождения');
-            return;
-        }
+        if (!validateForm(formData)) return;
 
         loadingSpinner.style.display = 'block';
         form.style.opacity = '0.5';
@@ -39,12 +212,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayResults(data.data);
                 resultSection.style.display = 'block';
                 resultSection.scrollIntoView({ behavior: 'smooth' });
+                showNotification('✨ Портрет построен!', 'success');
             } else {
-                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                showNotification('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
             }
         } catch (error) {
             console.error('Ошибка:', error);
-            alert('Произошла ошибка при подключении к серверу');
+            showNotification('❌ Произошла ошибка при подключении к серверу', 'error');
         } finally {
             loadingSpinner.style.display = 'none';
             form.style.opacity = '1';
@@ -55,11 +229,48 @@ document.addEventListener('DOMContentLoaded', function() {
     newCalculationBtn.addEventListener('click', function() {
         resultSection.style.display = 'none';
         form.reset();
+
+        // Очищаем маску даты
+        if (dateMask) {
+            dateMask.value = '';
+        }
+
+        // Сбрасываем координаты на Москву
+        if (latitudeInput) latitudeInput.value = '55.7558';
+        if (longitudeInput) longitudeInput.value = '37.6173';
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        showNotification('✨ Готов к новому расчету!', 'info');
     });
 });
 
+function validateForm(data) {
+    if (!data.fullName) {
+        showNotification('❌ Укажите имя', 'error');
+        return false;
+    }
+
+    if (!data.birthDate || data.birthDate.length !== 10) {
+        showNotification('❌ Введите дату рождения в формате ДД.ММ.ГГГГ', 'error');
+        return false;
+    }
+
+    if (!isValidDate(data.birthDate)) {
+        showNotification('❌ Проверьте правильность даты', 'error');
+        return false;
+    }
+
+    if (!data.birthTime || !data.birthTime.match(/^\d{2}:\d{2}$/)) {
+        showNotification('❌ Укажите время рождения', 'error');
+        return false;
+    }
+
+    return true;
+}
+
 function isValidDate(dateStr) {
+    if (!dateStr || dateStr.length !== 10) return false;
+
     const pattern = /^\d{2}\.\d{2}\.\d{4}$/;
     if (!pattern.test(dateStr)) return false;
 
@@ -71,6 +282,42 @@ function isValidDate(dateStr) {
     return day <= daysInMonth;
 }
 
+function showNotification(message, type = 'info') {
+    console.log(`[${type}] ${message}`);
+
+    // Создаем временное уведомление
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <span class="notification-icon">${type === 'error' ? '❌' : type === 'success' ? '✅' : '🔮'}</span>
+        <span class="notification-message">${message}</span>
+    `;
+
+    // Добавляем стили для уведомления
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '12px 20px';
+    notification.style.background = type === 'error' ? 'rgba(255, 69, 58, 0.9)' :
+        type === 'success' ? 'rgba(50, 205, 50, 0.9)' :
+            'rgba(201, 165, 75, 0.9)';
+    notification.style.color = '#fff';
+    notification.style.borderRadius = '8px';
+    notification.style.zIndex = '9999';
+    notification.style.backdropFilter = 'blur(10px)';
+    notification.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+    notification.style.animation = 'slideIn 0.3s ease';
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
 function displayResults(data) {
     document.getElementById('resultFullName').textContent = data.fullName;
     document.getElementById('resultBirthDate').textContent = `${data.birthData.date} ${data.birthData.time || ''}`;
@@ -78,10 +325,10 @@ function displayResults(data) {
     document.getElementById('ascendantSign').textContent = `${data.ascendant.sign} ${data.ascendant.degree}°`;
     document.getElementById('ascendantDescription').textContent = data.ascendant.description;
 
-    document.getElementById('sunSign').textContent = `${data.sun.sign} ${data.planets.find(p => p.name === 'Солнце')?.degree || ''}°`;
+    document.getElementById('sunSign').textContent = `${data.sun.sign} ${data.sun.degree}°`;
     document.getElementById('sunDescription').textContent = data.sun.description;
 
-    document.getElementById('moonSign').textContent = `${data.moon.sign} ${data.planets.find(p => p.name === 'Луна')?.degree || ''}°`;
+    document.getElementById('moonSign').textContent = `${data.moon.sign} ${data.moon.degree}°`;
     document.getElementById('moonDescription').textContent = data.moon.description;
 
     const planetsGrid = document.getElementById('planetsGrid');
@@ -140,5 +387,5 @@ function displayResults(data) {
         </div>
     `;
 
-    document.getElementById('interpretationText').innerHTML = data.interpretation;
+    document.getElementById('interpretationText').innerHTML = data.interpretation.replace(/\n/g, '<br>');
 }

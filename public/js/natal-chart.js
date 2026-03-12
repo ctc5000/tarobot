@@ -1,3 +1,4 @@
+// natal-chart.js
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('natalChartForm');
     const canvas = document.getElementById('natalChartCanvas');
@@ -5,110 +6,271 @@ document.addEventListener('DOMContentLoaded', function() {
     const newBtn = document.getElementById('newCalculationBtn');
 
     let chartDraw = null;
+    let dateMask = null;
+    let searchTimeout = null;
 
     if (canvas) {
         chartDraw = new NatalChartDraw('natalChartCanvas');
     }
 
-    // Поиск города
-    document.getElementById('searchCity')?.addEventListener('click', async function() {
-        const city = document.getElementById('birthPlace').value;
-        if (!city) return;
+    // ==================== МАСКА ДЛЯ ДАТЫ ====================
+    const birthDateInput = document.getElementById('birthDate');
+    if (birthDateInput && typeof IMask !== 'undefined') {
+        dateMask = IMask(birthDateInput, {
+            mask: '00.00.0000',
+            blocks: {
+                dd: { // день
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 31,
+                    maxLength: 2
+                },
+                mm: { // месяц
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 12,
+                    maxLength: 2
+                },
+                yyyy: { // год
+                    mask: IMask.MaskedRange,
+                    from: 1900,
+                    to: 2100,
+                    maxLength: 4
+                }
+            },
+            lazy: false, // показывать плейсхолдер
+            autofix: true, // автоматически исправлять неверные значения
+            placeholderChar: '_'
+        });
+
+        // Оставляем поле пустым
+        birthDateInput.value = '';
+    }
+
+    // ==================== АВТОМАТИЧЕСКИЙ ПОИСК ГОРОДА ====================
+    const birthPlaceInput = document.getElementById('birthPlace');
+    const suggestionsContainer = document.getElementById('citySuggestions');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const searchButton = document.getElementById('searchCity');
+
+    // Функция поиска города
+    async function searchCity(query) {
+        if (!query || query.length < 2) {
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
+            }
+            return;
+        }
 
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${city}`);
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`);
             const data = await response.json();
 
-            if (data && data[0]) {
-                document.getElementById('latitude').value = parseFloat(data[0].lat).toFixed(6);
-                document.getElementById('longitude').value = parseFloat(data[0].lon).toFixed(6);
-                showNotification(`✅ Найдены координаты для ${data[0].display_name.split(',')[0]}`, 'success');
+            if (data && data.length > 0) {
+                displaySuggestions(data);
             } else {
-                showNotification('❌ Город не найден', 'error');
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
             }
         } catch (error) {
             console.error('Ошибка поиска города:', error);
-            showNotification('❌ Ошибка при поиске города', 'error');
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
+            }
         }
-    });
+    }
 
-    // Обработка формы
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // Отображение подсказок
+    function displaySuggestions(cities) {
+        if (!suggestionsContainer) return;
 
-        const formData = {
-            fullName: document.getElementById('fullName').value,
-            gender: document.getElementById('gender').value,
-            birthDate: document.getElementById('birthDate').value,
-            birthTime: document.getElementById('birthTime').value,
-            latitude: parseFloat(document.getElementById('latitude').value) || 55.7558,
-            longitude: parseFloat(document.getElementById('longitude').value) || 37.6173,
-            houseSystem: document.getElementById('houseSystem').value
-        };
+        suggestionsContainer.innerHTML = '';
 
-        if (!validateForm(formData)) return;
+        cities.forEach(city => {
+            const cityName = city.display_name.split(',')[0];
+            const country = city.address?.country || '';
+            const region = city.address?.state || city.address?.region || '';
 
-        showNotification('🔮 Строим натальную карту...', 'info');
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = `
+                <div class="suggestion-main">${cityName}</div>
+                <div class="suggestion-detail">${region} ${country}</div>
+            `;
 
-        try {
-            const response = await fetch('/api/calculate/natal-chart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+            item.addEventListener('click', () => {
+                birthPlaceInput.value = cityName;
+                latitudeInput.value = parseFloat(city.lat).toFixed(6);
+                longitudeInput.value = parseFloat(city.lon).toFixed(6);
+                suggestionsContainer.style.display = 'none';
+
+                showNotification(`✅ Найден город: ${cityName}`, 'success');
             });
 
-            const result = await response.json();
+            suggestionsContainer.appendChild(item);
+        });
 
-            if (result.success) {
-                displayResults(formData, result.data);
-            } else {
-                showNotification('❌ Ошибка расчета: ' + result.error, 'error');
+        suggestionsContainer.style.display = 'block';
+    }
+
+    if (birthPlaceInput) {
+        // Обработчик ввода города с debounce
+        birthPlaceInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+
+            // Очищаем координаты при изменении города
+            if (latitudeInput) latitudeInput.value = '';
+            if (longitudeInput) longitudeInput.value = '';
+
+            // Очищаем предыдущий таймаут
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
             }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            showNotification('❌ Ошибка при подключении к серверу', 'error');
-        }
-    });
 
+            // Устанавливаем новый таймаут
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    searchCity(query);
+                }, 500);
+            } else {
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            }
+        });
+
+        // Закрытие подсказок при клике вне
+        document.addEventListener('click', function(e) {
+            if (suggestionsContainer &&
+                !birthPlaceInput.contains(e.target) &&
+                !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+    }
+
+    // Кнопка поиска (ручной поиск)
+    if (searchButton) {
+        searchButton.addEventListener('click', async function() {
+            const city = birthPlaceInput?.value.trim();
+            if (!city || city.length < 2) {
+                showNotification('❌ Введите название города (минимум 2 символа)', 'error');
+                return;
+            }
+
+            try {
+                showNotification('🔍 Ищем город...', 'info');
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`);
+                const data = await response.json();
+
+                if (data && data[0]) {
+                    if (latitudeInput) latitudeInput.value = parseFloat(data[0].lat).toFixed(6);
+                    if (longitudeInput) longitudeInput.value = parseFloat(data[0].lon).toFixed(6);
+                    showNotification(`✅ Найдены координаты для ${data[0].display_name.split(',')[0]}`, 'success');
+                    if (suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                } else {
+                    showNotification('❌ Город не найден', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка поиска города:', error);
+                showNotification('❌ Ошибка при поиске города', 'error');
+            }
+        });
+    }
+
+    // ==================== ВАЛИДАЦИЯ ФОРМЫ ====================
     function validateForm(data) {
         if (!data.fullName) {
             showNotification('❌ Укажите имя', 'error');
             return false;
         }
-        if (!isValidDate(data.birthDate)) {
-            showNotification('❌ Неверный формат даты. Используйте ДД.ММ.ГГГГ', 'error');
+
+        // Проверка даты через маску
+        if (!dateMask || !dateMask.value || dateMask.value.length !== 10) {
+            showNotification('❌ Введите корректную дату в формате ДД.ММ.ГГГГ', 'error');
             return false;
         }
-        if (!isValidTime(data.birthTime)) {
-            showNotification('❌ Неверный формат времени. Используйте ЧЧ:ММ', 'error');
+
+        const [day, month, year] = dateMask.value.split('.').map(Number);
+        if (!isValidDate(day, month, year)) {
+            showNotification('❌ Проверьте правильность даты', 'error');
             return false;
         }
+
+        // Проверка времени
+        const timeInput = document.getElementById('birthTime');
+        if (!timeInput || !timeInput.value || !timeInput.value.match(/^\d{2}:\d{2}$/)) {
+            showNotification('❌ Укажите время рождения', 'error');
+            return false;
+        }
+
         return true;
     }
 
-    function isValidDate(dateStr) {
-        const pattern = /^\d{2}\.\d{2}\.\d{4}$/;
-        if (!pattern.test(dateStr)) return false;
-        const [day, month, year] = dateStr.split('.').map(Number);
+    function isValidDate(day, month, year) {
         if (month < 1 || month > 12) return false;
         if (day < 1 || day > 31) return false;
-        const daysInMonth = new Date(year, month, 0).getDate();
-        return day <= daysInMonth;
+
+        const date = new Date(year, month - 1, day);
+        return date.getDate() === day &&
+            date.getMonth() === month - 1 &&
+            date.getFullYear() === year;
     }
 
-    function isValidTime(timeStr) {
-        const pattern = /^\d{2}:\d{2}$/;
-        if (!pattern.test(timeStr)) return false;
-        const [hour, minute] = timeStr.split(':').map(Number);
-        return hour >= 0 && hour < 24 && minute >= 0 && minute < 60;
+    // ==================== ОБРАБОТКА ФОРМЫ ====================
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                fullName: document.getElementById('fullName')?.value || '',
+                gender: document.getElementById('gender')?.value || 'male',
+                birthDate: document.getElementById('birthDate')?.value || '',
+                birthTime: document.getElementById('birthTime')?.value || '12:00',
+                latitude: parseFloat(document.getElementById('latitude')?.value) || 55.7558,
+                longitude: parseFloat(document.getElementById('longitude')?.value) || 37.6173,
+                houseSystem: document.getElementById('houseSystem')?.value || 'placidus'
+            };
+
+            if (!validateForm(formData)) return;
+
+            showNotification('🔮 Строим натальную карту...', 'info');
+
+            try {
+                const response = await fetch('/api/calculate/natal-chart', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(formData, result.data);
+                } else {
+                    showNotification('❌ Ошибка расчета: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification('❌ Ошибка при подключении к серверу', 'error');
+            }
+        });
     }
 
     // ==================== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ====================
 
     function displayResults(formData, chartData) {
-        document.getElementById('resultName').textContent = formData.fullName;
-        document.getElementById('resultDate').textContent = formData.birthDate;
-        document.getElementById('resultTime').textContent = formData.birthTime;
+        const resultName = document.getElementById('resultName');
+        const resultDate = document.getElementById('resultDate');
+        const resultTime = document.getElementById('resultTime');
+
+        if (resultName) resultName.textContent = formData.fullName;
+        if (resultDate) resultDate.textContent = formData.birthDate;
+        if (resultTime) resultTime.textContent = formData.birthTime;
 
         // Преобразуем данные для отрисовки
         const planetsForDraw = transformPlanetsData(chartData.planets);
@@ -118,12 +280,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Генерируем аспекты из данных планет
         const aspects = generateAspects(planetsForDraw);
 
-        // ВАЖНО: передаем аспекты в drawData
+        // Данные для отрисовки
         const drawData = {
             planets: planetsForDraw,
             houses: housesForDraw,
             ascendant: ascendant,
-            aspects: aspects  // <-- Добавляем аспекты!
+            aspects: aspects
         };
 
         if (chartDraw) {
@@ -132,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         displayLegend(planetsForDraw);
         displayPlanetPositions(planetsForDraw);
-        displayAspects(aspects);  // Отображаем список аспектов
+        displayAspects(aspects);
 
         // Основная интерпретация
         const interpretation = generateInterpretation(planetsForDraw, housesForDraw, ascendant, aspects);
@@ -142,7 +304,10 @@ document.addEventListener('DOMContentLoaded', function() {
             interpretationContainer = document.createElement('div');
             interpretationContainer.id = 'natalInterpretation';
             interpretationContainer.className = 'natal-interpretation';
-            document.querySelector('.result-card').appendChild(interpretationContainer);
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                resultCard.appendChild(interpretationContainer);
+            }
         }
         interpretationContainer.innerHTML = interpretation;
 
@@ -154,14 +319,19 @@ document.addEventListener('DOMContentLoaded', function() {
             reportContainer = document.createElement('div');
             reportContainer.id = 'expandedReport';
             reportContainer.className = 'expanded-report-container';
-            document.querySelector('.result-card').appendChild(reportContainer);
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                resultCard.appendChild(reportContainer);
+            }
         }
         reportContainer.innerHTML = expandedReport;
 
-        resultSection.style.display = 'block';
+        if (resultSection) {
+            resultSection.style.display = 'block';
+        }
 
         setTimeout(() => {
-            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            resultSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
     }
 
@@ -256,17 +426,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!legend) return;
         legend.innerHTML = '';
 
-        // Фильтруем только те планеты, у которых есть имя
         Object.values(planets).forEach(planet => {
             if (!planet || !planet.name) return;
 
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.innerHTML = `
-            <span class="planet-symbol">${planet.symbol || '●'}</span>
-            <span class="planet-name">${planet.name}</span>
-            <span class="planet-sign">${planet.sign || 'Неизвестно'}</span>
-        `;
+                <span class="planet-symbol">${planet.symbol || '●'}</span>
+                <span class="planet-name">${planet.name}</span>
+                <span class="planet-sign">${planet.sign || 'Неизвестно'}</span>
+            `;
             legend.appendChild(item);
         });
     }
@@ -287,23 +456,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const signSymbol = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'][signIndex] || '';
 
             item.innerHTML = `
-            <div class="position-header">
-                <span class="position-symbol">${planet.symbol || '●'}</span>
-                <span class="position-name">${planet.name}</span>
-            </div>
-            <div class="position-detail">
-                <span>Знак:</span>
-                <span class="position-value">${planet.sign || 'Неизвестно'} ${signSymbol}</span>
-            </div>
-            <div class="position-detail">
-                <span>Градус:</span>
-                <span class="position-value">${degree}°</span>
-            </div>
-            <div class="position-detail">
-                <span>Дом:</span>
-                <span class="position-value">${planet.house || '?'}</span>
-            </div>
-        `;
+                <div class="position-header">
+                    <span class="position-symbol">${planet.symbol || '●'}</span>
+                    <span class="position-name">${planet.name}</span>
+                </div>
+                <div class="position-detail">
+                    <span>Знак:</span>
+                    <span class="position-value">${planet.sign || 'Неизвестно'} ${signSymbol}</span>
+                </div>
+                <div class="position-detail">
+                    <span>Градус:</span>
+                    <span class="position-value">${degree}°</span>
+                </div>
+                <div class="position-detail">
+                    <span>Дом:</span>
+                    <span class="position-value">${planet.house || '?'}</span>
+                </div>
+            `;
 
             grid.appendChild(item);
         });
@@ -327,14 +496,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    newBtn.addEventListener('click', function() {
-        resultSection.style.display = 'none';
-        form.reset();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    if (newBtn) {
+        newBtn.addEventListener('click', function() {
+            if (resultSection) {
+                resultSection.style.display = 'none';
+            }
+            if (form) {
+                form.reset();
+                // Восстанавливаем значение времени по умолчанию
+                const timeInput = document.getElementById('birthTime');
+                if (timeInput) timeInput.value = '12:00';
+                // Восстанавливаем текущую дату
+                if (dateMask) {
+                    const today = new Date();
+                    dateMask.value = today;
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
     function showNotification(message, type) {
         console.log(`[${type}] ${message}`);
+        // Можно заменить на более красивую нотификацию
         alert(`${type === 'error' ? '❌' : type === 'success' ? '✅' : '🔮'} ${message}`);
     }
 
@@ -544,7 +728,6 @@ document.addEventListener('DOMContentLoaded', function() {
             pluto: 'вашу способность к трансформации, глубинную силу'
         };
 
-        // Проверяем, есть ли планета в словаре, если нет - используем общее описание
         if (!planetNames[planet]) {
             return `${planet} в ${house} доме (${houseMeanings[house]}) оказывает влияние на вашу жизнь.`;
         }
@@ -556,17 +739,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '<div class="planets-houses">';
 
         Object.entries(planets).forEach(([key, planet]) => {
-            // Проверяем, что planet существует и имеет нужные поля
             if (planet && planet.symbol && planet.house && planet.sign) {
                 const description = getPlanetInHouseDescription(key, planet.sign, planet.house);
                 html += `
-                <div class="planet-house-item">
-                    <span class="planet-symbol">${planet.symbol}</span>
-                    <span class="planet-desc">${description}</span>
-                </div>
-            `;
-            } else {
-                console.warn('Пропущена планета с некорректными данными:', key, planet);
+                    <div class="planet-house-item">
+                        <span class="planet-symbol">${planet.symbol}</span>
+                        <span class="planet-desc">${description}</span>
+                    </div>
+                `;
             }
         });
 
@@ -581,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '<div class="aspects-interpretation">';
 
-        aspects.forEach(aspect => {
+        aspects.slice(0, 5).forEach(aspect => {
             const typeDesc = {
                 conjunction: 'соединение — энергии сливаются, усиливая друг друга',
                 opposition: 'оппозиция — напряжение, требующее баланса',
@@ -757,14 +937,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateTalents(sunSign, moonSign, planets) {
         const talents = [];
 
-        // Получаем долготы для более точной настройки
         const sunLong = planets.sun?.longitude || 0;
         const moonLong = planets.moon?.longitude || 0;
         const mercuryLong = planets.mercury?.longitude || 0;
         const venusLong = planets.venus?.longitude || 0;
         const marsLong = planets.mars?.longitude || 0;
 
-        // Таланты на основе знаков с вариациями от долготы
         if (sunSign === 'Лев' || sunSign === 'Овен' || sunSign === 'Стрелец') {
             const fireStrength = Math.floor((sunLong % 30) / 3) + 1;
             talents.push(`🔥 Лидерские качества, умение вдохновлять и вести за собой (уровень ${fireStrength}/10)`);
@@ -782,7 +960,6 @@ document.addEventListener('DOMContentLoaded', function() {
             talents.push(`💧 Эмпатия, интуиция, глубокая эмоциональная чувствительность (уровень ${waterStrength}/10)`);
         }
 
-        // Таланты на основе аспектов между планетами
         const sunMoonDiff = Math.abs(sunLong - moonLong);
         if (sunMoonDiff < 30 || Math.abs(sunMoonDiff - 360) < 30) {
             talents.push('✨ Гармоничное сочетание сознания и эмоций — вы чувствуете свои истинные желания');
@@ -800,11 +977,9 @@ document.addEventListener('DOMContentLoaded', function() {
             talents.push('⚔️ Решительность, смелость, способность преодолевать препятствия');
         }
 
-        // Общие таланты
         talents.push('🎯 Стратегическое мышление, способность видеть общую картину');
         talents.push('⚡ Выносливость, способность восстанавливаться из любых кризисов');
 
-        // Уникальные таланты на основе точных позиций
         const uniqueIndex = Math.floor(sunLong + moonLong) % 5;
         const uniqueTalents = [
             '🔮 Интуитивное понимание скрытых закономерностей',
@@ -989,7 +1164,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let directions = [];
         let incomeSources = [];
 
-        // Основное направление по знаку Солнца с вариацией
         const sunVariation = Math.floor(sunLong % 10) + 1;
 
         if (sunSign === 'Овен' || sunSign === 'Лев' || sunSign === 'Стрелец') {
@@ -1010,7 +1184,6 @@ document.addEventListener('DOMContentLoaded', function() {
             incomeSources.push('Интуиция', 'Забота', 'Творчество');
         }
 
-        // Добавляем направления на основе других планет
         if (moonSign === 'Рак' || moonSign === 'Рыбы') {
             directions.push('🏥 Медицинская клиника', '💊 Товары для здоровья');
         }
@@ -1024,7 +1197,6 @@ document.addEventListener('DOMContentLoaded', function() {
             directions.push('🏋️‍♂️ Спорт и фитнес', '🔧 Инжиниринг');
         }
 
-        // Рекомендация на основе вариации Солнца
         const sunAdvice = [
             'Начинайте новые проекты в первой половине дня',
             'Лучшее время для переговоров — после обеда',
@@ -1041,18 +1213,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const specificAdvice = sunAdvice[sunVariation - 1] || 'Следуйте своей интуиции';
 
         return `
-        <div class="business-advice">
-            <p><strong>💰 Основные источники дохода:</strong> ${incomeSources.join(' • ')}</p>
-            <p><strong>🔍 Рекомендуемые направления:</strong></p>
-            <ul class="business-list">
-                ${directions.slice(0, 5).map(d => `<li>${d}</li>`).join('')}
-            </ul>
-            <p>${advice}</p>
-            <p class="health-tip"><strong>💡 Совет:</strong> ${specificAdvice}</p>
-        </div>
-    `;
+            <div class="business-advice">
+                <p><strong>💰 Основные источники дохода:</strong> ${incomeSources.join(' • ')}</p>
+                <p><strong>🔍 Рекомендуемые направления:</strong></p>
+                <ul class="business-list">
+                    ${directions.slice(0, 5).map(d => `<li>${d}</li>`).join('')}
+                </ul>
+                <p>${advice}</p>
+                <p class="health-tip"><strong>💡 Совет:</strong> ${specificAdvice}</p>
+            </div>
+        `;
     }
-
 
     function generateHealthRisks(planets) {
         const risks = [];
@@ -1068,7 +1239,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const sunLong = planets.sun?.longitude || 0;
         const marsLong = planets.mars?.longitude || 0;
 
-        // Сильные стороны здоровья
         if (sunSign === 'Лев' || sunSign === 'Овен') {
             strengths.push('Сильное сердце и иммунитет');
         }
@@ -1079,7 +1249,6 @@ document.addEventListener('DOMContentLoaded', function() {
             strengths.push('Высокая физическая выносливость');
         }
 
-        // Зоны риска на основе знаков
         if (sunSign === 'Овен') risks.push('⚡ Головные боли, гипертония, проблемы с глазами');
         if (sunSign === 'Телец') risks.push('⚡ Горло, шея, голосовые связки');
         if (sunSign === 'Близнецы') risks.push('⚡ Легкие, бронхи, нервная система');
@@ -1093,7 +1262,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sunSign === 'Водолей') risks.push('⚡ Голени, лодыжки, кровь');
         if (sunSign === 'Рыбы') risks.push('⚡ Стопы, лимфатическая система');
 
-        // Дополнительные риски от других планет
         if (marsSign === 'Овен' || marsSign === 'Скорпион') {
             risks.push('⚡ Воспалительные процессы, травмы');
             tips.push('Избегайте экстремальных нагрузок');
@@ -1103,7 +1271,6 @@ document.addEventListener('DOMContentLoaded', function() {
             tips.push('Занимайтесь плаванием, йогой');
         }
 
-        // Рекомендации на основе вариации
         const healthIndex = Math.floor((sunLong + marsLong) % 5);
         const healthTips = [
             'Рекомендуется утренняя гимнастика и контрастный душ',
@@ -1120,23 +1287,22 @@ document.addEventListener('DOMContentLoaded', function() {
         tips.push('Умеренные физические нагрузки, здоровый сон');
 
         return `
-        <div class="health-risks">
-            <p><strong>💪 Сильные стороны:</strong> ${strengths.join(' • ')}</p>
-            <p><strong>⚠️ Зоны особого внимания:</strong></p>
-            <ul class="health-list">
-                ${risks.map(r => `<li>${r}</li>`).join('')}
-            </ul>
-            <p class="health-tip">💡 ${healthTips[healthIndex]}</p>
-            <p class="health-tip">✨ Дополнительно: ${tips.join(' • ')}</p>
-        </div>
-    `;
+            <div class="health-risks">
+                <p><strong>💪 Сильные стороны:</strong> ${strengths.join(' • ')}</p>
+                <p><strong>⚠️ Зоны особого внимания:</strong></p>
+                <ul class="health-list">
+                    ${risks.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+                <p class="health-tip">💡 ${healthTips[healthIndex]}</p>
+                <p class="health-tip">✨ Дополнительно: ${tips.join(' • ')}</p>
+            </div>
+        `;
     }
 
     function generateLifeTask(planets) {
         const sunSign = planets.sun?.sign || 'Неизвестно';
         const moonSign = planets.moon?.sign || 'Неизвестно';
         const saturnSign = planets.saturn?.sign || 'Неизвестно';
-        const northNode = 'Стрелец'; // Для демо
 
         const sunLong = planets.sun?.longitude || 0;
         const saturnLong = planets.saturn?.longitude || 0;
@@ -1145,7 +1311,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let task = '';
         let mission = '';
 
-        // Прошлое на основе Южного узла (упрощенно)
         const pastLife = [
             'Вы принесли воинственную энергию, стремление к лидерству и самостоятельности.',
             'Вы принесли практичность, умение зарабатывать и накапливать.',
@@ -1156,7 +1321,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const pastIndex = Math.floor(sunLong / 72) % 5;
         past = pastLife[pastIndex];
 
-        // Задача на основе знака Солнца
         if (sunSign === 'Овен' || sunSign === 'Лев' || sunSign === 'Стрелец') {
             task = 'Научиться слушать других, не подавлять, а вдохновлять.';
             mission = 'Стать источником света и энергии для окружающих';
@@ -1171,7 +1335,6 @@ document.addEventListener('DOMContentLoaded', function() {
             mission = 'Исцелять и вдохновлять через искусство и сострадание';
         }
 
-        // Ключевые годы на основе Сатурна
         let years = '';
         if (planets.saturn) {
             const saturnPos = saturnLong % 30;
@@ -1182,7 +1345,6 @@ document.addEventListener('DOMContentLoaded', function() {
             years = '29-30, 38-40, 57-60 лет';
         }
 
-        // Уникальная фраза на основе положения планет
         const uniquePhrases = [
             'Ваша задача — найти баланс между материальным и духовным',
             'Главный урок — научиться доверять своей интуиции',
@@ -1199,13 +1361,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const uniquePhrase = uniquePhrases[phraseIndex];
 
         return `
-        <div class="life-task">
-            <p><strong>🧬 Из прошлого:</strong> ${past}</p>
-            <p><strong>🎯 Задача текущего воплощения:</strong> ${task}</p>
-            <p><strong>🌟 Жизненная миссия:</strong> ${mission}</p>
-            <p><strong>⏳ Ключевые годы трансформации:</strong> ${years}</p>
-            <p class="health-tip"><strong>🔮 Глубинный урок:</strong> ${uniquePhrase}</p>
-        </div>
-    `;
+            <div class="life-task">
+                <p><strong>🧬 Из прошлого:</strong> ${past}</p>
+                <p><strong>🎯 Задача текущего воплощения:</strong> ${task}</p>
+                <p><strong>🌟 Жизненная миссия:</strong> ${mission}</p>
+                <p><strong>⏳ Ключевые годы трансформации:</strong> ${years}</p>
+                <p class="health-tip"><strong>🔮 Глубинный урок:</strong> ${uniquePhrase}</p>
+            </div>
+        `;
     }
 });

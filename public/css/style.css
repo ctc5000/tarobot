@@ -886,10 +886,7 @@ h3 {
 /* Глубинный портрет */
 .deep-portrait {
     margin-top: 40px;
-    padding: 30px;
     background: rgba(201, 165, 75, 0.05);
-    border: 1px solid rgba(201, 165, 75, 0.2);
-    border-radius: var(--border-radius-lg);
 }
 
 .portrait-text {
@@ -1079,10 +1076,7 @@ h3 {
 /* Интерпретация */
 .natal-interpretation {
     margin-top: 40px;
-    padding: 30px;
     background: rgba(18, 18, 26, 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
 }
 
 .interpretation-section {
@@ -1355,6 +1349,7 @@ h3 {
 
     .tab-buttons {
         gap: 5px;
+        flex-direction: column;
     }
 
     .tab-btn {
@@ -1582,18 +1577,22 @@ html, body {
 }
 
 .moon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(145deg, var(--text-secondary), var(--accent-gold));
+    width: 100%;
+    background: linear-gradient(145deg, #a0a0b000, #c9a54b26);
     margin: 0 auto 15px;
     box-shadow: var(--shadow-gold);
-    animation: moonPulse 2s infinite;
+    margin-top: 25px;
 }
-
-@keyframes moonPulse {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.1); opacity: 1; }
+.sun {
+    width: 100%;
+    background: linear-gradient(145deg,  #c9a54b26,#a0a0b000);
+    margin: 0 auto 15px;
+    box-shadow: var(--shadow-gold);
+    margin-top: 25px;
+}
+.strengths-box
+{
+    margin-top: 25px;
 }
 
 /* ========== МЕНЮ (для скрипта) ========== */
@@ -1807,6 +1806,7 @@ html, body {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     padding: 30px;
+    line-height: 40px;
 }
 
 .result-card h2 {
@@ -3056,7 +3056,14 @@ html, body {
     .scenarios-table {
         font-size: 0.9rem;
     }
-
+    .scenarios-table body{
+        display: flex;
+        flex-direction: column;
+    }
+    .report-section
+    {
+        padding: 0;
+    }
     .scenario-name {
         min-width: 100px;
     }
@@ -3194,4 +3201,153 @@ html, body {
     .tarot-image-container {
         padding-top: 120%;
     }
+}
+
+/* Стили для поля с маской даты */
+input#birthDate {
+    letter-spacing: 0.5px;
+}
+
+/* Стили для автоподсказок городов */
+.suggestions-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(26, 26, 35, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(201, 165, 75, 0.2);
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background: rgba(201, 165, 75, 0.15);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-main {
+    color: #c9a54b;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.suggestion-detail {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+
+/* Стили для поля ввода с кнопкой */
+.input-with-button {
+    position: relative;
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-button input {
+    flex: 1;
+    padding-right: 40px; /* Место для кнопки */
+}
+
+/* Стили для координатных полей (только для чтения) */
+.coordinate-field {
+    background: rgba(255, 255, 255, 0.05);
+    cursor: default;
+}
+
+.coordinate-field:focus {
+    outline: none;
+    border-color: rgba(201, 165, 75, 0.3);
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .suggestions-container {
+        position: fixed;
+        top: auto;
+        left: 16px;
+        right: 16px;
+        max-height: 200px;
+    }
+
+    .input-with-button {
+        flex-direction: column;
+    }
+
+    .input-with-button button {
+        width: 100% !important;
+        margin-top: 8px !important;
+    }
+
+    /* Увеличиваем размер touch-областей */
+    .suggestion-item {
+        padding: 16px;
+    }
+
+    input[type="time"] {
+        min-height: 48px;
+    }
+}
+
+/* Стили для input type time на мобильных */
+input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 16px;
+    width: 100%;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 4px;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Анимация загрузки */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.searching {
+    animation: pulse 1.5s infinite;
+}
+
+/* Стили для подсказок при вводе */
+.form-group {
+    position: relative;
+}
+
+.form-hint {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
 }
