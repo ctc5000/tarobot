@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
 </head>
 <body>
 <!-- Меню будет загружено через menu-loader.js -->
@@ -50,7 +51,8 @@
 
                 <div class="form-group">
                     <label for="birthDate">📅 Дата рождения</label>
-                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" pattern="\d{2}\.\d{2}\.\d{4}" required>
+                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" required>
+                    <small class="form-hint">Например: 15.06.1987</small>
                 </div>
 
                 <div class="form-group">

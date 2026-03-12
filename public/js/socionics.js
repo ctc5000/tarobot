@@ -10,7 +10,38 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Форма соционики не найдена!');
         return;
     }
+    const birthDateInput = document.getElementById('birthDate');
+    if (birthDateInput && typeof IMask !== 'undefined') {
+        dateMask = IMask(birthDateInput, {
+            mask: '00.00.0000',
+            blocks: {
+                dd: { // день
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 31,
+                    maxLength: 2
+                },
+                mm: { // месяц
+                    mask: IMask.MaskedRange,
+                    from: 1,
+                    to: 12,
+                    maxLength: 2
+                },
+                yyyy: { // год
+                    mask: IMask.MaskedRange,
+                    from: 1900,
+                    to: 2100,
+                    maxLength: 4
+                }
+            },
+            lazy: false, // показывать плейсхолдер
+            autofix: true, // автоматически исправлять неверные значения
+            placeholderChar: '_'
+        });
 
+        // Оставляем поле пустым
+        birthDateInput.value = '';
+    }
     testTypeSelect.addEventListener('change', function() {
         testQuestions.style.display = this.value === 'test' ? 'block' : 'none';
     });

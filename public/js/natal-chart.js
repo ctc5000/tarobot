@@ -238,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!validateForm(formData)) return;
 
-            showNotification('🔮 Строим натальную карту...', 'info');
 
             try {
                 const response = await fetch('/api/calculate/natal-chart', {
