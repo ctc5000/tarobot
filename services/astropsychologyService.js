@@ -124,15 +124,17 @@ class AstropsychologyService {
 
     calculate(data) {
         try {
-            const { fullName, birthDate, birthTime, birthPlace, question } = data;
+            const { fullName, birthDate, birthTime, birthPlace, question, latitude, longitude } = data;
 
-            // Используем сервис натальной карты для расчета
+            console.log('Астропсихология расчет для:', { fullName, birthDate, birthTime, birthPlace, latitude, longitude });
+
+            // Используем сервис натальной карты для расчета с переданными координатами
             const natalResult = this.natalChartService.calculate({
                 fullName,
                 birthDate,
                 birthTime,
-                latitude: 55.7558, // По умолчанию Москва
-                longitude: 37.6173,
+                latitude: latitude || 55.7558,
+                longitude: longitude || 37.6173,
                 houseSystem: 'placidus'
             });
 
@@ -142,59 +144,81 @@ class AstropsychologyService {
 
             const chartData = natalResult.data;
 
+            // Используем данные из обогащенного ответа натальной карты
+            const ascendantData = chartData.ascendant || {};
+            const planetsData = chartData.planets || {};
+
             // Получаем знаки для основных планет
-            const sunSign = this.getSignFromLongitude(chartData.planets.sun?.longitude);
-            const moonSign = this.getSignFromLongitude(chartData.planets.moon?.longitude);
-            const ascendantSign = this.getSignFromLongitude(chartData.ascendant);
+            const sunSign = planetsData.sun?.sign || this.getSignFromLongitude(planetsData.sun?.longitude);
+            const moonSign = planetsData.moon?.sign || this.getSignFromLongitude(planetsData.moon?.longitude);
+            const ascendantSign = ascendantData.sign || this.getSignFromLongitude(ascendantData.degree || 0);
 
             // Форматируем планеты для отображения
-            const planets = this.formatPlanetsFromNatal(chartData.planets);
+            const planets = this.formatPlanetsFromNatal(planetsData);
 
             // Психологический портрет на основе астрологии
             const psychology = this.getAstroPsychology(
-                chartData.planets,
-                { sign: ascendantSign, degree: chartData.ascendant % 30 }
+                planetsData,
+                {
+                    sign: ascendantSign,
+                    degree: ascendantData.degreeInSign || (ascendantData.degree % 30).toFixed(1)
+                }
             );
 
             // Прогноз на текущий период
-            const forecast = this.getForecast(chartData.planets);
+            const forecast = this.getForecast(planetsData);
 
             // Анализ отношений (если есть запрос)
-            const relationship = question ? this.analyzeRelationship(chartData.planets, question) : null;
+            const relationship = question ? this.analyzeRelationship(planetsData, question) : null;
 
             return {
-                birthData: {
-                    date: birthDate,
-                    time: birthTime || '12:00',
-                    place: birthPlace || 'не указано'
-                },
-                ascendant: {
-                    sign: ascendantSign,
-                    degree: (chartData.ascendant % 30).toFixed(1),
-                    description: this.getAscendantDescription(ascendantSign)
-                },
-                sun: {
-                    sign: sunSign,
-                    degree: (chartData.planets.sun?.longitude % 30).toFixed(1),
-                    planet: this.planets.sun,
-                    description: this.getSunDescription(sunSign)
-                },
-                moon: {
-                    sign: moonSign,
-                    degree: (chartData.planets.moon?.longitude % 30).toFixed(1),
-                    planet: this.planets.moon,
-                    description: this.getMoonDescription(moonSign)
-                },
-                planets: planets,
-                psychology,
-                forecast,
-                relationship,
-                question: question || 'Самопознание',
-                interpretation: this.generateInterpretation(chartData, sunSign, moonSign, ascendantSign, psychology, forecast, question)
+                success: true,
+                data: {
+                    fullName: fullName,
+                    birthData: {
+                        date: birthDate,
+                        time: birthTime || '12:00',
+                        place: birthPlace || 'не указано'
+                    },
+                    ascendant: {
+                        sign: ascendantSign,
+                        degree: ascendantData.degreeInSign || (ascendantData.degree % 30).toFixed(1),
+                        description: this.getAscendantDescription(ascendantSign)
+                    },
+                    sun: {
+                        sign: sunSign,
+                        degree: planetsData.sun?.degreeInSign || (planetsData.sun?.longitude % 30).toFixed(1),
+                        planet: this.planets.sun,
+                        description: this.getSunDescription(sunSign)
+                    },
+                    moon: {
+                        sign: moonSign,
+                        degree: planetsData.moon?.degreeInSign || (planetsData.moon?.longitude % 30).toFixed(1),
+                        planet: this.planets.moon,
+                        description: this.getMoonDescription(moonSign)
+                    },
+                    planets: planets,
+                    psychology,
+                    forecast,
+                    relationship,
+                    question: question || 'Самопознание',
+                    interpretation: this.generateInterpretation(
+                        chartData,
+                        sunSign,
+                        moonSign,
+                        ascendantSign,
+                        psychology,
+                        forecast,
+                        question
+                    )
+                }
             };
         } catch (error) {
             console.error('Ошибка в AstropsychologyService:', error);
-            throw error;
+            return {
+                success: false,
+                error: error.message
+            };
         }
     }
 
@@ -230,9 +254,9 @@ class AstropsychologyService {
                     result.push({
                         name: planetInfo.name,
                         symbol: planetInfo.symbol,
-                        sign: this.getSignFromLongitude(planetData.longitude),
-                        degree: (planetData.longitude % 30).toFixed(1),
-                        retrograde: false, // В текущей реализации нет данных о ретроградности
+                        sign: planetData.sign || this.getSignFromLongitude(planetData.longitude),
+                        degree: planetData.degreeInSign || (planetData.longitude % 30).toFixed(1),
+                        retrograde: false,
                         meaning: planetInfo.meaning,
                         role: planetInfo.role
                     });
@@ -298,8 +322,8 @@ class AstropsychologyService {
     }
 
     getAstroPsychology(planets, ascendant) {
-        const sunSign = this.getSignFromLongitude(planets.sun?.longitude);
-        const moonSign = this.getSignFromLongitude(planets.moon?.longitude);
+        const sunSign = planets.sun?.sign || this.getSignFromLongitude(planets.sun?.longitude);
+        const moonSign = planets.moon?.sign || this.getSignFromLongitude(planets.moon?.longitude);
 
         return {
             ego: `Ваше эго (Солнце в ${sunSign}) проявляется как ${this.getSunDescription(sunSign).toLowerCase()}`,
@@ -313,16 +337,16 @@ class AstropsychologyService {
 
     getStrengths(planets) {
         const strengths = [];
-        const sunSign = this.getSignFromLongitude(planets.sun?.longitude);
-        const moonSign = this.getSignFromLongitude(planets.moon?.longitude);
-        const marsSign = this.getSignFromLongitude(planets.mars?.longitude);
-        const venusSign = this.getSignFromLongitude(planets.venus?.longitude);
+        const sunSign = planets.sun?.sign || this.getSignFromLongitude(planets.sun?.longitude);
+        const moonSign = planets.moon?.sign || this.getSignFromLongitude(planets.moon?.longitude);
+        const marsSign = planets.mars?.sign || this.getSignFromLongitude(planets.mars?.longitude);
+        const venusSign = planets.venus?.sign || this.getSignFromLongitude(planets.venus?.longitude);
 
         if (sunSign === 'Лев' || sunSign === 'Овен')
             strengths.push('Сильная воля и инициативность');
         if (moonSign === 'Рак' || moonSign === 'Рыбы')
             strengths.push('Глубокая эмпатия и интуиция');
-        if (['Близнецы', 'Дева'].includes(this.getSignFromLongitude(planets.mercury?.longitude)))
+        if (['Близнецы', 'Дева'].includes(planets.mercury?.sign || this.getSignFromLongitude(planets.mercury?.longitude)))
             strengths.push('Острый ум и коммуникабельность');
         if (venusSign === 'Телец' || venusSign === 'Весы')
             strengths.push('Художественный вкус и дипломатичность');
@@ -339,9 +363,9 @@ class AstropsychologyService {
 
     getChallenges(planets) {
         const challenges = [];
-        const saturnSign = this.getSignFromLongitude(planets.saturn?.longitude);
-        const marsSign = this.getSignFromLongitude(planets.mars?.longitude);
-        const venusSign = this.getSignFromLongitude(planets.venus?.longitude);
+        const saturnSign = planets.saturn?.sign || this.getSignFromLongitude(planets.saturn?.longitude);
+        const marsSign = planets.mars?.sign || this.getSignFromLongitude(planets.mars?.longitude);
+        const venusSign = planets.venus?.sign || this.getSignFromLongitude(planets.venus?.longitude);
 
         if (saturnSign === 'Козерог' || saturnSign === 'Водолей')
             challenges.push('Склонность к самокритике и ограничениям');
@@ -373,9 +397,9 @@ class AstropsychologyService {
     getForecast(planets) {
         const now = new Date();
         const dayOfYear = this.getDayOfYear(now);
-        const moonSign = this.getSignFromLongitude(planets.moon?.longitude);
-        const venusSign = this.getSignFromLongitude(planets.venus?.longitude);
-        const marsSign = this.getSignFromLongitude(planets.mars?.longitude);
+        const moonSign = planets.moon?.sign || this.getSignFromLongitude(planets.moon?.longitude);
+        const venusSign = planets.venus?.sign || this.getSignFromLongitude(planets.venus?.longitude);
+        const marsSign = planets.mars?.sign || this.getSignFromLongitude(planets.mars?.longitude);
 
         return {
             general: dayOfYear % 2 === 0 ? 'Благоприятный день для начинаний' : 'День для завершения и отдыха',
@@ -386,10 +410,9 @@ class AstropsychologyService {
     }
 
     analyzeRelationship(planets, question) {
-        const venusSign = this.getSignFromLongitude(planets.venus?.longitude);
-        const marsSign = this.getSignFromLongitude(planets.mars?.longitude);
+        const venusSign = planets.venus?.sign || this.getSignFromLongitude(planets.venus?.longitude);
+        const marsSign = planets.mars?.sign || this.getSignFromLongitude(planets.mars?.longitude);
 
-        // Простая совместимость на основе Венеры и Марса
         const compatibility = venusSign === marsSign ? 85 :
             venusSign && marsSign ? 65 : 50;
 
@@ -409,30 +432,30 @@ class AstropsychologyService {
     }
 
     generateInterpretation(chartData, sunSign, moonSign, ascendantSign, psychology, forecast, question) {
-        const planets = chartData.planets;
+        const planets = chartData.planets || {};
 
         return `
 🌞 **АСТРОПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ** 🌞
 
 **АСЦЕНДЕНТ (МАСКА)**
-${ascendantSign} ${(chartData.ascendant % 30).toFixed(1)}°
+${ascendantSign} ${(chartData.ascendant?.degreeInSign || (chartData.ascendant?.degree % 30) || 0).toFixed(1)}°
 ${this.getAscendantDescription(ascendantSign)}
 
 **СОЛНЦЕ (СУЩНОСТЬ)**
-${sunSign} ${(planets.sun?.longitude % 30).toFixed(1)}°
+${sunSign} ${(planets.sun?.degreeInSign || planets.sun?.longitude % 30 || 0).toFixed(1)}°
 ${this.getSunDescription(sunSign)}
 
 **ЛУНА (ДУША)**
-${moonSign} ${(planets.moon?.longitude % 30).toFixed(1)}°
+${moonSign} ${(planets.moon?.degreeInSign || planets.moon?.longitude % 30 || 0).toFixed(1)}°
 ${this.getMoonDescription(moonSign)}
 
 **ПЛАНЕТЫ В ЗНАКАХ**
 
-${planets.mercury ? `• ☿ Меркурий в ${this.getSignFromLongitude(planets.mercury.longitude)} ${(planets.mercury.longitude % 30).toFixed(1)}° — ${this.planets.mercury.role}` : ''}
-${planets.venus ? `• ♀ Венера в ${this.getSignFromLongitude(planets.venus.longitude)} ${(planets.venus.longitude % 30).toFixed(1)}° — ${this.planets.venus.role}` : ''}
-${planets.mars ? `• ♂ Марс в ${this.getSignFromLongitude(planets.mars.longitude)} ${(planets.mars.longitude % 30).toFixed(1)}° — ${this.planets.mars.role}` : ''}
-${planets.jupiter ? `• ♃ Юпитер в ${this.getSignFromLongitude(planets.jupiter.longitude)} ${(planets.jupiter.longitude % 30).toFixed(1)}° — ${this.planets.jupiter.role}` : ''}
-${planets.saturn ? `• ♄ Сатурн в ${this.getSignFromLongitude(planets.saturn.longitude)} ${(planets.saturn.longitude % 30).toFixed(1)}° — ${this.planets.saturn.role}` : ''}
+${planets.mercury ? `• ☿ Меркурий в ${planets.mercury.sign || this.getSignFromLongitude(planets.mercury.longitude)} ${(planets.mercury.degreeInSign || planets.mercury.longitude % 30).toFixed(1)}° — ${this.planets.mercury.role}` : ''}
+${planets.venus ? `• ♀ Венера в ${planets.venus.sign || this.getSignFromLongitude(planets.venus.longitude)} ${(planets.venus.degreeInSign || planets.venus.longitude % 30).toFixed(1)}° — ${this.planets.venus.role}` : ''}
+${planets.mars ? `• ♂ Марс в ${planets.mars.sign || this.getSignFromLongitude(planets.mars.longitude)} ${(planets.mars.degreeInSign || planets.mars.longitude % 30).toFixed(1)}° — ${this.planets.mars.role}` : ''}
+${planets.jupiter ? `• ♃ Юпитер в ${planets.jupiter.sign || this.getSignFromLongitude(planets.jupiter.longitude)} ${(planets.jupiter.degreeInSign || planets.jupiter.longitude % 30).toFixed(1)}° — ${this.planets.jupiter.role}` : ''}
+${planets.saturn ? `• ♄ Сатурн в ${planets.saturn.sign || this.getSignFromLongitude(planets.saturn.longitude)} ${(planets.saturn.degreeInSign || planets.saturn.longitude % 30).toFixed(1)}° — ${this.planets.saturn.role}` : ''}
 
 **ПСИХОЛОГИЧЕСКИЙ АНАЛИЗ**
 

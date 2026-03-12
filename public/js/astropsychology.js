@@ -319,73 +319,134 @@ function showNotification(message, type = 'info') {
 }
 
 function displayResults(data) {
-    document.getElementById('resultFullName').textContent = data.fullName;
-    document.getElementById('resultBirthDate').textContent = `${data.birthData.date} ${data.birthData.time || ''}`;
+    console.log('Отображение результатов:', data);
 
-    document.getElementById('ascendantSign').textContent = `${data.ascendant.sign} ${data.ascendant.degree}°`;
-    document.getElementById('ascendantDescription').textContent = data.ascendant.description;
+    // Проверяем структуру ответа - может быть data.data или просто data
+    const resultData = data.data || data;
 
-    document.getElementById('sunSign').textContent = `${data.sun.sign} ${data.sun.degree}°`;
-    document.getElementById('sunDescription').textContent = data.sun.description;
+    try {
+        // Основная информация
+        setElementText('resultFullName', resultData.fullName);
+        setElementText('resultBirthDate', `${resultData.birthData?.date || ''} ${resultData.birthData?.time || ''}`);
 
-    document.getElementById('moonSign').textContent = `${data.moon.sign} ${data.moon.degree}°`;
-    document.getElementById('moonDescription').textContent = data.moon.description;
+        // Асцендент
+        if (resultData.ascendant) {
+            setElementText('ascendantSign', `${resultData.ascendant.sign || ''} ${resultData.ascendant.degree || ''}°`);
+            setElementText('ascendantDescription', resultData.ascendant.description || '');
+        }
 
-    const planetsGrid = document.getElementById('planetsGrid');
-    planetsGrid.innerHTML = '';
-    data.planets.forEach(planet => {
-        const planetDiv = document.createElement('div');
-        planetDiv.className = 'planet-item';
-        planetDiv.innerHTML = `
-            <div class="planet-symbol">${planet.symbol}</div>
-            <div class="planet-name">${planet.name}</div>
-            <div>${planet.sign} ${planet.degree}°</div>
-            <small>${planet.retrograde ? 'ретроградный' : ''}</small>
-        `;
-        planetsGrid.appendChild(planetDiv);
-    });
+        // Солнце
+        if (resultData.sun) {
+            setElementText('sunSign', `${resultData.sun.sign || ''} ${resultData.sun.degree || ''}°`);
+            setElementText('sunDescription', resultData.sun.description || '');
+        }
 
-    document.getElementById('psychEgo').textContent = data.psychology.ego;
-    document.getElementById('psychEmotions').textContent = data.psychology.emotions;
-    document.getElementById('psychPersonality').textContent = data.psychology.personality;
+        // Луна
+        if (resultData.moon) {
+            setElementText('moonSign', `${resultData.moon.sign || ''} ${resultData.moon.degree || ''}°`);
+            setElementText('moonDescription', resultData.moon.description || '');
+        }
 
-    const strengthsList = document.getElementById('astroStrengths');
-    strengthsList.innerHTML = '';
-    data.psychology.strengths.forEach(strength => {
-        const li = document.createElement('li');
-        li.textContent = strength;
-        strengthsList.appendChild(li);
-    });
+        // Планеты
+        if (resultData.planets && Array.isArray(resultData.planets)) {
+            const planetsGrid = document.getElementById('planetsGrid');
+            if (planetsGrid) {
+                planetsGrid.innerHTML = '';
+                resultData.planets.forEach(planet => {
+                    if (!planet) return;
+                    const planetDiv = document.createElement('div');
+                    planetDiv.className = 'planet-item';
+                    planetDiv.innerHTML = `
+                        <div class="planet-symbol">${planet.symbol || '●'}</div>
+                        <div class="planet-name">${planet.name || ''}</div>
+                        <div>${planet.sign || ''} ${planet.degree || ''}°</div>
+                        <small>${planet.retrograde ? 'ретроградный' : ''}</small>
+                    `;
+                    planetsGrid.appendChild(planetDiv);
+                });
+            }
+        }
 
-    const challengesList = document.getElementById('astroChallenges');
-    challengesList.innerHTML = '';
-    data.psychology.challenges.forEach(challenge => {
-        const li = document.createElement('li');
-        li.textContent = challenge;
-        challengesList.appendChild(li);
-    });
+        // Психология
+        if (resultData.psychology) {
+            setElementText('psychEgo', resultData.psychology.ego || '');
+            setElementText('psychEmotions', resultData.psychology.emotions || '');
+            setElementText('psychPersonality', resultData.psychology.personality || '');
 
-    document.getElementById('growthPath').textContent = data.psychology.growthPath;
+            // Сильные стороны
+            if (resultData.psychology.strengths && Array.isArray(resultData.psychology.strengths)) {
+                const strengthsList = document.getElementById('astroStrengths');
+                if (strengthsList) {
+                    strengthsList.innerHTML = '';
+                    resultData.psychology.strengths.forEach(strength => {
+                        const li = document.createElement('li');
+                        li.textContent = strength;
+                        strengthsList.appendChild(li);
+                    });
+                }
+            }
 
-    const forecastGrid = document.getElementById('forecastGrid');
-    forecastGrid.innerHTML = `
-        <div class="forecast-item">
-            <strong>💼 Карьера</strong><br>
-            ${data.forecast.career}
-        </div>
-        <div class="forecast-item">
-            <strong>❤️ Любовь</strong><br>
-            ${data.forecast.love}
-        </div>
-        <div class="forecast-item">
-            <strong>🌿 Здоровье</strong><br>
-            ${data.forecast.health}
-        </div>
-        <div class="forecast-item">
-            <strong>✨ Общее</strong><br>
-            ${data.forecast.general}
-        </div>
-    `;
+            // Зоны роста
+            if (resultData.psychology.challenges && Array.isArray(resultData.psychology.challenges)) {
+                const challengesList = document.getElementById('astroChallenges');
+                if (challengesList) {
+                    challengesList.innerHTML = '';
+                    resultData.psychology.challenges.forEach(challenge => {
+                        const li = document.createElement('li');
+                        li.textContent = challenge;
+                        challengesList.appendChild(li);
+                    });
+                }
+            }
 
-    document.getElementById('interpretationText').innerHTML = data.interpretation.replace(/\n/g, '<br>');
+            setElementText('growthPath', resultData.psychology.growthPath || '');
+        }
+
+        // Прогноз
+        if (resultData.forecast) {
+            const forecastGrid = document.getElementById('forecastGrid');
+            if (forecastGrid) {
+                forecastGrid.innerHTML = `
+                    <div class="forecast-item">
+                        <strong>💼 Карьера</strong><br>
+                        ${resultData.forecast.career || ''}
+                    </div>
+                    <div class="forecast-item">
+                        <strong>❤️ Любовь</strong><br>
+                        ${resultData.forecast.love || ''}
+                    </div>
+                    <div class="forecast-item">
+                        <strong>🌿 Здоровье</strong><br>
+                        ${resultData.forecast.health || ''}
+                    </div>
+                    <div class="forecast-item">
+                        <strong>✨ Общее</strong><br>
+                        ${resultData.forecast.general || ''}
+                    </div>
+                `;
+            }
+        }
+
+        // Интерпретация
+        if (resultData.interpretation) {
+            const interpretationText = document.getElementById('interpretationText');
+            if (interpretationText) {
+                interpretationText.innerHTML = resultData.interpretation.replace(/\n/g, '<br>');
+            }
+        }
+
+    } catch (error) {
+        console.error('Ошибка при отображении результатов:', error);
+        showNotification('❌ Ошибка при отображении результатов', 'error');
+    }
+}
+
+/**
+ * Вспомогательная функция для установки текста элемента
+ */
+function setElementText(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value || '—';
+    }
 }

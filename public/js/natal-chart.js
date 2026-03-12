@@ -106,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 longitudeInput.value = parseFloat(city.lon).toFixed(6);
                 suggestionsContainer.style.display = 'none';
 
-                showNotification(`✅ Найден город: ${cityName}`, 'success');
             });
 
             suggestionsContainer.appendChild(item);
@@ -267,19 +266,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultDate = document.getElementById('resultDate');
         const resultTime = document.getElementById('resultTime');
 
-        if (resultName) resultName.textContent = formData.fullName;
-        if (resultDate) resultDate.textContent = formData.birthDate;
-        if (resultTime) resultTime.textContent = formData.birthTime;
+        if (resultName) resultName.textContent = formData.fullName || '—';
+        if (resultDate) resultDate.textContent = formData.birthDate || '—';
+        if (resultTime) resultTime.textContent = formData.birthTime || '—';
 
-        // Преобразуем данные для отрисовки
-        const planetsForDraw = transformPlanetsData(chartData.planets);
-        const housesForDraw = chartData.houses || [];
-        const ascendant = chartData.ascendant || 0;
+        // Проверяем наличие данных
+        if (!chartData) {
+            console.error('Нет данных для отображения');
+            return;
+        }
 
-        // Генерируем аспекты из данных планет
-        const aspects = generateAspects(planetsForDraw);
+        // Безопасно преобразуем данные для отрисовки
+        const planetsForDraw = chartData.planets ? transformPlanetsData(chartData.planets) : {};
+        const housesForDraw = Array.isArray(chartData.houses) ? chartData.houses : [];
+        const ascendant = chartData.ascendant?.degree || chartData.ascendant || 0;
 
-        // Данные для отрисовки
+        // Генерируем аспекты, если их нет
+        const aspects = Array.isArray(chartData.aspects) ? chartData.aspects : generateAspects(planetsForDraw);
+
+        // Данные для отрисовки канваса
         const drawData = {
             planets: planetsForDraw,
             houses: housesForDraw,
@@ -288,11 +293,35 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (chartDraw) {
-            chartDraw.draw(drawData);
+            try {
+                chartDraw.draw(drawData);
+            } catch (e) {
+                console.error('Ошибка отрисовки канваса:', e);
+            }
         }
 
+        // Отображаем легенду планет
         displayLegend(planetsForDraw);
+
+        // Расширенная информация о планетах
+        if (chartData.planets) {
+            displayEnrichedPlanetsInfo(chartData.planets);
+        }
+
+        // Информация о домах
+        if (housesForDraw.length > 0) {
+            displayEnrichedHousesInfo(housesForDraw);
+        }
+
+        // Информация об аспектах
+        if (aspects.length > 0) {
+            displayEnrichedAspectsInfo(aspects);
+        }
+
+        // Отображаем позиции планет
         displayPlanetPositions(planetsForDraw);
+
+        // Отображаем аспекты
         displayAspects(aspects);
 
         // Основная интерпретация
@@ -332,6 +361,264 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             resultSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
+    }
+
+// ==================== ИСПРАВЛЕННЫЕ ФУНКЦИИ С ПРОВЕРКАМИ ====================
+
+    /**
+     * Отображает расширенную информацию о планетах
+     */
+    function displayEnrichedPlanetsInfo(planets) {
+        if (!planets || typeof planets !== 'object') {
+            console.warn('Нет данных о планетах для отображения');
+            return;
+        }
+
+        // Создаем или находим контейнер
+        let container = document.getElementById('enrichedPlanetsInfo');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'enrichedPlanetsInfo';
+            container.className = 'enriched-planets-section';
+
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                const chartWrapper = document.querySelector('.natal-chart-wrapper');
+                if (chartWrapper) {
+                    chartWrapper.parentNode.insertBefore(container, chartWrapper.nextSibling);
+                } else {
+                    resultCard.appendChild(container);
+                }
+            } else {
+                return; // Нет места для вставки
+            }
+        }
+
+        let html = `
+        <h3>🪐 ЗНАЧЕНИЕ ПЛАНЕТ</h3>
+        <div class="enriched-planets-grid">
+    `;
+
+        // Сортируем планеты в определенном порядке
+        const planetOrder = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+        let hasPlanets = false;
+
+        planetOrder.forEach(key => {
+            const planet = planets[key];
+            if (!planet) return;
+
+            hasPlanets = true;
+
+            // Безопасно получаем значения с проверками
+            const planetName = planet.name || key;
+            const planetSign = planet.sign || 'Неизвестно';
+            const planetDegree = planet.degreeInSign || (planet.longitude ? (planet.longitude % 30).toFixed(1) : '?');
+            const planetMeaning = planet.planetMeaning || 'Значение планеты будет добавлено позже.';
+            const signDescription = planet.signDescription || 'Описание знака будет добавлено позже.';
+
+            html += `
+            <div class="enriched-planet-card">
+                <div class="enriched-planet-header">
+                    <span class="enriched-planet-symbol">${getPlanetSymbol(key)}</span>
+                    <span class="enriched-planet-name">${planetName}</span>
+                </div>
+                <div class="enriched-planet-position">
+                    <span class="enriched-planet-sign">${planetSign}</span>
+                    <span class="enriched-planet-degree">${planetDegree}°</span>
+                </div>
+                <div class="enriched-planet-meaning">
+                    <strong>Значение:</strong> ${planetMeaning}
+                </div>
+                <div class="enriched-planet-sign-desc">
+                    <strong>В знаке ${planetSign}:</strong> ${signDescription}
+                </div>
+            </div>
+        `;
+        });
+
+        html += `</div>`;
+
+        if (hasPlanets) {
+            container.innerHTML = html;
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    /**
+     * Отображает расширенную информацию о домах
+     */
+    function displayEnrichedHousesInfo(houses) {
+        if (!houses || !Array.isArray(houses) || houses.length === 0) {
+            console.warn('Нет данных о домах для отображения');
+            return;
+        }
+
+        // Создаем или находим контейнер
+        let container = document.getElementById('enrichedHousesInfo');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'enrichedHousesInfo';
+            container.className = 'enriched-houses-section';
+
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                const planetsSection = document.getElementById('enrichedPlanetsInfo');
+                if (planetsSection) {
+                    planetsSection.parentNode.insertBefore(container, planetsSection.nextSibling);
+                } else {
+                    const chartWrapper = document.querySelector('.natal-chart-wrapper');
+                    if (chartWrapper) {
+                        chartWrapper.parentNode.insertBefore(container, chartWrapper.nextSibling);
+                    } else {
+                        resultCard.appendChild(container);
+                    }
+                }
+            } else {
+                return;
+            }
+        }
+
+        let html = `
+        <h3>🏠 ЗНАЧЕНИЕ ДОМОВ</h3>
+        <div class="enriched-houses-grid">
+    `;
+
+        // Сортируем дома по номеру
+        const sortedHouses = [...houses].sort((a, b) => (a.number || 0) - (b.number || 0));
+
+        sortedHouses.forEach(house => {
+            if (!house) return;
+
+            const houseNumber = house.number || '?';
+            const houseSign = house.sign || getSignFromLongitude(house.cusp || 0);
+            const houseDesc = house.houseDescription || 'Описание дома будет добавлено позже.';
+            const signDesc = house.signDescription || 'Описание знака будет добавлено позже.';
+
+            const planetsList = Array.isArray(house.planets) && house.planets.length > 0
+                ? house.planets.join(', ')
+                : 'нет планет';
+
+            html += `
+            <div class="enriched-house-card">
+                <div class="enriched-house-header">
+                    <span class="enriched-house-number">${houseNumber} дом</span>
+                    <span class="enriched-house-cusp">Куспид в ${houseSign}</span>
+                </div>
+                <div class="enriched-house-desc">
+                    <strong>Значение:</strong> ${houseDesc}
+                </div>
+                <div class="enriched-house-sign-desc">
+                    <strong>Куспид в ${houseSign}:</strong> ${signDesc}
+                </div>
+                <div class="enriched-house-planets">
+                    <strong>Планеты:</strong> ${planetsList}
+                </div>
+            </div>
+        `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    /**
+     * Отображает расширенную информацию об аспектах
+     */
+    function displayEnrichedAspectsInfo(aspects) {
+        if (!aspects || !Array.isArray(aspects) || aspects.length === 0) {
+            console.warn('Нет данных об аспектах для отображения');
+            return;
+        }
+
+        // Создаем или находим контейнер
+        let container = document.getElementById('enrichedAspectsInfo');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'enrichedAspectsInfo';
+            container.className = 'enriched-aspects-section';
+
+            const resultCard = document.querySelector('.result-card');
+            if (resultCard) {
+                const housesSection = document.getElementById('enrichedHousesInfo');
+                if (housesSection) {
+                    housesSection.parentNode.insertBefore(container, housesSection.nextSibling);
+                } else {
+                    const planetsSection = document.getElementById('enrichedPlanetsInfo');
+                    if (planetsSection) {
+                        planetsSection.parentNode.insertBefore(container, planetsSection.nextSibling);
+                    } else {
+                        const chartWrapper = document.querySelector('.natal-chart-wrapper');
+                        if (chartWrapper) {
+                            chartWrapper.parentNode.insertBefore(container, chartWrapper.nextSibling);
+                        } else {
+                            resultCard.appendChild(container);
+                        }
+                    }
+                }
+            } else {
+                return;
+            }
+        }
+
+        let html = `
+        <h3>⚡ КЛЮЧЕВЫЕ АСПЕКТЫ</h3>
+        <div class="enriched-aspects-grid">
+    `;
+
+        aspects.forEach(aspect => {
+            if (!aspect) return;
+
+            // Безопасно получаем значения
+            const type = aspect.type || 'unknown';
+            const name = aspect.name || aspect.type || 'Аспект';
+            const orb = aspect.orb || '?';
+            const planet1 = aspect.planet1 || 'Планета 1';
+            const planet2 = aspect.planet2 || 'Планета 2';
+            const description = aspect.description || 'Описание аспекта будет добавлено позже.';
+
+            // Определяем цвет для типа аспекта
+            let aspectColor = '#c9a54b';
+            switch(type) {
+                case 'conjunction': aspectColor = '#ff4d4d'; break;
+                case 'opposition': aspectColor = '#4d4dff'; break;
+                case 'trine': aspectColor = '#4dff4d'; break;
+                case 'square': aspectColor = '#ff4dff'; break;
+                case 'sextile': aspectColor = '#ffff4d'; break;
+            }
+
+            html += `
+            <div class="enriched-aspect-card" style="border-left-color: ${aspectColor}">
+                <div class="enriched-aspect-header">
+                    <span class="enriched-aspect-name">${name}</span>
+                    <span class="enriched-aspect-orb">Орб: ${orb}°</span>
+                </div>
+                <div class="enriched-aspect-planets">
+                    <span class="enriched-aspect-planet">${planet1}</span>
+                    <span class="enriched-aspect-symbol">↔</span>
+                    <span class="enriched-aspect-planet">${planet2}</span>
+                </div>
+                <div class="enriched-aspect-desc">
+                    ${description}
+                </div>
+            </div>
+        `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    /**
+     * Получает символ планеты по ключу
+     */
+    function getPlanetSymbol(key) {
+        const symbols = {
+            sun: '☉', moon: '☽', mercury: '☿', venus: '♀',
+            mars: '♂', jupiter: '♃', saturn: '♄',
+            uranus: '♅', neptune: '♆', pluto: '♇'
+        };
+        return symbols[key] || '●';
     }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================

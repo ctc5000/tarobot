@@ -68,11 +68,11 @@ class TarotService {
             },
             8: {
                 number: 8,
-                name: 'Справедливость',
-                image: '/images/tarot/11-justice.jpg',
-                keywords: 'Баланс, закон, карма, честность',
-                description: `Справедливость — это момент истины, когда все тайное становится явным. Вы пожинаете плоды своих поступков.`,
-                advice: `Будьте предельно честны сейчас. Любая несправедливость вернется бумерангом. Примите ответственность за свои решения.`
+                name: 'Сила',
+                image: '/images/tarot/08-strength.jpg',
+                keywords: 'Внутренняя сила, мужество, страсть, власть',
+                description: `Сила — это не мышцы, а умение укрощать зверя внутри. Вы способны на многое, когда действуете из любви, а не из страха.`,
+                advice: `Действуйте из любви, а не из страха. Ваша мягкость сейчас — ваше главное оружие.`
             },
             9: {
                 number: 9,
@@ -92,11 +92,11 @@ class TarotService {
             },
             11: {
                 number: 11,
-                name: 'Сила',
-                image: '/images/tarot/08-strength.jpg',
-                keywords: 'Внутренняя сила, мужество, страсть, власть',
-                description: `Сила — это не мышцы, а умение укрощать зверя внутри. Вы способны на многое, когда действуете из любви, а не из страха.`,
-                advice: `Действуйте из любви, а не из страха. Ваша мягкость сейчас — ваше главное оружие.`
+                name: 'Справедливость',
+                image: '/images/tarot/11-justice.jpg',
+                keywords: 'Баланс, закон, карма, честность',
+                description: `Справедливость — это момент истины, когда все тайное становится явным. Вы пожинаете плоды своих поступков.`,
+                advice: `Будьте предельно честны сейчас. Любая несправедливость вернется бумерангом. Примите ответственность за свои решения.`
             },
             12: {
                 number: 12,
@@ -180,14 +180,14 @@ class TarotService {
             }
         };
 
-        // Младшие арканы (для полноты, но в нумерологии используются только старшие)
-        this.minorArcana = {
-            // Здесь можно добавить младшие арканы если понадобятся
-        };
-
         this.cardBack = '/images/tarot/back.jpg';
     }
 
+    /**
+     * Расчет карт Таро на основе нумерологических данных
+     * @param {Object} numerology - объект с нумерологическими данными
+     * @returns {Object} карты Таро
+     */
     calculate(numerology) {
         if (!numerology || !numerology.base) {
             return {
@@ -197,21 +197,42 @@ class TarotService {
             };
         }
 
+        // Получаем базовые числа
         const fateNumber = numerology.base.fate || 0;
         const personalityNumber = numerology.base.name || 0;
 
-        let controlNumber = 0;
+        // Число управления из нумерологии или рассчитываем сами
+        let controlNumber;
         if (numerology.control && numerology.control.number) {
             controlNumber = numerology.control.number;
         } else {
-            controlNumber = numerology.base.control || 0;
+            // Рассчитываем число управления как сумму всех базовых чисел
+            const sum = fateNumber + personalityNumber +
+                (numerology.base.surname || 0) +
+                (numerology.base.patronymic || 0);
+
+            // Редуцируем до диапазона 1-22
+            controlNumber = this.reduceNumber(sum);
         }
 
-        // Для нумерологии используем Старшие Арканы (0-21)
-        // Преобразуем числа 1-22 в 0-21 (где 1 -> 1, 22 -> 0)
+        // Преобразуем числа 1-22 в 0-21 для Старших Арканов
+        // (где 1-21 -> 1-21, 22 -> 0)
         const fateArcana = fateNumber === 22 ? 0 : fateNumber;
         const personalityArcana = personalityNumber === 22 ? 0 : personalityNumber;
-        const controlArcana = controlNumber === 22 ? 0 : controlNumber;
+        let controlArcana = controlNumber === 22 ? 0 : controlNumber;
+
+        // ГАРАНТИРУЕМ УНИКАЛЬНОСТЬ ТРЕТЬЕЙ КАРТЫ
+        // Если контрольная карта совпадает с картой судьбы или личности,
+        // вычисляем уникальную на основе всех трех чисел
+        if (controlArcana === fateArcana || controlArcana === personalityArcana) {
+            controlArcana = this.calculateUniquePathCard(
+                fateArcana,
+                personalityArcana,
+                fateNumber,
+                personalityNumber,
+                controlNumber
+            );
+        }
 
         return {
             fate: {
@@ -227,6 +248,59 @@ class TarotService {
                 ...this.getArcanaData(controlArcana)
             }
         };
+    }
+
+    /**
+     * Вычисляет уникальную карту пути, которая не совпадает с двумя другими
+     * Использует детерминированные формулы, не случайные числа
+     */
+    calculateUniquePathCard(fateArcana, personalityArcana, fateNum, personalityNum, controlNum) {
+        // Используем несколько детерминированных формул для получения уникального числа
+
+        // Формула 1: (сумма всех чисел * 3) % 22
+        const sum = fateNum + personalityNum + controlNum;
+        let candidate1 = (sum * 3) % 22;
+
+        // Формула 2: (произведение чисел) % 22
+        const product = (fateNum * personalityNum * (controlNum || 1)) % 22;
+        let candidate2 = product;
+
+        // Формула 3: (fateNum^2 + personalityNum^2) % 22
+        let candidate3 = (fateNum * fateNum + personalityNum * personalityNum) % 22;
+
+        // Проверяем каждого кандидата на уникальность
+        const candidates = [candidate1, candidate2, candidate3];
+
+        for (let candidate of candidates) {
+            if (candidate !== fateArcana && candidate !== personalityArcana) {
+                return candidate;
+            }
+        }
+
+        // Если ни один не подошел, используем циклический сдвиг
+        let result = (fateArcana + personalityArcana) % 22;
+        let attempts = 0;
+
+        while ((result === fateArcana || result === personalityArcana) && attempts < 22) {
+            result = (result + 1) % 22;
+            attempts++;
+        }
+
+        return result;
+    }
+
+    /**
+     * Редукция числа до диапазона 1-22
+     */
+    reduceNumber(num) {
+        // Сохраняем мастер-числа 11, 22
+        if (num === 11 || num === 22) return num;
+
+        let result = num;
+        while (result > 22) {
+            result = String(result).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+        }
+        return result;
     }
 
     getArcanaData(num) {
