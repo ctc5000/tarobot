@@ -136,7 +136,37 @@
         </div>
     </div>
 </footer>
+<script>
+    // Принудительная перезагрузка при открытии в Telegram WebApp
+    (function() {
+        // Проверяем, что мы в Telegram WebApp
+        if (window.Telegram && Telegram.WebApp) {
+            console.log('Telegram WebApp detected, checking version...');
 
+            // Получаем параметр версии из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const version = urlParams.get('v');
+
+            // Сохраняем версию в sessionStorage
+            const lastVersion = sessionStorage.getItem('app-version');
+
+            // Если версия изменилась или нет сохраненной версии
+            if (version && version !== lastVersion) {
+                console.log('New version detected:', version, 'reloading...');
+                sessionStorage.setItem('app-version', version);
+
+                // Принудительно перезагружаем с очисткой кеша
+                // Используем location.reload(true) для старых браузеров
+                window.location.reload();
+            } else {
+                console.log('Same version or no version parameter');
+            }
+
+            // Сообщаем Telegram, что приложение готово
+            Telegram.WebApp.ready();
+        }
+    })();
+</script>
 <script src="/js/menu-loader.js"></script>
 <script src="/js/main.js"></script>
 </body>

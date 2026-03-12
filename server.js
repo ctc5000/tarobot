@@ -46,16 +46,16 @@ const services = {
 };
 // Определение версии (Telegram или Web)
 app.use((req, res, next) => {
-    // Проверяем заголовок от Telegram
-    const isTelegram = req.headers['x-telegram-init-data'] ||
-        req.headers['user-agent']?.includes('Telegram');
-
-    // Сохраняем в locals для использования в шаблонах
-    res.locals.isTelegram = isTelegram;
-
-    // Добавляем заголовок для клиента
-    res.setHeader('X-App-Version', isTelegram ? 'telegram' : 'web');
-
+    // Отключаем кеширование для HTML
+    if (req.url.endsWith('.html') || req.url === '/') {
+        res.setHeader('Cache-Control', 'no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    // Короткое кеширование для CSS/JS (5 минут)
+    else if (req.url.match(/\.(css|js)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=300');
+    }
     next();
 });
 app.use((req, res, next) => {
