@@ -137,33 +137,63 @@
     </div>
 </footer>
 <script>
-    // Принудительная перезагрузка при открытии в Telegram WebApp
     (function() {
-        // Проверяем, что мы в Telegram WebApp
-        if (window.Telegram && Telegram.WebApp) {
-            console.log('Telegram WebApp detected, checking version...');
+        // Функция для обновления всех ресурсов
+        function forceReloadResources() {
+            console.log('🔄 Принудительное обновление ресурсов...');
 
-            // Получаем параметр версии из URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const version = urlParams.get('v');
+            // Уникальная версия на основе времени
+            const version = Date.now();
 
-            // Сохраняем версию в sessionStorage
-            const lastVersion = sessionStorage.getItem('app-version');
+            // 1. Обновляем все CSS ссылки
+            document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                if (link.href && !link.href.includes('fonts.googleapis.com')) {
+                    const baseUrl = link.href.split('?')[0];
+                    link.href = baseUrl + '?v=' + version;
+                    console.log('✅ CSS обновлен:', link.href);
+                }
+            });
 
-            // Если версия изменилась или нет сохраненной версии
-            if (version && version !== lastVersion) {
-                console.log('New version detected:', version, 'reloading...');
-                sessionStorage.setItem('app-version', version);
+            // 2. Обновляем все JS скрипты
+            document.querySelectorAll('script[src]').forEach(script => {
+                if (script.src && !script.src.includes('imask') && !script.src.includes('telegram')) {
+                    const baseUrl = script.src.split('?')[0];
+                    const newSrc = baseUrl + '?v=' + version;
 
-                // Принудительно перезагружаем с очисткой кеша
-                // Используем location.reload(true) для старых браузеров
-                window.location.reload();
-            } else {
-                console.log('Same version or no version parameter');
-            }
+                    // Создаем новый скрипт для принудительной загрузки
+                    const newScript = document.createElement('script');
+                    newScript.src = newSrc;
+                    newScript.onload = () => console.log('✅ Скрипт загружен:', newSrc);
 
-            // Сообщаем Telegram, что приложение готово
-            Telegram.WebApp.ready();
+                    // Заменяем старый скрипт новым
+                    script.parentNode.replaceChild(newScript, script);
+                }
+            });
+
+            // 3. Сохраняем версию, чтобы не обновлять слишком часто
+            sessionStorage.setItem('app-version', version);
+        }
+
+        // Проверяем, нужно ли обновлять
+        const currentVersion = sessionStorage.getItem('app-version');
+        const urlVersion = new URLSearchParams(window.location.search).get('v');
+
+        // Если версия из URL отличается от сохраненной - обновляем
+        if (urlVersion && urlVersion !== currentVersion) {
+            console.log('📦 Обнаружена новая версия:', urlVersion);
+            forceReloadResources();
+        } else if (!currentVersion) {
+            // Первый запуск - просто сохраняем версию
+            console.log('🚀 Первый запуск');
+            sessionStorage.setItem('app-version', urlVersion || Date.now());
+        } else {
+            console.log('✓ Версия актуальна');
+        }
+
+        // 4. Дополнительно: перезагружаем страницу если есть параметр reload
+        if (window.location.search.includes('reload=1')) {
+            console.log('🔄 Принудительная перезагрузка страницы...');
+            window.location.reload(true);
         }
     })();
 </script>
