@@ -434,28 +434,50 @@ class AstropsychologyService {
     generateInterpretation(chartData, sunSign, moonSign, ascendantSign, psychology, forecast, question) {
         const planets = chartData.planets || {};
 
+        // Безопасное получение градусов
+        let ascendantDegree = 0;
+        if (chartData.ascendant?.degreeInSign !== undefined && chartData.ascendant?.degreeInSign !== null) {
+            ascendantDegree = parseFloat(chartData.ascendant.degreeInSign);
+        } else if (chartData.ascendant?.degree !== undefined && chartData.ascendant?.degree !== null) {
+            ascendantDegree = parseFloat(chartData.ascendant.degree) % 30;
+        }
+
+        let sunDegree = 0;
+        if (planets.sun?.degreeInSign !== undefined && planets.sun?.degreeInSign !== null) {
+            sunDegree = parseFloat(planets.sun.degreeInSign);
+        } else if (planets.sun?.longitude !== undefined && planets.sun?.longitude !== null) {
+            sunDegree = parseFloat(planets.sun.longitude) % 30;
+        }
+
+        let moonDegree = 0;
+        if (planets.moon?.degreeInSign !== undefined && planets.moon?.degreeInSign !== null) {
+            moonDegree = parseFloat(planets.moon.degreeInSign);
+        } else if (planets.moon?.longitude !== undefined && planets.moon?.longitude !== null) {
+            moonDegree = parseFloat(planets.moon.longitude) % 30;
+        }
+
         return `
 🌞 **АСТРОПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ** 🌞
 
 **АСЦЕНДЕНТ (МАСКА)**
-${ascendantSign} ${(chartData.ascendant?.degreeInSign || (chartData.ascendant?.degree % 30) || 0).toFixed(1)}°
+${ascendantSign} ${ascendantDegree.toFixed(1)}°
 ${this.getAscendantDescription(ascendantSign)}
 
 **СОЛНЦЕ (СУЩНОСТЬ)**
-${sunSign} ${(planets.sun?.degreeInSign || planets.sun?.longitude % 30 || 0).toFixed(1)}°
+${sunSign} ${sunDegree.toFixed(1)}°
 ${this.getSunDescription(sunSign)}
 
 **ЛУНА (ДУША)**
-${moonSign} ${(planets.moon?.degreeInSign || planets.moon?.longitude % 30 || 0).toFixed(1)}°
+${moonSign} ${moonDegree.toFixed(1)}°
 ${this.getMoonDescription(moonSign)}
 
 **ПЛАНЕТЫ В ЗНАКАХ**
 
-${planets.mercury ? `• ☿ Меркурий в ${planets.mercury.sign || this.getSignFromLongitude(planets.mercury.longitude)} ${(planets.mercury.degreeInSign || planets.mercury.longitude % 30).toFixed(1)}° — ${this.planets.mercury.role}` : ''}
-${planets.venus ? `• ♀ Венера в ${planets.venus.sign || this.getSignFromLongitude(planets.venus.longitude)} ${(planets.venus.degreeInSign || planets.venus.longitude % 30).toFixed(1)}° — ${this.planets.venus.role}` : ''}
-${planets.mars ? `• ♂ Марс в ${planets.mars.sign || this.getSignFromLongitude(planets.mars.longitude)} ${(planets.mars.degreeInSign || planets.mars.longitude % 30).toFixed(1)}° — ${this.planets.mars.role}` : ''}
-${planets.jupiter ? `• ♃ Юпитер в ${planets.jupiter.sign || this.getSignFromLongitude(planets.jupiter.longitude)} ${(planets.jupiter.degreeInSign || planets.jupiter.longitude % 30).toFixed(1)}° — ${this.planets.jupiter.role}` : ''}
-${planets.saturn ? `• ♄ Сатурн в ${planets.saturn.sign || this.getSignFromLongitude(planets.saturn.longitude)} ${(planets.saturn.degreeInSign || planets.saturn.longitude % 30).toFixed(1)}° — ${this.planets.saturn.role}` : ''}
+${planets.mercury ? `• ☿ Меркурий в ${planets.mercury.sign || this.getSignFromLongitude(planets.mercury.longitude)} ${((planets.mercury.degreeInSign !== undefined ? parseFloat(planets.mercury.degreeInSign) : planets.mercury.longitude % 30) || 0).toFixed(1)}° — ${this.planets.mercury.role}` : ''}
+${planets.venus ? `• ♀ Венера в ${planets.venus.sign || this.getSignFromLongitude(planets.venus.longitude)} ${((planets.venus.degreeInSign !== undefined ? parseFloat(planets.venus.degreeInSign) : planets.venus.longitude % 30) || 0).toFixed(1)}° — ${this.planets.venus.role}` : ''}
+${planets.mars ? `• ♂ Марс в ${planets.mars.sign || this.getSignFromLongitude(planets.mars.longitude)} ${((planets.mars.degreeInSign !== undefined ? parseFloat(planets.mars.degreeInSign) : planets.mars.longitude % 30) || 0).toFixed(1)}° — ${this.planets.mars.role}` : ''}
+${planets.jupiter ? `• ♃ Юпитер в ${planets.jupiter.sign || this.getSignFromLongitude(planets.jupiter.longitude)} ${((planets.jupiter.degreeInSign !== undefined ? parseFloat(planets.jupiter.degreeInSign) : planets.jupiter.longitude % 30) || 0).toFixed(1)}° — ${this.planets.jupiter.role}` : ''}
+${planets.saturn ? `• ♄ Сатурн в ${planets.saturn.sign || this.getSignFromLongitude(planets.saturn.longitude)} ${((planets.saturn.degreeInSign !== undefined ? parseFloat(planets.saturn.degreeInSign) : planets.saturn.longitude % 30) || 0).toFixed(1)}° — ${this.planets.saturn.role}` : ''}
 
 **ПСИХОЛОГИЧЕСКИЙ АНАЛИЗ**
 
