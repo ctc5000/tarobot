@@ -58,7 +58,20 @@ app.use((req, res, next) => {
 
     next();
 });
-
+app.use((req, res, next) => {
+    // Отключаем кеширование для HTML файлов
+    if (req.url.endsWith('.html') || req.url === '/') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    // Для CSS и JS можно использовать более мягкое кеширование с версионированием
+    else if (req.url.endsWith('.css') || req.url.endsWith('.js')) {
+        // Устанавливаем короткое время кеширования (5 минут)
+        res.setHeader('Cache-Control', 'public, max-age=300');
+    }
+    next();
+});
 // Специальный маршрут для определения версии на клиенте
 app.get('/api/version', (req, res) => {
     res.json({
