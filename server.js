@@ -72,6 +72,27 @@ app.use((req, res, next) => {
     }
     next();
 });
+app.post('/api/tarot/reading', (req, res) => {
+    try {
+        const { question, spread } = req.body;
+
+        if (!question) {
+            return res.status(400).json({
+                success: false,
+                error: 'Не указан вопрос'
+            });
+        }
+
+        const result = services.tarot.performReading(question, spread || 'three');
+        res.json(result);
+    } catch (error) {
+        console.error('Ошибка в /api/tarot/reading:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 // Специальный маршрут для определения версии на клиенте
 app.get('/api/version', (req, res) => {
     res.json({
@@ -122,6 +143,9 @@ app.get('/runes', (req, res) => {
 });
 app.get('/natal-chart', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pages', 'natal-chart.html'));
+});
+app.get('/tarot', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'tarot.html'));
 });
 
 app.post('/api/calculate/natal-chart', (req, res) => {

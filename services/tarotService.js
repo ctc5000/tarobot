@@ -317,6 +317,214 @@ class TarotService {
             advice: `Исследуйте значение числа ${num} в своей жизни. Какие события, люди, ситуации связаны с ним? Там скрыт ответ.`
         };
     }
+    performReading(question, spreadType = 'three') {
+        try {
+            // Определения раскладов
+            const spreads = {
+                single: {
+                    name: 'Одна карта',
+                    positions: ['Ответ'],
+                    description: 'Быстрый ответ на конкретный вопрос',
+                    cardCount: 1
+                },
+                three: {
+                    name: 'Три карты',
+                    positions: ['Прошлое', 'Настоящее', 'Будущее'],
+                    description: 'Анализ ситуации во времени',
+                    cardCount: 3
+                },
+                five: {
+                    name: 'Пять карт',
+                    positions: ['Ситуация', 'Препятствие', 'Совет', 'Внешнее влияние', 'Итог'],
+                    description: 'Глубокий анализ ситуации',
+                    cardCount: 5
+                },
+                celtic: {
+                    name: 'Кельтский крест',
+                    positions: [
+                        'Суть вопроса',
+                        'Препятствие',
+                        'Цель',
+                        'Прошлое',
+                        'Будущее',
+                        'Сознание',
+                        'Подсознание',
+                        'Внешнее влияние',
+                        'Надежды и страхи',
+                        'Итог'
+                    ],
+                    description: 'Полный анализ ситуации',
+                    cardCount: 10
+                }
+            };
+
+            const spread = spreads[spreadType] || spreads.three;
+
+            // Получаем случайные карты из колоды
+            const cards = this.getRandomCards(spread.cardCount);
+
+            // Добавляем позиции к картам
+            cards.forEach((card, index) => {
+                card.position = spread.positions[index];
+                // Случайная ориентация (50% шанс перевернутой)
+                card.isReversed = Math.random() > 0.5;
+            });
+
+            // Формируем результат
+            const reading = {
+                question: question,
+                spread: {
+                    type: spreadType,
+                    name: spread.name,
+                    positions: spread.positions,
+                    description: spread.description
+                },
+                cards: cards,
+                interpretation: this.generateInterpretation(question, spread, cards)
+            };
+
+            return {
+                success: true,
+                data: reading
+            };
+        } catch (error) {
+            console.error('Ошибка при гадании:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Получение случайных карт из колоды
+     * @param {number} count - количество карт
+     * @returns {Array} массив карт
+     */
+    getRandomCards(count) {
+        const cards = [];
+        const arcanaKeys = Object.keys(this.majorArcana);
+
+        // Перемешиваем
+        const shuffled = [...arcanaKeys];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        // Берем первые count карт
+        for (let i = 0; i < count; i++) {
+            const key = shuffled[i];
+            cards.push({ ...this.majorArcana[key] });
+        }
+
+        return cards;
+    }
+
+    /**
+     * Генерация интерпретации
+     * @param {string} question - вопрос
+     * @param {Object} spread - расклад
+     * @param {Array} cards - карты
+     * @returns {string} интерпретация
+     */
+    generateInterpretation(question, spread, cards) {
+        let interpretation = `🔮 **Ваш вопрос:** "${question}"\n\n`;
+        interpretation += `**Расклад:** ${spread.name}\n`;
+        interpretation += `${spread.description}\n\n`;
+        interpretation += `**Карты:**\n\n`;
+
+        cards.forEach(card => {
+            const orientation = card.isReversed ? 'перевернутом' : 'прямом';
+            const meaning = card.isReversed
+                ? this.getReversedMeaning(card)
+                : card.keywords;
+
+            interpretation += `**${card.position}** — ${card.name} (${orientation})\n`;
+            interpretation += `▸ ${meaning}\n`;
+            interpretation += `▸ ${card.description.split('.')[0]}.\n\n`;
+        });
+
+        // Общая интерпретация
+        const uprightCount = cards.filter(c => !c.isReversed).length;
+        const reversedCount = cards.filter(c => c.isReversed).length;
+
+        interpretation += `**Общее толкование:**\n`;
+
+        if (cards.length === 1) {
+            const card = cards[0];
+            interpretation += card.isReversed
+                ? `Эта карта в перевернутом положении указывает на препятствия или теневые аспекты. ${card.advice}`
+                : `Эта карта в прямом положении несет позитивную энергию. ${card.advice}`;
+        } else {
+            interpretation += `В этом раскладе ${uprightCount} карт в прямом положении и ${reversedCount} в перевернутом. `;
+            interpretation += uprightCount > reversedCount
+                ? `Преобладают позитивные энергии, благоприятствующие вашему вопросу.`
+                : `Есть препятствия и вызовы, но они дают возможность для роста.`;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Получение значения для перевернутой карты
+     */
+    getReversedMeaning(card) {
+        const reversedMeanings = {
+            'Шут': 'Безрассудство, глупость, рискованные решения',
+            'Маг': 'Манипуляции, неиспользованный потенциал',
+            'Верховная Жрица': 'Секреты, подавленная интуиция',
+            'Императрица': 'Творческий блок, зависимость',
+            'Император': 'Тирания, жесткость, отсутствие контроля',
+            'Иерофант': 'Бунтарство, отказ от традиций',
+            'Влюбленные': 'Разлад, неправильный выбор',
+            'Колесница': 'Потеря контроля, агрессия',
+            'Сила': 'Слабость, неуверенность',
+            'Отшельник': 'Изоляция, одиночество',
+            'Колесо Фортуны': 'Неудача, сопротивление переменам',
+            'Справедливость': 'Несправедливость, дисбаланс',
+            'Повешенный': 'Застой, нежелание меняться',
+            'Смерть': 'Сопротивление переменам',
+            'Умеренность': 'Дисбаланс, конфликты',
+            'Дьявол': 'Освобождение, прозрение',
+            'Башня': 'Избегание перемен',
+            'Звезда': 'Отчаяние, потеря веры',
+            'Луна': 'Прояснение, выход из иллюзий',
+            'Солнце': 'Временные трудности',
+            'Суд': 'Сожаление, нежелание прощать',
+            'Мир': 'Незавершенность, застой'
+        };
+
+        return reversedMeanings[card.name] || 'Негативное проявление энергии карты';
+    }
+
+    /**
+     * Получение списка раскладов
+     */
+    getSpreads() {
+        return {
+            single: {
+                name: 'Одна карта',
+                description: 'Быстрый ответ на конкретный вопрос',
+                cardCount: 1
+            },
+            three: {
+                name: 'Три карты',
+                description: 'Анализ ситуации во времени',
+                cardCount: 3
+            },
+            five: {
+                name: 'Пять карт',
+                description: 'Глубокий анализ ситуации',
+                cardCount: 5
+            },
+            celtic: {
+                name: 'Кельтский крест',
+                description: 'Полный анализ ситуации',
+                cardCount: 10
+            }
+        };
+    }
 }
 
 module.exports = TarotService;

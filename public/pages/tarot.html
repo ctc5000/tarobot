@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Гадание на Таро | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Мета-теги для отключения кеширования -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <!-- Baraja CSS для анимации карт -->
+    <link rel="stylesheet" href="/css/vendor/baraja.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <!-- Стили для Таро -->
+    <style>
+        .tarot-reading-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .spread-selector {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .spread-card {
+            background: rgba(18, 18, 26, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .spread-card:hover,
+        .spread-card.active {
+            border-color: var(--accent-gold);
+            background: rgba(201, 165, 75, 0.1);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .spread-card h4 {
+            color: var(--accent-gold);
+            margin-bottom: 10px;
+        }
+
+        .spread-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .card-deck-container {
+            position: relative;
+            min-height: 400px;
+            margin: 40px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            overflow: visible !important;
+            width: 100%;
+        }
+
+        #cardDeck {
+            position: relative;
+            width: 150px;
+            height: 250px;
+            transform-style: preserve-3d;
+            transition: all 0.5s ease;
+            margin: 0 auto;
+        }
+
+        #cardDeck li {
+            position: absolute;
+            width: 150px;
+            height: 250px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backface-visibility: hidden;
+            transform-origin: center center;
+            background: #2a241e;
+            left: 0;
+            top: 0;
+        }
+
+        #cardDeck li .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #2a241e, #1a1510);
+            border: 2px solid var(--accent-gold);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            backface-visibility: hidden;
+        }
+
+        #cardDeck li .card-back span {
+            font-size: 3rem;
+            color: var(--accent-gold);
+            text-shadow: 0 0 15px rgba(201, 165, 75, 0.5);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(201, 165, 75, 0.5); }
+            to { text-shadow: 0 0 25px rgba(201, 165, 75, 0.9), 0 0 35px rgba(201, 165, 75, 0.4); }
+        }
+
+        #cardDeck li img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        #cardDeck li.flipped .card-back {
+            opacity: 0;
+            transform: rotateY(180deg);
+        }
+
+        .reading-button {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .results-section {
+            margin-top: 40px;
+        }
+
+        .cards-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card-result-item {
+            background: linear-gradient(145deg, rgba(26, 21, 16, 0.9), rgba(42, 36, 30, 0.9));
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .card-result-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold), transparent);
+        }
+
+        .card-result-item.reversed::before {
+            background: linear-gradient(90deg, #8b0000, transparent);
+        }
+
+        .card-result-item:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4), 0 0 0 1px rgba(201, 165, 75, 0.2) inset;
+        }
+
+        .card-result-item .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(201, 165, 75, 0.3);
+        }
+
+        .card-result-item .card-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-shadow: 0 0 10px rgba(201, 165, 75, 0.3);
+        }
+
+        .card-result-item .card-position {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(201, 165, 75, 0.15);
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-result-item .card-meaning {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .card-result-item .card-orientation {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .card-result-item .card-orientation::before {
+            content: '✦';
+            color: var(--accent-gold);
+        }
+
+        .card-result-item.reversed .card-orientation::before {
+            content: '⌾';
+            color: #8b0000;
+        }
+
+        .interpretation-box {
+            background: linear-gradient(145deg, rgba(26, 21, 16, 0.8), rgba(42, 36, 30, 0.8));
+            border: 1px solid var(--accent-gold);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            margin-top: 30px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interpretation-box::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(201, 165, 75, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .interpretation-box h3 {
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            text-shadow: 0 0 15px rgba(201, 165, 75, 0.3);
+        }
+
+        .interpretation-box .question {
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--accent-gold);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .interpretation-box .answer {
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-line;
+            font-size: 1rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(201, 165, 75, 0.1);
+            border-top-color: var(--accent-gold);
+            border-right-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
+            margin: 0 auto 15px;
+            box-shadow: 0 0 20px rgba(201, 165, 75, 0.2);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(201, 165, 75, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(201, 165, 75, 0.6); }
+        }
+
+        /* Адаптивность для мобильных */
+        @media (max-width: 768px) {
+            .spread-selector {
+                flex-direction: column;
+            }
+
+            #cardDeck {
+                width: 100px;
+                height: 166px;
+            }
+
+            #cardDeck li {
+                width: 100px;
+                height: 166px;
+            }
+
+            #cardDeck li .card-back span {
+                font-size: 2rem;
+            }
+
+            .cards-results {
+                grid-template-columns: 1fr;
+            }
+
+            .card-deck-container {
+                min-height: 300px;
+            }
+
+            /* Адаптация вылета карт для мобильных */
+            .fly-position-0 { --fly-x: -80px; --fly-y: -20px; --fly-rotate: -5deg; }
+            .fly-position-1 { --fly-x: 0px; --fly-y: -30px; --fly-rotate: 0deg; }
+            .fly-position-2 { --fly-x: 80px; --fly-y: -20px; --fly-rotate: 5deg; }
+            .fly-position-3 { --fly-x: -40px; --fly-y: 20px; --fly-rotate: -3deg; }
+            .fly-position-4 { --fly-x: 40px; --fly-y: 20px; --fly-rotate: 3deg; }
+            .fly-position-5 { --fly-x: -60px; --fly-y: 40px; --fly-rotate: -4deg; }
+            .fly-position-6 { --fly-x: 60px; --fly-y: 40px; --fly-rotate: 4deg; }
+            .fly-position-7 { --fly-x: -20px; --fly-y: 50px; --fly-rotate: -2deg; }
+            .fly-position-8 { --fly-x: 20px; --fly-y: 50px; --fly-rotate: 2deg; }
+            .fly-position-9 { --fly-x: 0px; --fly-y: 60px; --fly-rotate: 0deg; }
+        }
+
+        /* Десктопная адаптация */
+        @media (min-width: 769px) {
+            .fly-position-0 { --fly-x: -180px; --fly-y: -40px; --fly-rotate: -8deg; }
+            .fly-position-1 { --fly-x: -90px; --fly-y: -50px; --fly-rotate: -4deg; }
+            .fly-position-2 { --fly-x: 0px; --fly-y: -60px; --fly-rotate: 0deg; }
+            .fly-position-3 { --fly-x: 90px; --fly-y: -50px; --fly-rotate: 4deg; }
+            .fly-position-4 { --fly-x: 180px; --fly-y: -40px; --fly-rotate: 8deg; }
+            .fly-position-5 { --fly-x: -135px; --fly-y: 20px; --fly-rotate: -6deg; }
+            .fly-position-6 { --fly-x: -45px; --fly-y: 30px; --fly-rotate: -2deg; }
+            .fly-position-7 { --fly-x: 45px; --fly-y: 30px; --fly-rotate: 2deg; }
+            .fly-position-8 { --fly-x: 135px; --fly-y: 20px; --fly-rotate: 6deg; }
+            .fly-position-9 { --fly-x: 0px; --fly-y: 40px; --fly-rotate: 0deg; }
+        }
+
+        .fly-card {
+            animation: flyToPosition 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes flyToPosition {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--fly-x), var(--fly-y)) rotate(var(--fly-rotate)) scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInCard {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .card-result-item {
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes modalFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+<div id="menu-placeholder"></div>
+
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+                </a>
+            </div>
+            <div id="nav-placeholder"></div>
+        </div>
+    </div>
+</header>
+
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+</div>
+
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Гадание на Таро</h1>
+            <p class="page-subtitle">Раскройте тайны с помощью древних карт</p>
+        </div>
+
+        <section class="input-section glass-card tarot-reading-section">
+            <h2>🔮 Ваш вопрос</h2>
+            <form id="tarotForm">
+                <div class="form-group">
+                    <label for="question">❓ Задайте вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="Что вас интересует?" required></textarea>
+                    <small class="form-hint">Сформулируйте вопрос четко и открыто</small>
+                </div>
+
+                <h3>📊 Выберите расклад</h3>
+                <div class="spread-selector" id="spreadSelector">
+                    <div class="spread-card active" data-spread="single">
+                        <h4>Одна карта</h4>
+                        <p>Быстрый ответ на вопрос</p>
+                    </div>
+                    <div class="spread-card" data-spread="three">
+                        <h4>Три карты</h4>
+                        <p>Прошлое · Настоящее · Будущее</p>
+                    </div>
+                    <div class="spread-card" data-spread="five">
+                        <h4>Пять карт</h4>
+                        <p>Ситуация · Препятствие · Совет</p>
+                    </div>
+                    <div class="spread-card" data-spread="celtic">
+                        <h4>Кельтский крест</h4>
+                        <p>Глубокий анализ ситуации</p>
+                    </div>
+                </div>
+
+                <div class="reading-button">
+                    <button type="button" id="shuffleBtn" class="mystic-button" style="width: auto; margin-right: 10px;">
+                        <span class="button-text">🔄 Перетасовать карты</span>
+                    </button>
+                    <button type="button" id="readingBtn" class="mystic-button" style="width: auto;">
+                        <span class="button-text">🔮 Сделать расклад</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Карты раскладываются...</p>
+            </div>
+        </section>
+
+        <!-- Контейнер для колоды карт -->
+        <section class="card-deck-container" id="cardDeckContainer">
+            <ul class="baraja" id="cardDeck"></ul>
+        </section>
+
+        <!-- Результаты -->
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 ВАШ РАСКЛАД</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Вопрос:</span>
+                        <span class="value" id="displayQuestion"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Расклад:</span>
+                        <span class="value" id="displaySpread"></span>
+                    </div>
+                </div>
+
+                <div class="results-section" id="cardsResults"></div>
+
+                <div class="interpretation-box" id="interpretationBox">
+                    <h3>📜 ТОЛКОВАНИЕ</h3>
+                    <div class="question" id="interpretationQuestion"></div>
+                    <div class="answer" id="interpretationAnswer"></div>
+                </div>
+
+                <button class="mystic-button small" id="newReadingBtn">
+                    <span class="button-text">Новое гадание</span>
+                </button>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
+                </div>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Библиотеки -->
+<script src="/js/vendor/baraja.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
+<script src="/js/menu-loader.js"></script>
+<script src="/js/tarot-reading.js?v=2.0.0"></script>
+</body>
+</html>

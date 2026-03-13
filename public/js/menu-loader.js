@@ -36,6 +36,7 @@ function highlightActivePage() {
     else if (currentPath.includes('/natal-chart')) page = 'natal-chart';
     else if (currentPath.includes('/socionics')) page = 'socionics';
     else if (currentPath.includes('/astropsychology')) page = 'astropsychology';
+    else if (currentPath.includes('/tarot')) page = 'tarot';
 
     document.querySelectorAll('.mobile-nav-link, .main-nav .nav-link').forEach(link => {
         if (link.dataset.page === page) {
