@@ -7,28 +7,8 @@ const crypto = require('crypto');
 dotenv.config();
 
 const token = process.env.BOT_TOKEN;
-let baseWebAppUrl = process.env.WEBAPP_URL || 'https://yournumerology.ru';
+const WEBAPP_URL = 'https://yournumerology.ru'; // Прямой URL вашего сайта
 
-// Убираем лишний слеш в конце, если он есть
-baseWebAppUrl = baseWebAppUrl.replace(/\/$/, '');
-
-// Функция для генерации уникального параметра версии
-function getVersionParam() {
-    // Используем timestamp + случайное число для гарантии уникальности
-    const timestamp = Date.now();
-    const random = crypto.randomBytes(4).toString('hex');
-    return `v=${timestamp}-${random}`;
-}
-
-// Функция для получения полного URL с версией
-/*function getWebAppUrl() {
-    const versionParam = getVersionParam();
-    return `${baseWebAppUrl}/?${versionParam}`;
-}*/
-function getWebAppUrl() {
-    // Используем прямую ссылку на мини-приложение
-    return 'https://t.me/you_desteny_bot/destalgo';
-}
 // Проверяем наличие токена
 if (!token) {
     console.error('❌ ОШИБКА: BOT_TOKEN не найден в .env файле!');
@@ -38,13 +18,12 @@ if (!token) {
 
 console.log('🤖 Запуск Telegram бота...');
 console.log('📋 Токен:', token.substring(0, 10) + '...');
-console.log('🔗 Базовый URL:', baseWebAppUrl);
-console.log('📱 Режим: polling');
+console.log('🔗 WebApp URL:', WEBAPP_URL);
 
-// Создаем бота с polling (для разработки)
+// Создаем бота с polling
 const bot = new TelegramBot(token, {
     polling: {
-        interval: 300, // проверка новых сообщений каждые 300ms
+        interval: 300,
         autoStart: true,
         params: {
             timeout: 10
@@ -52,6 +31,45 @@ const bot = new TelegramBot(token, {
     },
     filepath: false
 });
+
+// Функция для генерации уникального параметра версии (для борьбы с кешем)
+function getVersionParam() {
+    const timestamp = Date.now();
+    const random = crypto.randomBytes(4).toString('hex');
+    return `v=${timestamp}-${random}`;
+}
+
+// Функция для получения полного URL с версией
+function getWebAppUrl() {
+    const versionParam = getVersionParam();
+    return `${WEBAPP_URL}/?${versionParam}`;
+}
+
+// Установка меню бота (кнопка слева внизу)
+async function setBotMenu() {
+    try {
+        await bot.setMyCommands([
+            { command: 'start', description: '🚀 Запустить бота' },
+            { command: 'menu', description: '📋 Открыть меню' },
+            { command: 'practices', description: '🔮 Список практик' },
+            { command: 'about', description: '📚 О проекте' },
+            { command: 'help', description: '❓ Помощь' }
+        ]);
+        console.log('✅ Меню бота установлено');
+
+        // Устанавливаем кнопку меню (в левом нижнем углу)
+        await bot.setChatMenuButton({
+            text: '🔮 Открыть приложение',
+            web_app: { url: WEBAPP_URL }
+        });
+        console.log('✅ Кнопка меню установлена');
+    } catch (error) {
+        console.error('❌ Ошибка установки меню:', error.message);
+    }
+}
+
+// Вызываем установку меню при запуске
+setBotMenu();
 
 // Обработка ошибок polling
 bot.on('polling_error', (error) => {
@@ -62,7 +80,7 @@ bot.on('polling_error', (error) => {
     }
 });
 
-// Обработка ошибок webhook (если они возникнут)
+// Обработка ошибок webhook
 bot.on('webhook_error', (error) => {
     console.error('❌ Ошибка webhook:', error.message);
 });
@@ -75,25 +93,26 @@ bot.onText(/\/start/, async (msg) => {
 
     console.log(`👤 Пользователь ${userName} (${chatId}) запустил бота [${userLanguage}]`);
 
-    // Приветственное сообщение в зависимости от языка
-    let welcomeMessage;
-    if (userLanguage.startsWith('ru')) {
-        welcomeMessage = `
-🌟 *Добро пожаловать в Мистическую Нумерологию, ${userName}!* 🌟
+    const welcomeMessage = userLanguage.startsWith('ru') ?
+        `🌟 *Добро пожаловать в Мистическую Нумерологию, ${userName}!* 🌟
 
 Я — ваш проводник в мире тайных знаний. Здесь вы найдете 9 древних практик для познания себя:
 
 🔢 *Нумерология* — магия чисел и код судьбы
-📖 *Натальная карта* —определение личности по звездам
+🌳 *Родология* — сила рода и память предков
+📜 *И-Цзин* — 64 гексаграммы Книги Перемен
+🌀 *Да Лю Жэнь* — великое тайное
+⚜️ *Герметизм* — 7 принципов мироздания
+📖 *Зоар* — каббала и АЛГОРИТМ СУДЬБЫ
 🧠 *Соционика* — 16 типов личности
 🌞 *Астропсихология* — психология по звездам
 ᚠ *Руны* — Старший Футарк
 
 ✨ *Нажмите кнопку ниже, чтобы открыть приложение* ✨
-        `;
-    } else {
-        welcomeMessage = `
-🌟 *Welcome to Mystical Numerology, ${userName}!* 🌟
+
+💡 *Подсказка:* В левом нижнем углу есть кнопка меню для быстрого доступа к приложению` :
+
+        `🌟 *Welcome to Mystical Numerology, ${userName}!* 🌟
 
 I am your guide in the world of secret knowledge. Here you will find 9 ancient practices for self-discovery:
 
@@ -108,31 +127,68 @@ I am your guide in the world of secret knowledge. Here you will find 9 ancient p
 ᚠ *Runes* — Elder Futhark
 
 ✨ *Click the button below to open the app* ✨
-        `;
-    }
+
+💡 *Tip:* There's a menu button in the bottom left corner for quick access to the app`;
 
     try {
-        // Отправляем сообщение с кнопкой WebApp
         await bot.sendMessage(chatId, welcomeMessage, {
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
                     [{
                         text: userLanguage.startsWith('ru') ? '🔮 Открыть портал знаний' : '🔮 Open knowledge portal',
-                       // web_app: { url: getWebAppUrl() }
-                        web_app: { url: 'https://t.me/you_desteny_bot/destalgo' }
+                        web_app: { url: getWebAppUrl() }
                     }],
                     [
                         { text: userLanguage.startsWith('ru') ? '📚 О проекте' : '📚 About', callback_data: 'about' },
                         { text: userLanguage.startsWith('ru') ? '❓ Помощь' : '❓ Help', callback_data: 'help' }
+                    ],
+                    [
+                        { text: userLanguage.startsWith('ru') ? '📋 Меню команд' : '📋 Commands menu', callback_data: 'menu' }
                     ]
                 ]
             }
         });
-
         console.log(`✅ Приветствие отправлено пользователю ${chatId}`);
     } catch (error) {
         console.error('❌ Ошибка отправки сообщения:', error);
+    }
+});
+
+// Команда /menu
+bot.onText(/\/menu/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userLanguage = msg.from.language_code || 'ru';
+
+    const menuText = userLanguage.startsWith('ru') ?
+        '📋 *Меню команд*\n\n' +
+        '🔮 /start — начать работу\n' +
+        '📋 /menu — открыть это меню\n' +
+        '🔢 /practices — список всех практик\n' +
+        '📚 /about — о проекте\n' +
+        '❓ /help — помощь\n\n' +
+        '💡 *Быстрый доступ:* Нажмите кнопку ниже или используйте меню в левом нижнем углу' :
+
+        '📋 *Commands Menu*\n\n' +
+        '🔮 /start — start working\n' +
+        '📋 /menu — open this menu\n' +
+        '🔢 /practices — list of all practices\n' +
+        '📚 /about — about the project\n' +
+        '❓ /help — help\n\n' +
+        '💡 *Quick access:* Click the button below or use the menu in the bottom left corner';
+
+    try {
+        await bot.sendMessage(chatId, menuText, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: userLanguage.startsWith('ru') ? '🔮 Открыть приложение' : '🔮 Open app',
+                        web_app: { url: getWebAppUrl() } }]
+                ]
+            }
+        });
+    } catch (error) {
+        console.error('❌ Ошибка отправки меню:', error);
     }
 });
 
@@ -141,7 +197,6 @@ bot.on('callback_query', async (callbackQuery) => {
     const msg = callbackQuery.message;
     const chatId = msg.chat.id;
     const data = callbackQuery.data;
-    const messageId = msg.message_id;
     const userLanguage = callbackQuery.from.language_code || 'ru';
 
     console.log(`📞 Callback получен: ${data} от ${chatId}`);
@@ -152,38 +207,20 @@ bot.on('callback_query', async (callbackQuery) => {
                 '*📚 О проекте "АЛГОРИТМ СУДЬБЫ"*\n\n' +
                 'Этот проект объединяет 9 древних и современных практик самопознания:\n\n' +
                 '• 🔢 Нумерология — код вашей судьбы\n' +
-                '• 🌳 Родология — связь с предками\n' +
-                '• 📜 И-Цзин — древняя Книга Перемен\n' +
-                '• 🌀 Да Лю Жэнь — китайская метафизика\n' +
-                '• ⚜️ Герметизм — 7 принципов\n' +
-                '• 📖 Зоар — каббалистический АЛГОРИТМ\n' +
+                '• 📖 Натальная карта — астрологический портрет\n' +
                 '• 🧠 Соционика — 16 типов личности\n' +
                 '• 🌞 Астропсихология — звездный портрет\n' +
                 '• ᚠ Руны — древние символы\n\n' +
-                '✨ *Все расчеты бесплатны и конфиденциальны* ✨\n\n' +
-                '📌 *Как пользоваться:*\n' +
-                '1. Нажмите "Открыть портал знаний"\n' +
-                '2. Выберите интересующую практику\n' +
-                '3. Введите данные для расчета\n' +
-                '4. Получите персональный результат' :
+                '✨ *Все расчеты бесплатны и конфиденциальны* ✨' :
 
                 '*📚 About "DESTINY ALGORITHM" Project*\n\n' +
                 'This project combines 9 ancient and modern practices for self-discovery:\n\n' +
                 '• 🔢 Numerology — your destiny code\n' +
-                '• 🌳 Rodology — connection with ancestors\n' +
-                '• 📜 I-Ching — ancient Book of Changes\n' +
-                '• 🌀 Da Liu Ren — Chinese metaphysics\n' +
-                '• ⚜️ Hermeticism — 7 principles\n' +
-                '• 📖 Zohar — Kabbalistic ALGORITHM\n' +
+                '• 📖 Natal chart — astrological portrait\n' +
                 '• 🧠 Socionics — 16 personality types\n' +
                 '• 🌞 Astropsychology — star portrait\n' +
-                '• ᚠ Runes — ancient symbols\n\n' +
-                '✨ *All calculations are free and confidential* ✨\n\n' +
-                '📌 *How to use:*\n' +
-                '1. Click "Open knowledge portal"\n' +
-                '2. Select the practice you are interested in\n' +
-                '3. Enter data for calculation\n' +
-                '4. Get a personalized result';
+                '• ᚠ Runes — Elder Futhark\n\n' +
+                '✨ *All calculations are free and confidential* ✨';
 
             await bot.sendMessage(chatId, aboutText, {
                 parse_mode: 'Markdown',
@@ -200,28 +237,24 @@ bot.on('callback_query', async (callbackQuery) => {
                 '❓ *Помощь*\n\n' +
                 '*Команды бота:*\n' +
                 '/start — начать работу\n' +
-                '/help — показать это сообщение\n' +
+                '/menu — открыть меню\n' +
                 '/practices — список всех практик\n' +
-                '/about — о проекте\n' +
-                '/feedback — отправить отзыв\n\n' +
+                '/about — о проекте\n\n' +
                 '*Проблемы с открытием приложения:*\n' +
                 '1️⃣ Убедитесь, что у вас последняя версия Telegram\n' +
-                '2️⃣ Используйте мобильное приложение (не веб-версию)\n' +
-                '3️⃣ Нажмите кнопку "🔮 Открыть портал знаний"\n' +
-                '4️⃣ Если не открывается, напишите /feedback' :
+                '2️⃣ Используйте мобильное приложение\n' +
+                '3️⃣ Нажмите кнопку "🔮 Открыть приложение" ниже' :
 
                 '❓ *Help*\n\n' +
                 '*Bot commands:*\n' +
                 '/start — start working\n' +
-                '/help — show this message\n' +
+                '/menu — open menu\n' +
                 '/practices — list of all practices\n' +
-                '/about — about the project\n' +
-                '/feedback — send feedback\n\n' +
+                '/about — about the project\n\n' +
                 '*Problems opening the app:*\n' +
                 '1️⃣ Make sure you have the latest version of Telegram\n' +
-                '2️⃣ Use the mobile app (not web version)\n' +
-                '3️⃣ Click "🔮 Open knowledge portal" button\n' +
-                '4️⃣ If it doesn\'t open, write /feedback';
+                '2️⃣ Use the mobile app\n' +
+                '3️⃣ Click the "🔮 Open app" button below';
 
             await bot.sendMessage(chatId, helpText, {
                 parse_mode: 'Markdown',
@@ -232,9 +265,28 @@ bot.on('callback_query', async (callbackQuery) => {
                     ]
                 }
             });
+
+        } else if (data === 'menu') {
+            // Отправляем меню команд
+            const menuText = userLanguage.startsWith('ru') ?
+                '📋 *Меню команд*\n\n' +
+                '🔮 /start — начать работу\n' +
+                '📋 /menu — открыть меню\n' +
+                '🔢 /practices — список всех практик\n' +
+                '📚 /about — о проекте\n' +
+                '❓ /help — помощь' :
+
+                '📋 *Commands Menu*\n\n' +
+                '🔮 /start — start working\n' +
+                '📋 /menu — open menu\n' +
+                '🔢 /practices — list of all practices\n' +
+                '📚 /about — about the project\n' +
+                '❓ /help — help';
+
+            await bot.sendMessage(chatId, menuText, { parse_mode: 'Markdown' });
         }
 
-        // Отвечаем на callback, чтобы убрать "часики"
+        // Отвечаем на callback
         await bot.answerCallbackQuery(callbackQuery.id);
         console.log(`✅ Callback ${data} обработан для ${chatId}`);
 
@@ -243,70 +295,29 @@ bot.on('callback_query', async (callbackQuery) => {
     }
 });
 
-// Команда /help
-bot.onText(/\/help/, async (msg) => {
-    const chatId = msg.chat.id;
-    const userLanguage = msg.from.language_code || 'ru';
-
-    try {
-        const helpText = userLanguage.startsWith('ru') ?
-            '❓ *Команды бота:*\n\n' +
-            '/start — начать работу\n' +
-            '/help — показать это сообщение\n' +
-            '/practices — список всех практик\n' +
-            '/about — о проекте\n' +
-            '/feedback — отправить отзыв' :
-
-            '❓ *Bot commands:*\n\n' +
-            '/start — start working\n' +
-            '/help — show this message\n' +
-            '/practices — list of all practices\n' +
-            '/about — about the project\n' +
-            '/feedback — send feedback';
-
-        await bot.sendMessage(chatId, helpText, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: userLanguage.startsWith('ru') ? '🔮 Открыть приложение' : '🔮 Open app',
-                        web_app: { url: getWebAppUrl() } }]
-                ]
-            }
-        });
-    } catch (error) {
-        console.error('❌ Ошибка отправки help:', error);
-    }
-});
-
 // Команда /practices
 bot.onText(/\/practices/, async (msg) => {
     const chatId = msg.chat.id;
     const userLanguage = msg.from.language_code || 'ru';
 
+    const practicesText = userLanguage.startsWith('ru') ?
+        '📚 *Доступные практики:*\n\n' +
+        '1️⃣ *Нумерология* — расчет по ФИО и дате\n' +
+        '2️⃣ *Натальная карта* — астрологический портрет\n' +
+        '3️⃣ *Соционика* — 16 типов личности\n' +
+        '4️⃣ *Астропсихология* — психология по звездам\n' +
+        '5️⃣ *Руны* — гадание на Старшем Футарке\n\n' +
+        '✨ *Выберите практику в приложении* ✨' :
+
+        '📚 *Available practices:*\n\n' +
+        '1️⃣ *Numerology* — calculation by name and date\n' +
+        '2️⃣ *Natal chart* — astrological portrait\n' +
+        '3️⃣ *Socionics* — 16 personality types\n' +
+        '4️⃣ *Astropsychology* — psychology by the stars\n' +
+        '5️⃣ *Runes* — Elder Futhark divination\n\n' +
+        '✨ *Choose a practice in the app* ✨';
+
     try {
-        const practicesText = userLanguage.startsWith('ru') ?
-            '📚 *Доступные практики:*\n\n' +
-            '1️⃣ *Нумерология* — расчет по ФИО и дате\n' +
-            '2️⃣ *Родология* — исследование родовых программ\n' +
-            '3️⃣ *И-Цзин* — ответ на вопрос по гексаграммам\n' +
-            '4️⃣ *Да Лю Жэнь* — китайская метафизика\n' +
-            '5️⃣ *Герметизм* — 7 принципов\n' +
-            '6️⃣ *Зоар* — АЛГОРИТМ СУДЬБЫ\n' +
-            '7️⃣ *Соционика* — определение типа личности\n' +
-            '8️⃣ *Астропсихология* — натальная карта\n' +
-            '9️⃣ *Руны* — гадание на Старшем Футарке' :
-
-            '📚 *Available practices:*\n\n' +
-            '1️⃣ *Numerology* — calculation by name and date\n' +
-            '2️⃣ *Rodology* — research of ancestral programs\n' +
-            '3️⃣ *I-Ching* — answer by hexagrams\n' +
-            '4️⃣ *Da Liu Ren* — Chinese metaphysics\n' +
-            '5️⃣ *Hermeticism* — 7 principles\n' +
-            '6️⃣ *Zohar* — DESTINY ALGORITHM\n' +
-            '7️⃣ *Socionics* — 16 personality types\n' +
-            '8️⃣ *Astropsychology* — natal chart\n' +
-            '9️⃣ *Runes* — Elder Futhark divination';
-
         await bot.sendMessage(chatId, practicesText, {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -321,34 +332,82 @@ bot.onText(/\/practices/, async (msg) => {
     }
 });
 
-// Команда /feedback
-bot.onText(/\/feedback/, async (msg) => {
+// Команда /about
+bot.onText(/\/about/, async (msg) => {
     const chatId = msg.chat.id;
     const userLanguage = msg.from.language_code || 'ru';
 
+    const aboutText = userLanguage.startsWith('ru') ?
+        '*📚 О проекте "АЛГОРИТМ СУДЬБЫ"*\n\n' +
+        'Этот проект объединяет 9 древних и современных практик самопознания.\n\n' +
+        '✨ *Все расчеты бесплатны и конфиденциальны* ✨\n\n' +
+        '📌 *Как пользоваться:*\n' +
+        '1. Нажмите кнопку "🔮 Открыть приложение"\n' +
+        '2. Выберите интересующую практику\n' +
+        '3. Введите данные для расчета\n' +
+        '4. Получите персональный результат' :
+
+        '*📚 About "DESTINY ALGORITHM" Project*\n\n' +
+        'This project combines 9 ancient and modern practices for self-discovery.\n\n' +
+        '✨ *All calculations are free and confidential* ✨\n\n' +
+        '📌 *How to use:*\n' +
+        '1. Click the "🔮 Open app" button\n' +
+        '2. Select the practice you are interested in\n' +
+        '3. Enter data for calculation\n' +
+        '4. Get a personalized result';
+
     try {
-        const feedbackText = userLanguage.startsWith('ru') ?
-            '💬 *Обратная связь*\n\n' +
-            'Вы можете отправить свои вопросы, предложения или сообщить об ошибке:\n\n' +
-            '📧 Email: support@yournumerology.ru\n' +
-            '💬 Telegram: @yournumerology_support\n\n' +
-            'Мы ответим в ближайшее время!' :
-
-            '💬 *Feedback*\n\n' +
-            'You can send your questions, suggestions or report a bug:\n\n' +
-            '📧 Email: support@yournumerology.ru\n' +
-            '💬 Telegram: @yournumerology_support\n\n' +
-            'We will reply as soon as possible!';
-
-        await bot.sendMessage(chatId, feedbackText, { parse_mode: 'Markdown' });
+        await bot.sendMessage(chatId, aboutText, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: userLanguage.startsWith('ru') ? '🔮 Открыть приложение' : '🔮 Open app',
+                        web_app: { url: getWebAppUrl() } }]
+                ]
+            }
+        });
     } catch (error) {
-        console.error('❌ Ошибка отправки feedback:', error);
+        console.error('❌ Ошибка отправки about:', error);
+    }
+});
+
+// Команда /help
+bot.onText(/\/help/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userLanguage = msg.from.language_code || 'ru';
+
+    const helpText = userLanguage.startsWith('ru') ?
+        '❓ *Команды бота:*\n\n' +
+        '/start — начать работу\n' +
+        '/menu — открыть меню\n' +
+        '/practices — список всех практик\n' +
+        '/about — о проекте\n' +
+        '/help — показать это сообщение' :
+
+        '❓ *Bot commands:*\n\n' +
+        '/start — start working\n' +
+        '/menu — open menu\n' +
+        '/practices — list of all practices\n' +
+        '/about — about the project\n' +
+        '/help — show this message';
+
+    try {
+        await bot.sendMessage(chatId, helpText, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: userLanguage.startsWith('ru') ? '🔮 Открыть приложение' : '🔮 Open app',
+                        web_app: { url: getWebAppUrl() } }]
+                ]
+            }
+        });
+    } catch (error) {
+        console.error('❌ Ошибка отправки help:', error);
     }
 });
 
 // Обработка обычных сообщений
 bot.on('message', async (msg) => {
-    // Игнорируем команды (они уже обработаны выше)
     if (msg.text && !msg.text.startsWith('/')) {
         const chatId = msg.chat.id;
         const userLanguage = msg.from.language_code || 'ru';
@@ -380,9 +439,9 @@ bot.on('message', async (msg) => {
         console.log(`✅ Telegram бот успешно запущен!`);
         console.log(`📱 Имя: ${botInfo.first_name}`);
         console.log(`🔗 Ссылка: https://t.me/${botInfo.username}`);
-        console.log(`🌐 Базовый URL: ${baseWebAppUrl}`);
-        console.log(`⏱️  Режим: polling`);
-        console.log(`👥 Поддержка: @yournumerology_support`);
+        console.log(`🌐 WebApp URL: ${WEBAPP_URL}`);
+        console.log(`📋 Команды меню установлены`);
+        console.log(`👥 Поддержка: @${botInfo.username}`);
     } catch (error) {
         console.error('❌ Ошибка получения информации о боте:', error);
     }
