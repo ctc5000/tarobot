@@ -21,11 +21,14 @@ function getVersionParam() {
 }
 
 // Функция для получения полного URL с версией
-function getWebAppUrl() {
+/*function getWebAppUrl() {
     const versionParam = getVersionParam();
     return `${baseWebAppUrl}/?${versionParam}`;
+}*/
+function getWebAppUrl() {
+    // Используем прямую ссылку на мини-приложение
+    return 'https://t.me/you_desteny_bot/destalgo';
 }
-
 // Проверяем наличие токена
 if (!token) {
     console.error('❌ ОШИБКА: BOT_TOKEN не найден в .env файле!');
@@ -81,11 +84,7 @@ bot.onText(/\/start/, async (msg) => {
 Я — ваш проводник в мире тайных знаний. Здесь вы найдете 9 древних практик для познания себя:
 
 🔢 *Нумерология* — магия чисел и код судьбы
-🌳 *Родология* — сила рода и память предков
-📜 *И-Цзин* — 64 гексаграммы Книги Перемен
-🌀 *Да Лю Жэнь* — великое тайное
-⚜️ *Герметизм* — 7 принципов мироздания
-📖 *Зоар* — каббала и АЛГОРИТМ СУДЬБЫ
+📖 *Натальная карта* —определение личности по звездам
 🧠 *Соционика* — 16 типов личности
 🌞 *Астропсихология* — психология по звездам
 ᚠ *Руны* — Старший Футарк
@@ -120,7 +119,8 @@ I am your guide in the world of secret knowledge. Here you will find 9 ancient p
                 inline_keyboard: [
                     [{
                         text: userLanguage.startsWith('ru') ? '🔮 Открыть портал знаний' : '🔮 Open knowledge portal',
-                        web_app: { url: getWebAppUrl() }
+                       // web_app: { url: getWebAppUrl() }
+                        web_app: { url: 'https://t.me/you_desteny_bot/destalgo' }
                     }],
                     [
                         { text: userLanguage.startsWith('ru') ? '📚 О проекте' : '📚 About', callback_data: 'about' },
