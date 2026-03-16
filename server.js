@@ -93,6 +93,28 @@ app.post('/api/tarot/reading', (req, res) => {
         });
     }
 });
+app.post('/api/tarot/quick', (req, res) => {
+    try {
+        const { question } = req.body;
+
+        if (!question) {
+            return res.status(400).json({
+                success: false,
+                error: 'Не указан вопрос'
+            });
+        }
+
+        // Всегда используем расклад "five" (5 карт)
+        const result = services.tarot.performReading(question, 'five');
+        res.json(result);
+    } catch (error) {
+        console.error('Ошибка в /api/tarot/quick:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 // Специальный маршрут для определения версии на клиенте
 app.get('/api/version', (req, res) => {
     res.json({
