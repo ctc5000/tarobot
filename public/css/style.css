@@ -3618,3 +3618,19 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
         font-size: 1.1rem;
     }
 }
+/* Стили для PDF (не влияют на отображение, но могут пригодиться) */
+.pdf-document {
+    font-family: 'Playfair Display', serif;
+    line-height: 1.6;
+}
+
+.pdf-document h1 {
+    color: #c9a54b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pdf-document .signature {
+    font-family: 'Inter', cursive;
+    margin-top: 30px;
+}

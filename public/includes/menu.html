@@ -1,53 +1,51 @@
-<!-- Гамбургер-меню для мобильных -->
-<button class="menu-toggle">
+<!-- Мобильное меню -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-header">
+    <div class="header-left">
+      <span class="logo-icon">⛤</span>
+      <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+    </div>
+    <button class="mobile-menu-close" id="mobileMenuClose">&times;</button>
+  </div>
+  <nav class="mobile-nav">
+    <a href="/" class="mobile-nav-link" data-page="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-text">Главная</span>
+    </a>
+    <a href="/numerology" class="mobile-nav-link" data-page="numerology">
+      <span class="nav-icon">🔢</span>
+      <span class="nav-text">Нумерология</span>
+    </a>
+    <a href="/natal-chart" class="mobile-nav-link" data-page="natal-chart">
+      <span class="nav-icon">🌠</span>
+      <span class="nav-text">Натальная карта</span>
+    </a>
+    <a href="/socionics" class="mobile-nav-link" data-page="socionics">
+      <span class="nav-icon">🧠</span>
+      <span class="nav-text">Соционика</span>
+    </a>
+    <a href="/astropsychology" class="mobile-nav-link" data-page="astropsychology">
+      <span class="nav-icon">🌞</span>
+      <span class="nav-text">Астропсихология</span>
+    </a>
+    <a href="/tarot" class="mobile-nav-link" data-page="tarot">
+      <span class="nav-icon">🎴</span>
+      <span class="nav-text">Таро</span>
+    </a>
+  </nav>
+  <div class="mobile-menu-footer">
+    <p>© 2026 АЛГОРИТМ СУДЬБЫ</p>
+  </div>
+</div>
+
+<!-- Оверлей для мобильного меню -->
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- Кнопка гамбургер -->
+<button class="menu-toggle" id="menuToggle">
   <div class="hamburger">
     <span></span>
     <span></span>
     <span></span>
   </div>
 </button>
-
-<!-- Оверлей -->
-<div class="menu-overlay"></div>
-
-<!-- Мобильное меню -->
-<div class="mobile-menu">
-  <div class="mobile-menu-header">
-    <div class="header-left">
-      <span class="logo-icon">⛤</span>
-      <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
-    </div>
-    <button class="mobile-menu-close">&times;</button>
-  </div>
-
-  <nav class="mobile-nav">
-    <a href="/?v=1" class="mobile-nav-link" data-page="home">
-      <span class="nav-icon">🏠</span>
-      <span class="nav-text">Главная</span>
-    </a>
-    <a href="/numerology?v=1" class="mobile-nav-link" data-page="numerology">
-      <span class="nav-icon">🔢</span>
-      <span class="nav-text">Нумерология</span>
-    </a>
-    <a href="/natal-chart?v=1" class="mobile-nav-link" data-page="natal-chart">
-      <span class="nav-icon">🌠</span>
-      <span class="nav-text">Натальная карта</span>
-    </a>
-    <a href="/socionics?v=1" class="mobile-nav-link" data-page="socionics">
-      <span class="nav-icon">🧠</span>
-      <span class="nav-text">Соционика</span>
-    </a>
-    <a href="/astropsychology?v=1" class="mobile-nav-link" data-page="astropsychology">
-      <span class="nav-icon">🌞</span>
-      <span class="nav-text">Астропсихология</span>
-    </a>
-    <a href="/tarot?v=1" class="mobile-nav-link" data-page="tarot">
-      <span class="nav-icon">🎴</span>
-      <span class="nav-text">Расклад таро</span>
-    </a>
-  </nav>
-
-  <div class="mobile-menu-footer">
-    <p>© 2026 АЛГОРИТМ СУДЬБЫ</p>
-  </div>
-</div>

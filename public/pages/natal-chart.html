@@ -10,6 +10,41 @@
     <link rel="stylesheet" href="/css/style.css">
     <!-- Подключаем библиотеку для маски ввода -->
     <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
+    <!-- Библиотеки для PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        (function() {
+            const currentVersion = sessionStorage.getItem('app-version');
+            const urlVersion = new URLSearchParams(window.location.search).get('v');
+
+            if (urlVersion && urlVersion !== currentVersion) {
+                console.log('📦 Новая версия:', urlVersion);
+                sessionStorage.setItem('app-version', urlVersion || Date.now());
+            }
+        })();
+    </script>
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
+
+        ym(107722589, 'init', {
+            ssr:true,
+            webvisor:true,
+            clickmap:true,
+            ecommerce:"dataLayer",
+            referrer: document.referrer,
+            url: location.href,
+            accurateTrackBounce:true,
+            trackLinks:true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
 </head>
 <body>
 <!-- Меню будет загружено через menu-loader.js -->
@@ -148,8 +183,14 @@
                     <span class="button-text">Новый расчет</span>
                 </button>
             </div>
+            <div class="pdf-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="mystic-button small" id="savePdfBtn">
+                    <span class="button-text">📄 Сохранить в PDF</span>
+                </button>
+            </div>
         </section>
     </div>
+
 </main>
 
 <footer class="site-footer">
@@ -173,69 +214,9 @@
         </div>
     </div>
 </footer>
-<script>
-    (function() {
-        // Функция для обновления всех ресурсов
-        function forceReloadResources() {
-            console.log('🔄 Принудительное обновление ресурсов...');
 
-            // Уникальная версия на основе времени
-            const version = Date.now();
-
-            // 1. Обновляем все CSS ссылки
-            document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                if (link.href && !link.href.includes('fonts.googleapis.com')) {
-                    const baseUrl = link.href.split('?')[0];
-                    link.href = baseUrl + '?v=' + version;
-                    console.log('✅ CSS обновлен:', link.href);
-                }
-            });
-
-            // 2. Обновляем все JS скрипты
-            document.querySelectorAll('script[src]').forEach(script => {
-                if (script.src && !script.src.includes('imask') && !script.src.includes('telegram')) {
-                    const baseUrl = script.src.split('?')[0];
-                    const newSrc = baseUrl + '?v=' + version;
-
-                    // Создаем новый скрипт для принудительной загрузки
-                    const newScript = document.createElement('script');
-                    newScript.src = newSrc;
-                    newScript.onload = () => console.log('✅ Скрипт загружен:', newSrc);
-
-                    // Заменяем старый скрипт новым
-                    script.parentNode.replaceChild(newScript, script);
-                }
-            });
-
-            // 3. Сохраняем версию, чтобы не обновлять слишком часто
-            sessionStorage.setItem('app-version', version);
-        }
-
-        // Проверяем, нужно ли обновлять
-        const currentVersion = sessionStorage.getItem('app-version');
-        const urlVersion = new URLSearchParams(window.location.search).get('v');
-
-        // Если версия из URL отличается от сохраненной - обновляем
-        if (urlVersion && urlVersion !== currentVersion) {
-            console.log('📦 Обнаружена новая версия:', urlVersion);
-            forceReloadResources();
-        } else if (!currentVersion) {
-            // Первый запуск - просто сохраняем версию
-            console.log('🚀 Первый запуск');
-            sessionStorage.setItem('app-version', urlVersion || Date.now());
-        } else {
-            console.log('✓ Версия актуальна');
-        }
-
-        // 4. Дополнительно: перезагружаем страницу если есть параметр reload
-        if (window.location.search.includes('reload=1')) {
-            console.log('🔄 Принудительная перезагрузка страницы...');
-            window.location.reload(true);
-        }
-    })();
-</script>
+<script src="/js/menu-loader.js"></script>
 <script src="/js/natal-chart-draw.js"></script>
 <script src="/js/natal-chart.js"></script>
-<script src="/js/menu-loader.js"></script>
 </body>
 </html>
