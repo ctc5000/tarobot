@@ -113,7 +113,7 @@ class LoveInterpreter {
 
     calculateLoveNumber(numbers) {
         // Число любви = число имени + число судьбы
-        const sum = numbers.name + numbers.fate;
+        let sum = numbers.name + numbers.fate;
         while (sum > 9 && sum !== 11 && sum !== 22) {
             sum = String(sum).split('').reduce((s, d) => s + parseInt(d), 0);
         }
@@ -130,7 +130,7 @@ class LoveInterpreter {
     }
 
     calculateFamilyNumber(numbers) {
-        const sum = numbers.surname + numbers.patronymic;
+        let sum = numbers.surname + numbers.patronymic;
         while (sum > 9 && sum !== 11 && sum !== 22) {
             sum = String(sum).split('').reduce((s, d) => s + parseInt(d), 0);
         }

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Страница не найдена | АЛГОРИТМ СУДЬБЫ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1520 100%);
+            color: #e5e5e5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 120px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 20px;
+            color: #c9a54b;
+            text-shadow: 0 0 30px rgba(201,165,75,0.3);
+            animation: glow 3s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(201,165,75,0.3); }
+            to { text-shadow: 0 0 40px rgba(201,165,75,0.6); }
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #a0a0b0;
+            line-height: 1.6;
+        }
+
+        .symbol {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #c9a54b;
+            opacity: 0.5;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #c9a54b, #b08c3a);
+            color: #0a0a0f;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(201,165,75,0.3);
+        }
+
+        .links {
+            margin-top: 40px;
+        }
+
+        .links a {
+            color: #c9a54b;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 14px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .links a:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="symbol">⛤</div>
+    <h1>404</h1>
+    <h2>Страница не найдена</h2>
+    <p>Пути судьбы неисповедимы...<br>Возможно, эта страница переместилась или никогда не существовала.</p>
+    <a href="/" class="button">Вернуться на главную</a>
+    <div class="links">
+        <a href="/numerology">Нумерология</a>
+        <a href="/tarot">Таро</a>
+        <a href="/natal-chart">Натальная карта</a>
+        <a href="/socionics">Соционика</a>
+    </div>
+</div>
+</body>
+</html>

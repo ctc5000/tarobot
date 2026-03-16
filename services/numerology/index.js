@@ -11,6 +11,7 @@ const LoveInterpreter = require('./interpreters/loveInterpreter');
 const MoneyInterpreter = require('./interpreters/moneyInterpreter');
 const HealthInterpreter = require('./interpreters/healthInterpreter');
 const TalentInterpreter = require('./interpreters/talentInterpreter');
+const PatternsGenerator = require('./interpreters/patternsGenerator');
 
 /**
  * Главный сервис нумерологии
@@ -31,6 +32,9 @@ class NumerologyService {
         this.moneyInterpreter = new MoneyInterpreter();
         this.healthInterpreter = new HealthInterpreter();
         this.talentInterpreter = new TalentInterpreter();
+
+        // Генератор паттернов
+        this.patternsGenerator = new PatternsGenerator();
     }
 
     /**
@@ -68,7 +72,7 @@ class NumerologyService {
     }
 
     /**
-     * Получение дополнительных интерпретаций
+     * Получение всех дополнительных интерпретаций
      * @param {Object} baseNumbers - базовые числа
      * @returns {Object} все интерпретации
      */
@@ -106,6 +110,44 @@ class NumerologyService {
             default:
                 throw new Error(`Неизвестный тип интерпретации: ${type}`);
         }
+    }
+
+    /**
+     * Генерация паттернов личности
+     * @param {Object} numerology - данные нумерологии
+     * @param {Object} zodiac - данные знака зодиака
+     * @param {Object} fengShui - данные фен-шуй
+     * @param {Object} tarot - данные Таро
+     * @param {Object} psychology - данные психологии
+     * @returns {Array} массив паттернов
+     */
+    generatePatterns(numerology, zodiac, fengShui, tarot, psychology) {
+        return this.patternsGenerator.generate(
+            numerology,
+            zodiac,
+            fengShui,
+            tarot,
+            psychology
+        );
+    }
+
+    /**
+     * Сокращенные паттерны для превью
+     * @param {Object} numerology - данные нумерологии
+     * @param {Object} zodiac - данные знака зодиака
+     * @param {Object} fengShui - данные фен-шуй
+     * @param {Object} tarot - данные Таро
+     * @param {Object} psychology - данные психологии
+     * @returns {Array} массив из 3 паттернов
+     */
+    getPreviewPatterns(numerology, zodiac, fengShui, tarot, psychology) {
+        return this.patternsGenerator.getPreviewPatterns(
+            numerology,
+            zodiac,
+            fengShui,
+            tarot,
+            psychology
+        );
     }
 
     /**

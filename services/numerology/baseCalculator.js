@@ -61,7 +61,7 @@ class BaseCalculator {
      * @returns {number} число судьбы
      */
     calculateFateNumber(birthDate) {
-        const sum = birthDate.split('.').join('').split('')
+        let sum = birthDate.split('.').join('').split('')
             .reduce((s, d) => s + parseInt(d), 0);
         return this.reduceToRange(sum);
     }

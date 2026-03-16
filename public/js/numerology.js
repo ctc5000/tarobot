@@ -1,3 +1,5 @@
+// /js/numerology.js - ПОЛНАЯ ВЕРСИЯ (без preview)
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🔮 Numerology.js загружен');
 
@@ -7,67 +9,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const newCalculationBtn = document.getElementById('newCalculationBtn');
 
     if (!form) {
-        console.error('❌ Форма с id="numerologyForm" не найдена!');
+        console.error('❌ Форма не найдена');
         return;
     }
+
+    let dateMask = null;
+
     // ==================== МАСКА ДЛЯ ДАТЫ ====================
     const birthDateInput = document.getElementById('birthDate');
     if (birthDateInput && typeof IMask !== 'undefined') {
         dateMask = IMask(birthDateInput, {
             mask: '00.00.0000',
             blocks: {
-                dd: { // день
-                    mask: IMask.MaskedRange,
-                    from: 1,
-                    to: 31,
-                    maxLength: 2
-                },
-                mm: { // месяц
-                    mask: IMask.MaskedRange,
-                    from: 1,
-                    to: 12,
-                    maxLength: 2
-                },
-                yyyy: { // год
-                    mask: IMask.MaskedRange,
-                    from: 1900,
-                    to: 2100,
-                    maxLength: 4
-                }
+                dd: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
+                mm: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
+                yyyy: { mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4 }
             },
-            lazy: false, // показывать плейсхолдер
-            autofix: true, // автоматически исправлять неверные значения
+            lazy: false,
+            autofix: true,
             placeholderChar: '_'
         });
-
-        // Оставляем поле пустым
         birthDateInput.value = '';
     }
-    // Проверяем наличие liveCalculator
-    if (typeof LiveCalculator !== 'undefined' && !window.liveCalculator) {
-        window.liveCalculator = new LiveCalculator();
-    } else if (!window.liveCalculator) {
-        console.warn('⚠️ LiveCalculator не найден, создаем упрощенную версию');
-        window.liveCalculator = {
-            calculateWithEffect: async function(form, button, callback) {
-                console.log('🔄 Упрощенный расчет');
-                button.disabled = true;
-                button.innerHTML = '<span class="button-text">🔮 Расчет...</span>';
 
-                await callback();
-
-                button.disabled = false;
-                button.innerHTML = '<span class="button-text">✨ Рассчитать судьбу</span>';
-            },
-            createSparks: function() {},
-            sleep: function(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
-        };
-    }
-
-    addFormFieldEffects();
-
+    // ==================== ОБРАБОТКА ФОРМЫ ====================
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         console.log('📤 Форма отправлена');
@@ -78,60 +43,60 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!validateForm(fullName, birthDate)) return;
 
         if (loadingSpinner) loadingSpinner.style.display = 'block';
+        form.style.opacity = '0.5';
+        form.style.pointerEvents = 'none';
 
         try {
-            await window.liveCalculator.calculateWithEffect(
-                form,
-                form.querySelector('button[type="submit"]'),
-                async () => {
-                    try {
-                        const response = await fetch('/api/calculate/numerology', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ fullName, birthDate })
-                        });
+            // Отправляем запрос на сервер (БЕЗ preview)
+            const response = await fetch('/api/calculate/numerology', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, birthDate })
+            });
 
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-                        const data = await response.json();
+            const data = await response.json();
 
-                        if (data.success) {
-                            await window.liveCalculator.sleep(500);
+            if (data.success) {
+                // Сохраняем данные для дополнительных расчетов
+                window.currentNumerologyData = data.data;
 
-                            // Сохраняем данные для дополнительных расчетов
-                            window.currentNumerologyData = data.data;
+                // Отображаем результаты
+                displayResults(data.data);
 
-                            displayResults(data.data);
+                if (resultSection) {
+                    resultSection.style.display = 'block';
+                    resultSection.classList.add('fade-in');
+                    resultSection.scrollIntoView({ behavior: 'smooth' });
+                }
 
-                            if (resultSection) {
-                                resultSection.style.display = 'block';
-                                resultSection.classList.add('fade-in');
-                                resultSection.scrollIntoView({ behavior: 'smooth' });
-                            }
+                form.style.display = 'none';
+                showNotification('✨ Расчет выполнен!', 'success');
 
-                            form.style.display = 'none';
-                           // showNotification('✨ Судьба раскрыта!', 'success');
-
-                            for (let i = 0; i < 5; i++) {
-                                window.liveCalculator.createSparks();
-                            }
-                        } else {
-                            showNotification('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
-                        }
-                    } catch (error) {
-                        console.error('❌ Ошибка:', error);
-                        showNotification('❌ Ошибка при подключении к серверу: ' + error.message, 'error');
+                // Создаем эффект искр
+                for (let i = 0; i < 5; i++) {
+                    if (window.liveCalculator) {
+                        window.liveCalculator.createSparks();
                     }
                 }
-            );
+
+            } else {
+                showNotification('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                form.style.opacity = '1';
+                form.style.pointerEvents = 'auto';
+            }
         } catch (error) {
             console.error('❌ Ошибка:', error);
-            showNotification('❌ Произошла внутренняя ошибка', 'error');
+            showNotification('❌ Ошибка при подключении к серверу: ' + error.message, 'error');
+            form.style.opacity = '1';
+            form.style.pointerEvents = 'auto';
         } finally {
             if (loadingSpinner) loadingSpinner.style.display = 'none';
         }
     });
 
+    // ==================== НОВЫЙ РАСЧЕТ ====================
     if (newCalculationBtn) {
         newCalculationBtn.addEventListener('click', function() {
             if (resultSection) {
@@ -139,662 +104,82 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultSection.style.display = 'none';
             }
             form.style.display = 'block';
+            form.style.opacity = '1';
+            form.style.pointerEvents = 'auto';
             form.reset();
+
+            if (dateMask) {
+                dateMask.value = '';
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
             showNotification('✨ Готов к новым открытиям!', 'info');
         });
     }
 
-    // Добавляем обработчики для кнопок дополнительных расчетов
-    setupAdditionalCalculations();
-
+    // ==================== ТАБЫ (основные) ====================
     const tabBtns = document.querySelectorAll('.tab-btn');
     if (tabBtns.length > 0) {
         tabBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 const tabId = this.dataset.tab;
 
+                // ВАЖНО: проверяем, что tabId существует
+                if (!tabId) {
+                    console.warn('⚠️ tabId не определен');
+                    return;
+                }
+
+                // Деактивируем все кнопки
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+                // Деактивируем все контенты
                 document.querySelectorAll('.tab-content').forEach(c => {
                     c.classList.remove('active');
                     c.classList.remove('fade-in');
                 });
 
+                // Активируем текущую кнопку
                 this.classList.add('active');
-                const tabElement = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+
+                // Формируем ID элемента с проверкой
+                const formattedTabId = tabId.charAt(0).toUpperCase() + tabId.slice(1).toLowerCase();
+                const tabElement = document.getElementById('tab' + formattedTabId);
 
                 if (tabElement) {
                     tabElement.classList.add('active', 'fade-in');
                     if (window.liveCalculator) {
                         window.liveCalculator.createSparks();
                     }
+                } else {
+                    console.warn(`⚠️ Элемент с id "tab${formattedTabId}" не найден`);
+
+                    // Пробуем альтернативные варианты (на случай несоответствия регистра)
+                    const possibleIds = [
+                        'tab' + tabId,
+                        'tab' + tabId.toLowerCase(),
+                        'tab' + tabId.toUpperCase(),
+                        'tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)
+                    ];
+
+                    for (let id of possibleIds) {
+                        const altElement = document.getElementById(id);
+                        if (altElement) {
+                            altElement.classList.add('active', 'fade-in');
+                            break;
+                        }
+                    }
                 }
             });
         });
     }
 
+    // Добавляем эффекты
+    addFormFieldEffects();
     addResultCardEffects();
 });
 
-// ==================== ФУНКЦИИ РАСЧЕТА ТЕКСТОВЫХ ОПИСАНИЙ ====================
-
-function calculateCareer(numbers) {
-    const careerNum = calculateCareerNumber(numbers);
-    const successNum = calculateSuccessNumber(numbers);
-    const realizationNum = calculateRealizationNumber(numbers);
-
-    const descriptions = {
-        1: 'Вы прирожденный лидер. Вам подходят руководящие должности, управление проектами, политика. Ваша карьера будет успешной там, где нужно принимать решения и вести за собой людей.',
-        2: 'Вы дипломат и миротворец. Вам подходят профессии, связанные с переговорами, психологией, дипломатией. Вы отлично работаете в команде и умеете сглаживать конфликты.',
-        3: 'Вы творческая личность. Вам подходят профессии в сфере искусства, дизайна, журналистики, рекламы. Ваша карьера расцветет там, где есть место самовыражению.',
-        4: 'Вы надежный организатор. Вам подходят профессии, требующие системности: бухгалтерия, администрирование, строительство. Вы умеете создавать порядок из хаоса.',
-        5: 'Вы исследователь и путешественник. Вам подходят профессии, связанные с поездками, коммуникациями, торговлей. Вам важно разнообразие и свобода в работе.',
-        6: 'Вы наставник и заботливый руководитель. Вам подходят профессии в образовании, медицине, социальной сфере. Вы умеете заботиться о других и создавать комфорт.',
-        7: 'Вы аналитик и исследователь. Вам подходят профессии в науке, IT, аналитике, философии. Вы любите глубоко изучать вопросы и находить скрытые закономерности.',
-        8: 'Вы прирожденный управленец и финансист. Вам подходят профессии в бизнесе, финансах, управлении крупными проектами. Вы умеете зарабатывать и управлять ресурсами.',
-        9: 'Вы гуманист и универсал. Вам подходят профессии, где вы можете помогать многим: международные организации, благотворительность, образование. Вы способны охватывать глобальные задачи.'
-    };
-
-    return `
-        <p><strong>Ваше карьерное число: ${careerNum}</strong></p>
-        <p>${descriptions[careerNum] || 'У вас уникальный карьерный путь.'}</p>
-        <p><strong>Число успеха (${successNum}):</strong> ${getSuccessDescription(successNum)}</p>
-        <p><strong>Число реализации (${realizationNum}):</strong> ${getRealizationDescription(realizationNum)}</p>
-    `;
-}
-
-function calculateFamily(numbers) {
-    const familyNum = calculateFamilyNumber(numbers);
-    const partnerNum = calculatePartnerNumber(numbers);
-    const childrenNum = calculateChildrenNumber(numbers);
-
-    const descriptions = {
-        1: 'В семье вы лидер и глава. Вам важно, чтобы ваше мнение уважали. Склонны принимать решения самостоятельно.',
-        2: 'В семье вы хранитель гармонии. Умеете сглаживать конфликты и создавать уют. Цените партнерские отношения.',
-        3: 'В семье вы источник радости и вдохновения. Любите праздники, общение с детьми, творческую атмосферу.',
-        4: 'В семье вы строитель и опора. Создаете стабильность, традиции, материальную базу. Цените надежность.',
-        5: 'В семье вы цените свободу. Вам важно личное пространство. Можете быть непостоянны в быту, но интересны как партнер.',
-        6: 'В семье вы заботливый родитель и партнер. Готовы жертвовать собой ради близких. Идеальный семьянин.',
-        7: 'В семье вы немного отстранены, погружены в себя. Вам нужно личное пространство. Цените духовную близость.',
-        8: 'В семье вы ответственный лидер. Обеспечиваете семью материально, принимаете важные решения. Требовательны к домочадцам.',
-        9: 'В семье вы универсальный партнер. Можете быть разным, подстраиваетесь под ситуацию. Цените гармонию и взаимопонимание.'
-    };
-
-    return `
-        <p><strong>Ваше семейное число: ${familyNum}</strong></p>
-        <p>${descriptions[familyNum] || 'У вас уникальный семейный путь.'}</p>
-        <p><strong>Число партнера (${partnerNum}):</strong> ${getPartnerDescription(partnerNum)}</p>
-        <p><strong>Число детей (${childrenNum}):</strong> ${getChildrenDescription(childrenNum)}</p>
-    `;
-}
-
-function calculateLove(numbers) {
-    const loveNum = calculateLoveNumber(numbers);
-    const compatibility = calculateCompatibility(numbers);
-
-    const descriptions = {
-        1: 'Вы страстный и инициативный партнер. Любите завоевывать, проявлять инициативу. Вам нужен партнер, который сможет оценить вашу энергию.',
-        2: 'Вы нежный и романтичный партнер. Цените гармонию и взаимопонимание. Вам важно чувствовать эмоциональную связь с партнером.',
-        3: 'Вы веселый и общительный партнер. Любите флирт, ухаживания, романтику. Вам нужен партнер, с которым интересно.',
-        4: 'Вы верный и надежный партнер. Отношения для вас — это ответственность. Цените стабильность и предсказуемость.',
-        5: 'Вы свободолюбивый партнер. Боитесь рутины, нуждаетесь в разнообразии. Вам нужен партнер, который даст вам свободу.',
-        6: 'Вы заботливый и преданный партнер. Готовы отдавать себя отношениям полностью. Ищете партнера, который оценит вашу заботу.',
-        7: 'Вы глубокий и загадочный партнер. Вам нужна духовная близость, общие интересы. Не терпите поверхностных отношений.',
-        8: 'Вы ответственный и серьезный партнер. Отношения для вас — проект. Цените партнера, который разделяет ваши цели.',
-        9: 'Вы универсальный партнер. Можете быть разным в разных отношениях. Ищете партнера, который примет вас целиком.'
-    };
-
-    let compatibilityText = '';
-    if (compatibility >= 80) compatibilityText = 'У вас отличная совместимость с большинством партнеров. Вы легко строите отношения.';
-    else if (compatibility >= 60) compatibilityText = 'У вас хорошая совместимость. Важно найти партнера, который разделяет ваши ценности.';
-    else if (compatibility >= 40) compatibilityText = 'Средняя совместимость. Отношения требуют работы и взаимопонимания.';
-    else compatibilityText = 'Сложная совместимость. Вам нужен особенный партнер, который поймет вашу глубину.';
-
-    return `
-        <p><strong>Ваше число любви: ${loveNum}</strong></p>
-        <p>${descriptions[loveNum] || 'У вас уникальный путь в любви.'}</p>
-        <p><strong>Совместимость: ${compatibility}%</strong> — ${compatibilityText}</p>
-    `;
-}
-
-function calculateMoney(numbers) {
-    const moneyNum = calculateMoneyNumber(numbers);
-    const abundanceNum = calculateAbundanceNumber(numbers);
-
-    const descriptions = {
-        1: 'Вы зарабатываете лидерством и инициативой. Деньги приходят к вам через новые проекты, руководящие должности. Вы можете быть первопроходцем в финансовых вопросах.',
-        2: 'Вы зарабатываете через партнерства и дипломатию. Деньги приходят через отношения, сотрудничество, посредничество. Вам важно уметь договариваться.',
-        3: 'Вы зарабатываете творчеством и коммуникацией. Деньги приходят через искусство, рекламу, обучение, развлечения. Ваш оптимизм притягивает финансы.',
-        4: 'Вы зарабатываете системным трудом и дисциплиной. Деньги приходят через стабильную работу, долгосрочные проекты, недвижимость. Вы умеете накапливать.',
-        5: 'Вы зарабатываете через свободу и риски. Деньги приходят через торговлю, путешествия, предпринимательство. Вам важна финансовая свобода.',
-        6: 'Вы зарабатываете через заботу и сервис. Деньги приходят через обслуживание, медицину, образование, помощь другим. Вы умеете создавать комфорт за деньги.',
-        7: 'Вы зарабатываете через знания и аналитику. Деньги приходят через науку, IT, консалтинг, эзотерику. Вам важно монетизировать свои знания.',
-        8: 'Вы прирожденный финансист. Деньги идут к вам легко, если вы управляете крупными проектами, инвестируете, занимаетесь бизнесом. У вас талант к приумножению.',
-        9: 'Вы зарабатываете через глобальные проекты и благотворительность. Деньги приходят, когда вы служите обществу, работаете в международных организациях.'
-    };
-
-    return `
-        <p><strong>Ваше финансовое число: ${moneyNum}</strong></p>
-        <p>${descriptions[moneyNum] || 'У вас уникальный финансовый путь.'}</p>
-        <p><strong>Число изобилия (${abundanceNum}):</strong> ${getAbundanceDescription(abundanceNum)}</p>
-    `;
-}
-
-function calculateHealth(numbers) {
-    const healthNum = calculateHealthNumber(numbers);
-    const energyNum = calculateEnergyNumber(numbers);
-
-    const descriptions = {
-        1: 'У вас сильная жизненная энергия. Вы активны и выносливы. Склонны к перегрузкам — важно вовремя отдыхать. Слабое место: сердце, давление.',
-        2: 'У вас чувствительная энергетика. Ваше здоровье зависит от эмоционального состояния. Склонны к психосоматике. Слабое место: желудок, лимфа.',
-        3: 'У вас подвижная энергия. Вы быстро восстанавливаетесь, но легко истощаетесь. Слабое место: нервная система, горло, щитовидная железа.',
-        4: 'У вас устойчивая энергетика. Вы выносливы и стабильны. Склонны к застойным явлениям. Слабое место: опорно-двигательный аппарат, зубы.',
-        5: 'У вас переменчивая энергия. То подъем, то спад. Важно соблюдать режим. Слабое место: бронхи, легкие, кожа.',
-        6: 'У вас гармоничная энергетика. Вы уравновешены и спокойны. Склонны к перееданию. Слабое место: почки, репродуктивная система.',
-        7: 'У вас глубокая энергетика. Вы чувствительны к тонким воздействиям. Склонны к меланхолии. Слабое место: кишечник, нервная система.',
-        8: 'У вас мощная энергетика. Вы сильны и выносливы. Склонны к перегрузкам и гипертонии. Слабое место: печень, желчный пузырь.',
-        9: 'У вас универсальная энергетика. Вы адаптивны, но можете распыляться. Слабое место: иммунная система, кровь.'
-    };
-
-    let energyText = '';
-    if (energyNum >= 8) energyText = 'У вас высокий уровень энергии. Вы активны и жизнерадостны.';
-    else if (energyNum >= 5) energyText = 'У вас средний уровень энергии. Важно поддерживать баланс.';
-    else energyText = 'У вас пониженный уровень энергии. Вам нужно больше отдыхать и восстанавливаться.';
-
-    return `
-        <p><strong>Ваше число здоровья: ${healthNum}</strong></p>
-        <p>${descriptions[healthNum] || 'У вас уникальная энергетика.'}</p>
-        <p><strong>Уровень энергии: ${energyNum}/10</strong> — ${energyText}</p>
-    `;
-}
-
-function calculateTalent(numbers) {
-    const talentNum = calculateTalentNumber(numbers);
-    const potentialNum = calculatePotentialNumber(numbers);
-
-    const descriptions = {
-        1: 'Ваш талант — лидерство и инициатива. Вы умеете начинать новые проекты, вести за собой людей, принимать решения. Вам подходит руководящая работа.',
-        2: 'Ваш талант — дипломатия и эмпатия. Вы умеете сглаживать конфликты, находить общий язык с разными людьми, создавать гармонию. Вам подходит работа с людьми.',
-        3: 'Ваш талант — творчество и самовыражение. Вы умеете создавать красивое, вдохновлять, развлекать. Вам подходит искусство, дизайн, журналистика.',
-        4: 'Ваш талант — организация и структурирование. Вы умеете создавать порядок, системы, планировать. Вам подходит администрирование, бухгалтерия, строительство.',
-        5: 'Ваш талант — коммуникация и адаптация. Вы легко находите общий язык, быстро учитесь, умеете продавать. Вам подходит торговля, PR, путешествия.',
-        6: 'Ваш талант — забота и наставничество. Вы умеете помогать, учить, лечить, создавать комфорт. Вам подходит педагогика, медицина, психология.',
-        7: 'Ваш талант — анализ и исследование. Вы умеете глубоко изучать вопросы, находить закономерности, видеть скрытое. Вам подходит наука, IT, аналитика.',
-        8: 'Ваш талант — управление и финансы. Вы умеете управлять ресурсами, людьми, проектами. Вам подходит бизнес, финансы, крупные проекты.',
-        9: 'Ваш талант — универсальность и глобальное мышление. Вы способны охватывать разные сферы, видеть картину целиком. Вам подходят международные проекты.'
-    };
-
-    return `
-        <p><strong>Ваше число таланта: ${talentNum}</strong></p>
-        <p>${descriptions[talentNum] || 'У вас уникальные таланты.'}</p>
-        <p><strong>Потенциал реализации: ${potentialNum}%</strong></p>
-        <p>${getPotentialDescription(potentialNum)}</p>
-    `;
-}
-
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ОПИСАНИЙ ====================
-
-function getSuccessDescription(num) {
-    const descriptions = {
-        1: 'Успех приходит через лидерство и самостоятельные проекты',
-        2: 'Успех приходит через партнерства и сотрудничество',
-        3: 'Успех приходит через творчество и самовыражение',
-        4: 'Успех приходит через системный труд и дисциплину',
-        5: 'Успех приходит через свободу и перемены',
-        6: 'Успех приходит через заботу о других',
-        7: 'Успех приходит через глубокие знания',
-        8: 'Успех приходит через управление и финансы',
-        9: 'Успех приходит через служение обществу'
-    };
-    return descriptions[num] || 'Успех придет через раскрытие вашего потенциала';
-}
-
-function getRealizationDescription(num) {
-    const descriptions = {
-        1: 'Реализуетесь как лидер, руководитель',
-        2: 'Реализуетесь в партнерстве, дипломатии',
-        3: 'Реализуетесь в творчестве, искусстве',
-        4: 'Реализуетесь в создании структур и порядка',
-        5: 'Реализуетесь в путешествиях, коммуникациях',
-        6: 'Реализуетесь в заботе, образовании',
-        7: 'Реализуетесь в науке, аналитике',
-        8: 'Реализуетесь в бизнесе, управлении',
-        9: 'Реализуетесь в глобальных проектах'
-    };
-    return descriptions[num] || 'Реализуетесь, следуя своему призванию';
-}
-
-function getPartnerDescription(num) {
-    const descriptions = {
-        1: 'Вам нужен партнер, который уважает ваше лидерство',
-        2: 'Вам нужен нежный и понимающий партнер',
-        3: 'Вам нужен веселый и творческий партнер',
-        4: 'Вам нужен надежный и стабильный партнер',
-        5: 'Вам нужен свободолюбивый партнер',
-        6: 'Вам нужен заботливый и преданный партнер',
-        7: 'Вам нужен глубокий и понимающий партнер',
-        8: 'Вам нужен ответственный и серьезный партнер',
-        9: 'Вам нужен универсальный и гибкий партнер'
-    };
-    return descriptions[num] || 'Партнер, который поймет и примет вас';
-}
-
-function getChildrenDescription(num) {
-    if (num <= 0) return 'Вам важно найти баланс между свободой и семейными обязательствами';
-    if (num === 1) return 'Один ребенок, к которому вы будете очень привязаны';
-    if (num === 2) return 'Двое детей — гармоничная семья';
-    if (num === 3) return 'Трое детей — большая и дружная семья';
-    if (num >= 4) return 'Возможность многодетной семьи или работа с детьми';
-    return 'Гармоничные отношения с детьми';
-}
-
-function getAbundanceDescription(num) {
-    const descriptions = {
-        1: 'Изобилие приходит, когда вы проявляете инициативу',
-        2: 'Изобилие приходит через партнерства',
-        3: 'Изобилие приходит через творчество',
-        4: 'Изобилие приходит через стабильность и порядок',
-        5: 'Изобилие приходит через свободу и перемены',
-        6: 'Изобилие приходит через заботу о других',
-        7: 'Изобилие приходит через знания',
-        8: 'Изобилие приходит через управление финансами',
-        9: 'Изобилие приходит через служение'
-    };
-    return descriptions[num] || 'Изобилие придет, когда вы будете в гармонии с собой';
-}
-
-function getPotentialDescription(percent) {
-    if (percent >= 80) return 'У вас огромный потенциал. Главное — не бояться его реализовывать.';
-    if (percent >= 60) return 'Хороший потенциал. Развивайте свои сильные стороны.';
-    if (percent >= 40) return 'Средний потенциал. Важно найти свою нишу.';
-    return 'Потенциал требует раскрытия через развитие и обучение.';
-}
-
-// ==================== ФУНКЦИИ ДЛЯ НАСТРОЙКИ ИНТЕРФЕЙСА ====================
-
-function setupAdditionalCalculations() {
-    // Создаем контейнер для кнопок дополнительных расчетов, если его нет
-    if (!document.getElementById('additionalCalculations')) {
-        const resultCard = document.querySelector('.result-card');
-        if (resultCard) {
-            const additionalDiv = document.createElement('div');
-            additionalDiv.id = 'additionalCalculations';
-            additionalDiv.className = 'additional-calculations';
-            additionalDiv.innerHTML = `
-                <h3>🔮 ДОПОЛНИТЕЛЬНЫЕ РАСЧЕТЫ</h3>
-                <div class="additional-buttons">
-                    <button class="calc-btn" data-calc="career">
-                        <span class="calc-icon">💼</span>
-                        <span class="calc-title">Карьера</span>
-                    </button>
-                    <button class="calc-btn" data-calc="family">
-                        <span class="calc-icon">👨‍👩‍👧‍👦</span>
-                        <span class="calc-title">Семья</span>
-                    </button>
-                    <button class="calc-btn" data-calc="love">
-                        <span class="calc-icon">❤️</span>
-                        <span class="calc-title">Любовь</span>
-                    </button>
-                    <button class="calc-btn" data-calc="money">
-                        <span class="calc-icon">💰</span>
-                        <span class="calc-title">Финансы</span>
-                    </button>
-                    <button class="calc-btn" data-calc="health">
-                        <span class="calc-icon">🌿</span>
-                        <span class="calc-title">Здоровье</span>
-                    </button>
-                    <button class="calc-btn" data-calc="talent">
-                        <span class="calc-icon">⭐</span>
-                        <span class="calc-title">Таланты</span>
-                    </button>
-                </div>
-                <div id="additionalResult" class="additional-result"></div>
-            `;
-
-            // Вставляем после матрицы чисел
-            const numerologyGrid = document.querySelector('.numerology-grid');
-            if (numerologyGrid) {
-                numerologyGrid.parentNode.insertBefore(additionalDiv, numerologyGrid.nextSibling);
-            } else {
-                resultCard.appendChild(additionalDiv);
-            }
-
-            // Добавляем обработчики для кнопок
-            document.querySelectorAll('.calc-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const calcType = this.dataset.calc;
-                    performAdditionalCalculation(calcType);
-                });
-            });
-        }
-    }
-}
-
-// Функция для выполнения дополнительных расчетов
-function performAdditionalCalculation(type) {
-    if (!window.currentNumerologyData) {
-        showNotification('❌ Сначала выполните основной расчет', 'error');
-        return;
-    }
-
-    const data = window.currentNumerologyData;
-    const numbers = data.numerology.base;
-    const resultDiv = document.getElementById('additionalResult');
-
-    let result = '';
-    let matrix = '';
-
-    switch(type) {
-        case 'career':
-            result = calculateCareer(numbers);
-            matrix = buildCareerMatrix(numbers);
-            break;
-        case 'family':
-            result = calculateFamily(numbers);
-            matrix = buildFamilyMatrix(numbers);
-            break;
-        case 'love':
-            result = calculateLove(numbers);
-            matrix = buildLoveMatrix(numbers);
-            break;
-        case 'money':
-            result = calculateMoney(numbers);
-            matrix = buildMoneyMatrix(numbers);
-            break;
-        case 'health':
-            result = calculateHealth(numbers);
-            matrix = buildHealthMatrix(numbers);
-            break;
-        case 'talent':
-            result = calculateTalent(numbers);
-            matrix = buildTalentMatrix(numbers);
-            break;
-    }
-
-    resultDiv.innerHTML = `
-        <div class="calculation-result fade-in">
-            <h4>${getCalculationTitle(type)}</h4>
-            ${matrix}
-            <div class="result-text">${result}</div>
-        </div>
-    `;
-
-    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-// Функция для получения заголовка расчета
-function getCalculationTitle(type) {
-    const titles = {
-        career: '💼 КАРЬЕРНЫЙ ПОТЕНЦИАЛ',
-        family: '👨‍👩‍👧‍👦 СЕМЕЙНАЯ ГАРМОНИЯ',
-        love: '❤️ ЛЮБОВНАЯ СОВМЕСТИМОСТЬ',
-        money: '💰 ФИНАНСОВЫЙ ПОТОК',
-        health: '🌿 ЭНЕРГИЯ ЗДОРОВЬЯ',
-        talent: '⭐ СКРЫТЫЕ ТАЛАНТЫ'
-    };
-    return titles[type] || 'ДОПОЛНИТЕЛЬНЫЙ РАСЧЕТ';
-}
-
-// ==================== ФУНКЦИИ ПОСТРОЕНИЯ МАТРИЦ ====================
-
-function buildCareerMatrix(numbers) {
-    const careerNum = calculateCareerNumber(numbers);
-    const successNum = calculateSuccessNumber(numbers);
-    const realizationNum = calculateRealizationNumber(numbers);
-
-    return `
-        <div class="number-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${careerNum === 1 ? 'highlight' : ''}">1<br><small>Лидер</small></div>
-                <div class="matrix-cell ${careerNum === 2 ? 'highlight' : ''}">2<br><small>Дипломат</small></div>
-                <div class="matrix-cell ${careerNum === 3 ? 'highlight' : ''}">3<br><small>Творец</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${careerNum === 4 ? 'highlight' : ''}">4<br><small>Организатор</small></div>
-                <div class="matrix-cell ${careerNum === 5 ? 'highlight' : ''}">5<br><small>Исследователь</small></div>
-                <div class="matrix-cell ${careerNum === 6 ? 'highlight' : ''}">6<br><small>Наставник</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${careerNum === 7 ? 'highlight' : ''}">7<br><small>Аналитик</small></div>
-                <div class="matrix-cell ${careerNum === 8 ? 'highlight' : ''}">8<br><small>Управленец</small></div>
-                <div class="matrix-cell ${careerNum === 9 ? 'highlight' : ''}">9<br><small>Гуманист</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Число успеха: <strong>${successNum}</strong></span>
-            <span class="matrix-label">Число реализации: <strong>${realizationNum}</strong></span>
-        </div>
-    `;
-}
-
-function buildFamilyMatrix(numbers) {
-    const familyNum = calculateFamilyNumber(numbers);
-    const partnerNum = calculatePartnerNumber(numbers);
-    const childrenNum = calculateChildrenNumber(numbers);
-
-    return `
-        <div class="family-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${familyNum === 1 ? 'highlight' : ''}">1<br><small>Глава</small></div>
-                <div class="matrix-cell ${familyNum === 2 ? 'highlight' : ''}">2<br><small>Хранитель</small></div>
-                <div class="matrix-cell ${familyNum === 3 ? 'highlight' : ''}">3<br><small>Вдохновитель</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${familyNum === 4 ? 'highlight' : ''}">4<br><small>Строитель</small></div>
-                <div class="matrix-cell ${familyNum === 5 ? 'highlight' : ''}">5<br><small>Свободный</small></div>
-                <div class="matrix-cell ${familyNum === 6 ? 'highlight' : ''}">6<br><small>Заботливый</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${familyNum === 7 ? 'highlight' : ''}">7<br><small>Мудрец</small></div>
-                <div class="matrix-cell ${familyNum === 8 ? 'highlight' : ''}">8<br><small>Справедливый</small></div>
-                <div class="matrix-cell ${familyNum === 9 ? 'highlight' : ''}">9<br><small>Универсальный</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Партнер: <strong>${partnerNum}</strong></span>
-            <span class="matrix-label">Дети: <strong>${childrenNum}</strong></span>
-        </div>
-    `;
-}
-
-function buildLoveMatrix(numbers) {
-    const loveNum = calculateLoveNumber(numbers);
-    const compatibility = calculateCompatibility(numbers);
-
-    return `
-        <div class="love-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${loveNum === 1 ? 'highlight' : ''}">1<br><small>Страстный</small></div>
-                <div class="matrix-cell ${loveNum === 2 ? 'highlight' : ''}">2<br><small>Нежный</small></div>
-                <div class="matrix-cell ${loveNum === 3 ? 'highlight' : ''}">3<br><small>Романтик</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${loveNum === 4 ? 'highlight' : ''}">4<br><small>Верный</small></div>
-                <div class="matrix-cell ${loveNum === 5 ? 'highlight' : ''}">5<br><small>Свободный</small></div>
-                <div class="matrix-cell ${loveNum === 6 ? 'highlight' : ''}">6<br><small>Заботливый</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${loveNum === 7 ? 'highlight' : ''}">7<br><small>Глубокий</small></div>
-                <div class="matrix-cell ${loveNum === 8 ? 'highlight' : ''}">8<br><small>Ответственный</small></div>
-                <div class="matrix-cell ${loveNum === 9 ? 'highlight' : ''}">9<br><small>Универсальный</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Совместимость: <strong>${compatibility}%</strong></span>
-        </div>
-    `;
-}
-
-function buildMoneyMatrix(numbers) {
-    const moneyNum = calculateMoneyNumber(numbers);
-    const abundanceNum = calculateAbundanceNumber(numbers);
-
-    return `
-        <div class="money-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${moneyNum === 1 ? 'highlight' : ''}">1<br><small>Заработчик</small></div>
-                <div class="matrix-cell ${moneyNum === 2 ? 'highlight' : ''}">2<br><small>Накопитель</small></div>
-                <div class="matrix-cell ${moneyNum === 3 ? 'highlight' : ''}">3<br><small>Тратящий</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${moneyNum === 4 ? 'highlight' : ''}">4<br><small>Инвестор</small></div>
-                <div class="matrix-cell ${moneyNum === 5 ? 'highlight' : ''}">5<br><small>Рисковый</small></div>
-                <div class="matrix-cell ${moneyNum === 6 ? 'highlight' : ''}">6<br><small>Щедрый</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${moneyNum === 7 ? 'highlight' : ''}">7<br><small>Философ</small></div>
-                <div class="matrix-cell ${moneyNum === 8 ? 'highlight' : ''}">8<br><small>Магнат</small></div>
-                <div class="matrix-cell ${moneyNum === 9 ? 'highlight' : ''}">9<br><small>Благотворитель</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Число изобилия: <strong>${abundanceNum}</strong></span>
-        </div>
-    `;
-}
-
-function buildHealthMatrix(numbers) {
-    const healthNum = calculateHealthNumber(numbers);
-    const energyNum = calculateEnergyNumber(numbers);
-
-    return `
-        <div class="health-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${healthNum === 1 ? 'highlight' : ''}">1<br><small>Активный</small></div>
-                <div class="matrix-cell ${healthNum === 2 ? 'highlight' : ''}">2<br><small>Гармоничный</small></div>
-                <div class="matrix-cell ${healthNum === 3 ? 'highlight' : ''}">3<br><small>Жизнерадостный</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${healthNum === 4 ? 'highlight' : ''}">4<br><small>Выносливый</small></div>
-                <div class="matrix-cell ${healthNum === 5 ? 'highlight' : ''}">5<br><small>Подвижный</small></div>
-                <div class="matrix-cell ${healthNum === 6 ? 'highlight' : ''}">6<br><small>Уравновешенный</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${healthNum === 7 ? 'highlight' : ''}">7<br><small>Спокойный</small></div>
-                <div class="matrix-cell ${healthNum === 8 ? 'highlight' : ''}">8<br><small>Сильный</small></div>
-                <div class="matrix-cell ${healthNum === 9 ? 'highlight' : ''}">9<br><small>Универсальный</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Энергия: <strong>${energyNum}/10</strong></span>
-        </div>
-    `;
-}
-
-function buildTalentMatrix(numbers) {
-    const talentNum = calculateTalentNumber(numbers);
-    const potentialNum = calculatePotentialNumber(numbers);
-
-    return `
-        <div class="talent-matrix">
-            <div class="matrix-row">
-                <div class="matrix-cell ${talentNum === 1 ? 'highlight' : ''}">1<br><small>Лидерство</small></div>
-                <div class="matrix-cell ${talentNum === 2 ? 'highlight' : ''}">2<br><small>Дипломатия</small></div>
-                <div class="matrix-cell ${talentNum === 3 ? 'highlight' : ''}">3<br><small>Творчество</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${talentNum === 4 ? 'highlight' : ''}">4<br><small>Организация</small></div>
-                <div class="matrix-cell ${talentNum === 5 ? 'highlight' : ''}">5<br><small>Коммуникация</small></div>
-                <div class="matrix-cell ${talentNum === 6 ? 'highlight' : ''}">6<br><small>Забота</small></div>
-            </div>
-            <div class="matrix-row">
-                <div class="matrix-cell ${talentNum === 7 ? 'highlight' : ''}">7<br><small>Аналитика</small></div>
-                <div class="matrix-cell ${talentNum === 8 ? 'highlight' : ''}">8<br><small>Управление</small></div>
-                <div class="matrix-cell ${talentNum === 9 ? 'highlight' : ''}">9<br><small>Гуманизм</small></div>
-            </div>
-        </div>
-        <div class="matrix-footer">
-            <span class="matrix-label">Потенциал: <strong>${potentialNum}%</strong></span>
-        </div>
-    `;
-}
-
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАСЧЕТОВ ====================
-
-function calculateCareerNumber(numbers) {
-    // Сумма числа судьбы и имени
-    return reduceNumber((numbers.fate + numbers.name) % 9 || 9);
-}
-
-function calculateSuccessNumber(numbers) {
-    // Число успеха = сумма всех чисел
-    return reduceNumber(numbers.fate + numbers.name + numbers.surname + numbers.patronymic);
-}
-
-function calculateRealizationNumber(numbers) {
-    // Число реализации = число судьбы + число рода
-    return reduceNumber(numbers.fate + numbers.surname);
-}
-
-function calculateFamilyNumber(numbers) {
-    // Семейное число = число рода + число отчества
-    return reduceNumber(numbers.surname + numbers.patronymic);
-}
-
-function calculatePartnerNumber(numbers) {
-    // Число партнера = число имени + 6
-    return reduceNumber(numbers.name + 6);
-}
-
-function calculateChildrenNumber(numbers) {
-    // Число детей = число семьи - 3
-    return Math.abs(reduceNumber(calculateFamilyNumber(numbers) - 3));
-}
-
-function calculateLoveNumber(numbers) {
-    // Число любви = число имени + число судьбы
-    return reduceNumber(numbers.name + numbers.fate);
-}
-
-function calculateCompatibility(numbers) {
-    // Совместимость в процентах
-    const love = calculateLoveNumber(numbers);
-    const family = calculateFamilyNumber(numbers);
-    return Math.min(100, Math.floor((love + family) * 5.5));
-}
-
-function calculateMoneyNumber(numbers) {
-    // Финансовое число = число судьбы * 2
-    return reduceNumber(numbers.fate * 2);
-}
-
-function calculateAbundanceNumber(numbers) {
-    // Число изобилия = сумма финансового и карьерного
-    const money = calculateMoneyNumber(numbers);
-    const career = calculateCareerNumber(numbers);
-    return reduceNumber(money + career);
-}
-
-function calculateHealthNumber(numbers) {
-    // Число здоровья = 10 - (число судьбы % 9)
-    return 10 - (numbers.fate % 9 || 9);
-}
-
-function calculateEnergyNumber(numbers) {
-    // Уровень энергии от 1 до 10
-    return (numbers.name % 10) + 1;
-}
-
-function calculateTalentNumber(numbers) {
-    // Число таланта = число имени * 2
-    return reduceNumber(numbers.name * 2);
-}
-
-function calculatePotentialNumber(numbers) {
-    // Потенциал в процентах
-    const talent = calculateTalentNumber(numbers);
-    return Math.min(100, talent * 11);
-}
-
-function reduceNumber(num) {
-    while (num > 9 && num !== 11 && num !== 22) {
-        num = String(num).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
-    }
-    return num;
-}
-
-// ==================== ФУНКЦИИ ВАЛИДАЦИИ И ЭФФЕКТОВ ====================
-
+// ==================== ВАЛИДАЦИЯ ====================
 function validateForm(fullName, birthDate) {
     if (!fullName || !birthDate) {
         showNotification('❌ Пожалуйста, заполните все поля', 'error');
@@ -828,51 +213,16 @@ function isValidDate(dateStr) {
     return day <= daysInMonth;
 }
 
-function addFormFieldEffects() {
-    const inputs = document.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.style.borderColor = 'var(--accent-violet)';
-            this.style.boxShadow = '0 0 15px var(--glow-color)';
-        });
-        input.addEventListener('blur', function() {
-            this.style.borderColor = 'var(--medium-purple)';
-            this.style.boxShadow = 'none';
-        });
-    });
-}
-
-function addResultCardEffects() {
-    const cards = document.querySelectorAll('.grid-item, .special-item, .call-item');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-            this.style.transition = 'transform 0.3s ease';
-        });
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-}
-
-function showNotification(message, type = 'info') {
-    if (window.telegramApp) {
-        window.telegramApp.notify(message, type);
-        return;
-    }
-    console.log(`[${type}] ${message}`);
-    alert(`${type === 'error' ? '❌' : type === 'success' ? '✅' : '🔮'} ${message}`);
-}
-
-// ==================== ФУНКЦИИ ОТОБРАЖЕНИЯ ОСНОВНЫХ РЕЗУЛЬТАТОВ ====================
-
+// ==================== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ====================
 function displayResults(data) {
     console.log('📊 Отображение результатов:', data);
 
     try {
+        // Основная информация
         setElementText('resultFullName', data.fullName);
         setElementText('resultBirthDate', data.birthDate);
 
+        // ===== НУМЕРОЛОГИЯ =====
         if (data.numerology?.base) {
             setElementText('fateNumber', data.numerology.base.fate);
             setElementText('nameNumber', data.numerology.base.name);
@@ -890,22 +240,55 @@ function displayResults(data) {
             setElementText('callSocial', data.numerology.calls.social);
             setElementText('callWorld', data.numerology.calls.world);
 
-            setElementText('callCloseDesc', getCallDescription(data.numerology.calls.close, 'close'));
-            setElementText('callSocialDesc', getCallDescription(data.numerology.calls.social, 'social'));
-            setElementText('callWorldDesc', getCallDescription(data.numerology.calls.world, 'world'));
+            // Полные описания окликов (генерируются на сервере)
+            if (data.numerology.calls.descriptions) {
+                setElementText('callCloseDesc', data.numerology.calls.descriptions.close);
+                setElementText('callSocialDesc', data.numerology.calls.descriptions.social);
+                setElementText('callWorldDesc', data.numerology.calls.descriptions.world);
+            }
         }
 
-        if (data.zodiac) displayZodiac(data.zodiac);
-        if (data.fengShui) displayFengShui(data.fengShui);
-        if (data.tarot) displayTarot(data.tarot);
-        if (data.psychology) displayPsychology(data.psychology);
+        // ===== ЗОДИАК =====
+        if (data.zodiac) {
+            displayZodiac(data.zodiac);
+        }
 
-        const patterns = generatePatterns(data);
-        displayPatterns(patterns);
+        // ===== ФЕН-ШУЙ =====
+        if (data.fengShui) {
+            displayFengShui(data.fengShui);
+        }
 
-        const interpretation = generateFullInterpretation(data);
-        setElementHTML('interpretationText', interpretation);
+        // ===== ТАРО =====
+        if (data.tarot) {
+            displayTarot(data.tarot);
+        }
 
+        // ===== ПСИХОЛОГИЯ =====
+        if (data.psychology) {
+            displayPsychology(data.psychology);
+        }
+
+        // ===== ПАТТЕРНЫ =====
+        if (data.patterns) {
+            displayPatterns(data.patterns);
+        }
+
+        // ===== ИНТЕРПРЕТАЦИИ =====
+        if (data.numerology?.interpretations) {
+            displayInterpretations(data.numerology.interpretations);
+
+            // Активируем первую вкладку интерпретаций после загрузки
+            setTimeout(() => {
+                const firstTab = document.querySelector('.interpretation-tabs .tab-btn');
+                if (firstTab) {
+                    // Имитируем клик по первой вкладке
+                    const event = new Event('click');
+                    firstTab.dispatchEvent(event);
+                }
+            }, 100);
+        }
+
+        // ===== ГЛУБИННЫЙ ПОРТРЕТ =====
         if (data.psychology?.portrait) {
             setElementHTML('deepPortrait', formatPortrait(data.psychology.portrait));
         }
@@ -915,6 +298,7 @@ function displayResults(data) {
         showNotification('❌ Ошибка при отображении результатов', 'error');
     }
 }
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ОТОБРАЖЕНИЯ =====
 
 function setElementText(id, value) {
     const element = document.getElementById(id);
@@ -924,6 +308,11 @@ function setElementText(id, value) {
 function setElementHTML(id, html) {
     const element = document.getElementById(id);
     if (element) element.innerHTML = html || '<p>—</p>';
+}
+
+function setElementAttribute(id, attr, value) {
+    const element = document.getElementById(id);
+    if (element) element.setAttribute(attr, value);
 }
 
 function displayZodiac(zodiac) {
@@ -955,293 +344,47 @@ function displayFengShui(fengShui) {
     setElementText('fengshuiAffirmation', fengShui.affirmation || 'Я в гармонии с потоками вселенной');
 }
 
-// ==================== ИСПРАВЛЕННАЯ ФУНКЦИЯ DISPLAYTAROT ====================
-
 function displayTarot(tarot) {
-    if (!tarot) return;
-
-    console.log('Отображение Таро:', tarot);
-
-    // Получаем данные из сервиса TarotService через сервер
-    // Они уже должны быть в tarot объекте
-
-    // Проверяем, есть ли все три карты и не дублируются ли они
-    if (!tarot.fate || !tarot.personality || !tarot.control) {
-        console.error('Неполные данные Таро от сервера');
+    if (!tarot) {
+        console.warn('Нет данных Таро');
         return;
     }
 
-    // Проверяем, не дублируются ли карты
-    const cards = [
-        { type: 'fate', number: tarot.fate.number },
-        { type: 'personality', number: tarot.personality.number },
-        { type: 'control', number: tarot.control.number }
-    ];
+    console.log('Отображение Таро (данные с сервера):', tarot);
 
-    // Проверяем уникальность
-    const numbers = cards.map(c => c.number);
-    const uniqueNumbers = new Set(numbers);
+    try {
+        // Карта Судьбы
+        setElementAttribute('tarotFateImage', 'src', tarot.fate?.image || '/images/tarot/back.jpg');
+        setElementText('tarotFateNumber', tarot.fate?.number !== undefined ?
+            (tarot.fate.number === 0 ? 22 : tarot.fate.number) : '--');
+        setElementText('tarotFateName', tarot.fate?.name || '--');
+        setElementText('tarotFateKeywords', tarot.fate?.keywords || '--');
+        setElementText('tarotFateDescription', tarot.fate?.description || '--');
+        setElementText('tarotFateAdvice', tarot.fate?.advice || '--');
 
-    if (uniqueNumbers.size < 3) {
-        console.warn('Обнаружены дублирующиеся карты, исправляем...');
+        // Карта Личности
+        setElementAttribute('tarotPersonalityImage', 'src', tarot.personality?.image || '/images/tarot/back.jpg');
+        setElementText('tarotPersonalityNumber', tarot.personality?.number !== undefined ?
+            (tarot.personality.number === 0 ? 22 : tarot.personality.number) : '--');
+        setElementText('tarotPersonalityName', tarot.personality?.name || '--');
+        setElementText('tarotPersonalityKeywords', tarot.personality?.keywords || '--');
+        setElementText('tarotPersonalityDescription', tarot.personality?.description || '--');
+        setElementText('tarotPersonalityAdvice', tarot.personality?.advice || '--');
 
-        // Если есть дубликаты, генерируем уникальные на клиенте
-        const birthDate = window.currentNumerologyData?.birthDate;
-        const fullName = window.currentNumerologyData?.fullName;
+        // Карта Пути
+        setElementAttribute('tarotControlImage', 'src', tarot.control?.image || '/images/tarot/back.jpg');
+        setElementText('tarotControlNumber', tarot.control?.number !== undefined ?
+            (tarot.control.number === 0 ? 22 : tarot.control.number) : '--');
+        setElementText('tarotControlName', tarot.control?.name || '--');
+        setElementText('tarotControlKeywords', tarot.control?.keywords || '--');
+        setElementText('tarotControlDescription', tarot.control?.description || '--');
+        setElementText('tarotControlAdvice', tarot.control?.advice || '--');
 
-        const fateCard = { number: tarot.fate.number, ...tarot.fate };
-        const personalityCard = { number: tarot.personality.number, ...tarot.personality };
-
-        // Генерируем уникальную карту пути
-        const pathCard = generateUniquePathCard(fateCard.number, personalityCard.number);
-
-        // Обновляем control карту
-        tarot.control = {
-            number: pathCard.number,
-            name: pathCard.name,
-            image: pathCard.image,
-            keywords: pathCard.keywords,
-            description: pathCard.description,
-            advice: pathCard.advice
-        };
+    } catch (error) {
+        console.error('Ошибка при отображении Таро:', error);
     }
-
-    // Карта Судьбы
-    const fateImage = document.getElementById('tarotFateImage');
-    if (fateImage) {
-        fateImage.src = tarot.fate.image || '/images/tarot/back.jpg';
-        fateImage.alt = tarot.fate.name || 'Карта Судьбы';
-    }
-    setElementText('tarotFateNumber', tarot.fate.number);
-    setElementText('tarotFateName', tarot.fate.name);
-    setElementText('tarotFateKeywords', tarot.fate.keywords);
-    setElementText('tarotFateDescription', tarot.fate.description);
-    setElementText('tarotFateAdvice', tarot.fate.advice);
-
-    // Карта Личности
-    const personalityImage = document.getElementById('tarotPersonalityImage');
-    if (personalityImage) {
-        personalityImage.src = tarot.personality.image || '/images/tarot/back.jpg';
-        personalityImage.alt = tarot.personality.name || 'Карта Личности';
-    }
-    setElementText('tarotPersonalityNumber', tarot.personality.number);
-    setElementText('tarotPersonalityName', tarot.personality.name);
-    setElementText('tarotPersonalityKeywords', tarot.personality.keywords);
-    setElementText('tarotPersonalityDescription', tarot.personality.description);
-    setElementText('tarotPersonalityAdvice', tarot.personality.advice);
-
-    // Карта Пути
-    const controlImage = document.getElementById('tarotControlImage');
-    if (controlImage) {
-        controlImage.src = tarot.control.image || '/images/tarot/back.jpg';
-        controlImage.alt = tarot.control.name || 'Карта Пути';
-    }
-    setElementText('tarotControlNumber', tarot.control.number);
-    setElementText('tarotControlName', tarot.control.name);
-    setElementText('tarotControlKeywords', tarot.control.keywords);
-    setElementText('tarotControlDescription', tarot.control.description);
-    setElementText('tarotControlAdvice', tarot.control.advice);
 }
 
-/**
- * Генерирует уникальную карту пути, отличную от двух других
- */
-function generateUniquePathCard(fateNumber, personalityNumber) {
-    // Массив всех возможных карт Старших Арканов (0-21)
-    const allCards = Array.from({ length: 22 }, (_, i) => i);
-
-    // Исключаем уже использованные карты
-    const usedCards = [fateNumber, personalityNumber];
-    const availableCards = allCards.filter(num => !usedCards.includes(num));
-
-    // Если есть доступные карты, выбираем случайную
-    if (availableCards.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availableCards.length);
-        const cardNumber = availableCards[randomIndex];
-
-        // Получаем данные карты из глобального объекта или создаем базовые
-        return {
-            number: cardNumber,
-            name: getTarotCardName(cardNumber === 0 ? 22 : cardNumber),
-            image: `/images/tarot/${getTarotImageName(cardNumber)}.jpg`,
-            keywords: getTarotKeywords(cardNumber === 0 ? 22 : cardNumber),
-            description: getTarotCardDescription(cardNumber, 'path'),
-            advice: getTarotAdvice(cardNumber, 'path')
-        };
-    }
-
-    // Если все карты заняты (маловероятно), используем формулу
-    const fallbackNumber = (fateNumber + personalityNumber * 3) % 22;
-    return {
-        number: fallbackNumber,
-        name: getTarotCardName(fallbackNumber === 0 ? 22 : fallbackNumber),
-        image: `/images/tarot/${getTarotImageName(fallbackNumber)}.jpg`,
-        keywords: getTarotKeywords(fallbackNumber === 0 ? 22 : fallbackNumber),
-        description: getTarotCardDescription(fallbackNumber, 'path'),
-        advice: getTarotAdvice(fallbackNumber, 'path')
-    };
-}
-
-/**
- * Получает имя файла изображения для карты Таро
- */
-function getTarotImageName(number) {
-    const imageNames = {
-        0: '00-fool',
-        1: '01-magician',
-        2: '02-high-priestess',
-        3: '03-empress',
-        4: '04-emperor',
-        5: '05-hierophant',
-        6: '06-lovers',
-        7: '07-chariot',
-        8: '08-strength',
-        9: '09-hermit',
-        10: '10-wheel',
-        11: '11-justice',
-        12: '12-hanged-man',
-        13: '13-death',
-        14: '14-temperance',
-        15: '15-devil',
-        16: '16-tower',
-        17: '17-star',
-        18: '18-moon',
-        19: '19-sun',
-        20: '20-judgement',
-        21: '21-world'
-    };
-    return imageNames[number] || 'back';
-}
-/**
- * Получение названия карты Таро по номеру (1-22)
- */
-function getTarotCardName(number) {
-    const cards = {
-        1: 'Маг',
-        2: 'Верховная Жрица',
-        3: 'Императрица',
-        4: 'Император',
-        5: 'Иерофант',
-        6: 'Влюбленные',
-        7: 'Колесница',
-        8: 'Сила',
-        9: 'Отшельник',
-        10: 'Колесо Фортуны',
-        11: 'Справедливость',
-        12: 'Повешенный',
-        13: 'Смерть',
-        14: 'Умеренность',
-        15: 'Дьявол',
-        16: 'Башня',
-        17: 'Звезда',
-        18: 'Луна',
-        19: 'Солнце',
-        20: 'Суд',
-        21: 'Мир',
-        22: 'Шут'
-    };
-    return cards[number] || 'Неизвестная карта';
-}
-
-/**
- * Получение ключевых слов для карты Таро
- */
-function getTarotKeywords(number) {
-    const keywords = {
-        1: 'Воля, мастерство, концентрация, ресурсы',
-        2: 'Интуиция, тайна, подсознание, мудрость',
-        3: 'Плодородие, изобилие, творчество, природа',
-        4: 'Власть, структура, порядок, авторитет',
-        5: 'Традиции, обучение, вера, наставничество',
-        6: 'Выбор, отношения, любовь, гармония',
-        7: 'Победа, воля, контроль, преодоление',
-        8: 'Баланс, закон, карма, честность',
-        9: 'Мудрость, уединение, поиск, свет',
-        10: 'Судьба, перемены, циклы, удача',
-        11: 'Внутренняя сила, мужество, страсть, власть',
-        12: 'Жертва, новый взгляд, пауза, принятие',
-        13: 'Трансформация, конец, новое начало',
-        14: 'Баланс, гармония, терпение, золотая середина',
-        15: 'Искушение, зависимость, материальность, тень',
-        16: 'Разрушение, прорыв, кризис, освобождение',
-        17: 'Надежда, вдохновение, исцеление, свет',
-        18: 'Иллюзии, подсознание, страхи, интуиция',
-        19: 'Радость, успех, энергия, ясность',
-        20: 'Возрождение, призвание, прощение, пробуждение',
-        21: 'Завершение, целостность, единение, награда',
-        22: 'Новое начало, спонтанность, вера, свобода'
-    };
-    return keywords[number] || 'Тайна, ожидающая раскрытия';
-}
-
-/**
- * Получение описания карты Таро
- */
-function getTarotCardDescription(cardNumber, cardType) {
-    // Нормализуем номер (0-21) в 1-22 для словаря
-    const normalizedNumber = cardNumber === 0 ? 22 : cardNumber;
-
-    const descriptions = {
-        1: 'Маг — это вы в моменты, когда вся вселенная служит вашему замыслу. Вы обладаете всеми необходимыми инструментами для реализации желаний. Ваша сила — в концентрации намерения, ваша магия — в действии.',
-        2: 'Жрица — это ваша внутренняя тишина, где рождаются все ответы. Вы знаете больше, чем можете объяснить словами. Ваша сила — в интуиции, ваша мудрость — в умении ждать.',
-        3: 'Императрица — это ваша способность творить и взращивать. Все, к чему вы прикасаетесь с любовью, расцветает. Ваша сила — в принятии, ваша мудрость — в терпении природы.',
-        4: 'Император — это ваша способность создавать порядок из хаоса. Вы — творец своей реальности, устанавливающий законы и границы.',
-        5: 'Иерофант — это ваша связь с традициями и мудростью предков. Вы — часть цепи знаний, передающихся из поколения в поколение.',
-        6: 'Влюбленные — это момент истины, когда сердце должно выбрать. Вы стоите на перепутье, и ваш выбор определит судьбу.',
-        7: 'Колесница — это ваша способность двигаться к цели, преодолевая препятствия. Вы управляете своей судьбой, даже когда дорога трудна.',
-        8: 'Сила — это не мышцы, а умение укрощать зверя внутри. Вы способны на многое, когда действуете из любви, а не из страха.',
-        9: 'Отшельник — это время уйти внутрь, чтобы найти свет. Вы ищете ответы не вовне, а в глубине себя.',
-        10: 'Колесо Фортуны — это напоминание о том, что все течет, все меняется. Вы в потоке жизни, и удача улыбается тем, кто плывет по течению.',
-        11: 'Справедливость — это момент истины, когда все тайное становится явным. Вы пожинаете плоды своих поступков.',
-        12: 'Повешенный — это время остановиться и посмотреть на мир иначе. Вы в подвешенном состоянии, но именно сейчас открывается истина.',
-        13: 'Смерть — это не конец, а трансформация. Что-то в вашей жизни должно уйти, чтобы освободить место для нового.',
-        14: 'Умеренность — это искусство быть в балансе, не впадать в крайности. Вы учитесь смешивать противоположности, находить середину.',
-        15: 'Дьявол — это встреча со своей тенью, со своими зависимостями и страхами. Вы видите то, что держит вас в плену.',
-        16: 'Башня — это момент крушения старых структур. То, что казалось незыблемым, рушится, освобождая место для нового.',
-        17: 'Звезда — это свет в конце туннеля, надежда после кризиса. Вы открыты для вдохновения, верите в лучшее.',
-        18: 'Луна — это мир снов, интуиции, подсознательных страхов. Вы входите в темный лес своей души.',
-        19: 'Солнце — это свет, радость, ясность после тьмы. Вы в периоде расцвета, когда все получается легко и радостно.',
-        20: 'Суд — это момент пробуждения, когда вы слышите зов своей души. Прошлое прощено, вы готовы к новой жизни.',
-        21: 'Мир — это завершение большого цикла, достижение цели, чувство единства со всем сущим. Вы дошли до точки, где виден весь путь.',
-        22: 'Шут — это чистая энергия нового начала, готовность идти в неизвестность с открытым сердцем. Вы на пороге приключения, не зная, что ждет впереди.'
-    };
-
-    return descriptions[normalizedNumber] || 'Эта карта несет уникальную энергию, которую предстоит расшифровать лично вам.';
-}
-
-/**
- * Получение совета по карте Таро
- */
-function getTarotAdvice(cardNumber, cardType) {
-    const normalizedNumber = cardNumber === 0 ? 22 : cardNumber;
-
-    const advices = {
-        1: 'Не ждите идеального момента — создавайте его своей волей. Ваши мысли материальны, ваши действия формируют реальность.',
-        2: 'Доверьтесь своей интуиции. То, что приходит во сне или как внезапное озарение — истинно. Сейчас время слушать, а не говорить.',
-        3: 'Сейте семена своих желаний сейчас. Ухаживайте за ними с любовью, и они дадут плоды. Окружите себя красотой и природой.',
-        4: 'Наведите порядок в доме и в делах. Структура и дисциплина сейчас — ваши лучшие союзники.',
-        5: 'Ищите мудрость в проверенных источниках. Обратитесь к наставнику или станьте им для кого-то.',
-        6: 'Прислушайтесь к сердцу в вопросах выбора. Любовь — лучший советчик. Но помните: любой выбор закрывает другие двери.',
-        7: 'Двигайтесь к цели, не отвлекаясь. Контролируйте эмоции — они не должны управлять вами. Победа близка.',
-        8: 'Действуйте из любви, а не из страха. Ваша мягкость сейчас — ваше главное оружие.',
-        9: 'Сейчас время уединения и рефлексии. Не бойтесь одиночества — оно принесет ответы. Свет внутри ярче, чем снаружи.',
-        10: 'Доверьтесь судьбе. Сейчас все идет так, как должно. Даже неожиданные повороты ведут к лучшему.',
-        11: 'Будьте предельно честны сейчас. Любая несправедливость вернется бумерангом. Примите ответственность за свои решения.',
-        12: 'Не боритесь с течением. Примите паузу. Смените угол зрения — ответ придет оттуда, откуда не ждали.',
-        13: 'Завершайте то, что просит завершения. Не бойтесь перемен — они несут обновление.',
-        14: 'Ищите золотую середину во всем. Не перегибайте палку. Время лечит, терпение вознаграждается.',
-        15: 'Честно посмотрите на свои зависимости — от людей, веществ, мнений, денег. Осознание — первый шаг к свободе.',
-        16: 'Не пытайтесь удержать то, что рушится. Примите кризис как очищение. После бури всегда наступает ясность.',
-        17: 'Верьте в лучшее. Мечтайте, вдохновляйтесь, творите. Сейчас время загадывать желания — они сбудутся.',
-        18: 'Доверьтесь интуиции, даже если разум противится. Обратите внимание на сны. Страхи — это просто тени, за ними скрыт свет.',
-        19: 'Радуйтесь жизни, делитесь светом с другими. Сейчас все получается легко. Наслаждайтесь успехом и теплом.',
-        20: 'Прислушайтесь к зову души. Простите себя и других. Начните новую главу — вы к ней готовы.',
-        21: 'Наслаждайтесь результатами. Вы завершили важный этап. Чувствуйте свою связь со всем миром.',
-        22: 'Не бойтесь начинать с чистого листа. Будьте спонтанны, доверяйте потоку. Сейчас лучшее время для нового.'
-    };
-
-    return advices[normalizedNumber] || 'Следуйте за своей интуицией и доверяйте процессу жизни.';
-}
 function displayPsychology(psychology) {
     if (!psychology) return;
 
@@ -1283,6 +426,16 @@ function displayPatterns(patterns) {
     }
 }
 
+function formatPortrait(portrait) {
+    if (!portrait) return '<p>Портрет формируется...</p>';
+
+    let formatted = portrait.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\n/g, '<br>');
+
+    const paragraphs = formatted.split('<br><br>');
+    return paragraphs.map(p => `<p>${p}</p>`).join('');
+}
+
 function getZodiacSymbol(signName) {
     const symbols = {
         'Овен': '♈', 'Телец': '♉', 'Близнецы': '♊', 'Рак': '♋',
@@ -1304,449 +457,757 @@ function getElementSymbol(element) {
     return symbols[elementLower] || '✨';
 }
 
-function getCallDescription(num, type) {
-    const base = {
-        1: 'волевой лидер, инициатор',
-        2: 'дипломат, миротворец',
-        3: 'творческая натура, душа компании',
-        4: 'надежный партнер, строитель',
-        5: 'коммуникатор, исследователь',
-        6: 'заботливый, ответственный',
-        7: 'целеустремленный, победитель',
-        8: 'справедливый, авторитетный',
-        9: 'мудрый, загадочный',
-        10: 'харизматичный лидер',
-        11: 'вдохновляющий, сильный',
-        12: 'понимающий, принимающий',
-        13: 'меняющийся, обновляющийся',
-        14: 'гармоничный, уравновешенный',
-        15: 'притягательный, страстный',
-        16: 'основательный, мощный',
-        17: 'окрыленный, верящий',
-        18: 'интуитивный, загадочный',
-        19: 'солнечный, щедрый',
-        20: 'пробуждающий',
-        21: 'целостный, завершенный',
-        22: 'свободный, легкий'
-    };
+// ==================== ЭФФЕКТЫ ====================
 
-    const typePrefix = {
-        close: 'В кругу семьи вы — ',
-        social: 'В коллективе вас видят как ',
-        world: 'Незнакомцы воспринимают вас как '
-    };
-
-    return typePrefix[type] + (base[num] || 'многогранная личность');
+function addFormFieldEffects() {
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.borderColor = 'var(--accent-violet)';
+            this.style.boxShadow = '0 0 15px var(--glow-color)';
+        });
+        input.addEventListener('blur', function() {
+            this.style.borderColor = 'var(--medium-purple)';
+            this.style.boxShadow = 'none';
+        });
+    });
 }
 
-function formatPortrait(portrait) {
-    if (!portrait) return '<p>Портрет формируется...</p>';
-
-    let formatted = portrait.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/\n/g, '<br>');
-
-    const paragraphs = formatted.split('<br><br>');
-    return paragraphs.map(p => `<p>${p}</p>`).join('');
+function addResultCardEffects() {
+    const cards = document.querySelectorAll('.grid-item, .special-item, .call-item');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
 }
 
-function generatePatterns(data) {
-    const patterns = [];
+// ===== УВЕДОМЛЕНИЯ =====
+function showNotification(message, type = 'info') {
+    console.log(`[${type}] ${message}`);
 
-    if (!data?.numerology) return patterns;
+    const notification = document.createElement('div');
+    notification.className = `notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${type === 'error' ? 'rgba(244, 67, 54, 0.95)' :
+        type === 'success' ? 'rgba(76, 175, 80, 0.95)' :
+            'rgba(33, 33, 33, 0.95)'};
+        color: white;
+        border-radius: 8px;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.1);
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
 
-    const { base, achilles, control, calls } = data.numerology;
-    if (!base) return patterns;
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+// ===== ОТОБРАЖЕНИЕ ИНТЕРПРЕТАЦИЙ =====
+// ===== ОТОБРАЖЕНИЕ ИНТЕРПРЕТАЦИЙ =====
+function displayInterpretations(interpretations) {
+    if (!interpretations) return;
 
-    // ========== 1. Анализ повторяющихся чисел ==========
-    const counts = {};
-    const numbers = [base.fate, base.name, base.surname, base.patronymic].filter(n => n);
-    numbers.forEach(n => counts[n] = (counts[n] || 0) + 1);
+    console.log('📊 Отображение интерпретаций:', interpretations);
 
-    Object.entries(counts).forEach(([num, count]) => {
-        if (count >= 2) {
-            if (num == 8) {
-                patterns.push('⚖️ **Усиленная родовая карма** — тема справедливости и закона проходит красной нитью через всю вашу жизнь. Вы особенно чувствительны к вопросам чести и баланса, и вам важно научиться прощать несовершенство мира.');
-            } else if (num == 11) {
-                patterns.push('🔥 **Двойная харизма** — мощный лидерский потенциал, требующий мудрого управления. Вы способны вдохновлять массы, но важно не сгореть самому. Ваша задача — направлять энергию в созидательное русло.');
-            } else if (num == 3) {
-                patterns.push('🎨 **Творческая энергия в избытке** — потребность в самовыражении ищет выхода. Вам жизненно необходимо творить, иначе энергия застаивается и приводит к апатии.');
-            } else if (num == 6) {
-                patterns.push('💝 **Гиперответственность** — склонность заботиться о других в ущерб себе. Помните: кислородную маску сначала на себя. Ваша забота ценна, только если вы сами наполнены.');
-            } else if (num == 22) {
-                patterns.push('🦋 **Свободный дух** — вы не терпите ограничений, постоянно ищете новые пути и начинания. Ваша сила в спонтанности, но важно не терять связь с реальностью.');
-            } else if (num == 4) {
-                patterns.push('🏛️ **Фундаментальность** — вы строитель и создатель основ. Ваша стабильность — опора для многих, но остерегайтесь закостенелости. Учитесь гибкости.');
-            } else if (num == 1) {
-                patterns.push('👑 **Прирожденный лидер** — вам важно быть первым. Но помните: настоящее лидерство — не в том, чтобы быть впереди, а в том, чтобы вести за собой.');
-            } else if (num == 2) {
-                patterns.push('🤝 **Дипломат от природы** — вы чувствуете других людей на клеточном уровне. Ваша задача — использовать этот дар для создания гармонии, а не для манипуляций.');
-            } else {
-                patterns.push(`🔮 **Число ${num} повторяется** — энергия этого числа требует особого внимания и проработки в текущем воплощении. Это ваш главный ресурс и главный вызов одновременно.`);
-            }
+    // Карьера
+    if (interpretations.career) {
+        displayCareerInterpretation(interpretations.career);
+    }
+
+    // Семья
+    if (interpretations.family) {
+        displayFamilyInterpretation(interpretations.family);
+    }
+
+    // Любовь
+    if (interpretations.love) {
+        displayLoveInterpretation(interpretations.love);
+    }
+
+    // Финансы
+    if (interpretations.money) {
+        displayMoneyInterpretation(interpretations.money);
+    }
+
+    // Здоровье
+    if (interpretations.health) {
+        displayHealthInterpretation(interpretations.health);
+    }
+
+    // Таланты
+    if (interpretations.talent) {
+        displayTalentInterpretation(interpretations.talent);
+    }
+
+    // Добавляем обработчики для табов интерпретаций
+    setupInterpretationTabs();
+}
+
+function displayCareerInterpretation(career) {
+    if (!career) return;
+
+    console.log('📊 Отображение карьеры:', career);
+
+    // Основная информация
+    setElementText('careerNumber', career.careerNumber);
+    setElementText('careerTitle', career.title || 'Карьерный потенциал');
+    setElementText('careerDescription', career.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('careerDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = career.detailedDescription || career.description || '';
+    }
+
+    // Сильные стороны
+    const strengthsList = document.getElementById('careerStrengths');
+    if (strengthsList && career.strengths) {
+        strengthsList.innerHTML = '';
+        career.strengths.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            strengthsList.appendChild(li);
+        });
+    } else if (strengthsList) {
+        strengthsList.innerHTML = '<li>—</li>';
+    }
+
+    // Зоны роста
+    const weaknessesList = document.getElementById('careerWeaknesses');
+    if (weaknessesList && career.weaknesses) {
+        weaknessesList.innerHTML = '';
+        career.weaknesses.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w;
+            weaknessesList.appendChild(li);
+        });
+    } else if (weaknessesList) {
+        weaknessesList.innerHTML = '<li>—</li>';
+    }
+
+    // Подходящие профессии
+    const suitableList = document.getElementById('careerSuitable');
+    if (suitableList && career.suitable) {
+        suitableList.innerHTML = '';
+        career.suitable.forEach(p => {
+            const li = document.createElement('li');
+            li.innerHTML = p;
+            suitableList.appendChild(li);
+        });
+    } else if (suitableList) {
+        suitableList.innerHTML = '<li>—</li>';
+    }
+
+    // Стиль работы
+    setElementText('careerWorkStyle', career.workStyle || '');
+
+    // Подход к деньгам
+    setElementText('careerMoneyApproach', career.moneyApproach || '');
+
+    // Стиль управления
+    setElementText('careerManagementStyle', career.managementStyle || '');
+
+    // Идеальная среда
+    setElementText('careerIdealEnvironment', career.idealEnvironment || '');
+
+    // Факторы успеха
+    const successFactorsList = document.getElementById('careerSuccessFactors');
+    if (successFactorsList && career.successFactors) {
+        successFactorsList.innerHTML = '';
+        career.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Факторы риска
+    const failureFactorsList = document.getElementById('careerFailureFactors');
+    if (failureFactorsList && career.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        career.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Путь развития
+    setElementText('careerDevelopmentPath', career.developmentPath || career.advice || '');
+
+    // Числа успеха и реализации
+    setElementText('careerSuccessNum', career.successNumber);
+    setElementText('careerSuccessDesc', career.successDescription || '');
+    setElementText('careerRealizationNum', career.realizationNumber);
+    setElementText('careerRealizationDesc', career.realizationDescription || '');
+
+    // Совет
+    setElementText('careerAdvice', career.advice || '');
+}
+
+function displayFamilyInterpretation(family) {
+    if (!family) return;
+
+    console.log('📊 Отображение семьи:', family);
+
+    // Основная информация
+    setElementText('familyNumber', family.familyNumber);
+    setElementText('familyTitle', family.title || 'Семейная гармония');
+    setElementText('familyDescription', family.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('familyDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = family.detailedDescription || family.description || '';
+    }
+
+    // Роль в семье
+    setElementText('familyRole', family.role || '');
+
+    // Сильные стороны
+    const strengthsList = document.getElementById('familyStrengths');
+    if (strengthsList && family.strengths) {
+        strengthsList.innerHTML = '';
+        family.strengths.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            strengthsList.appendChild(li);
+        });
+    } else if (strengthsList) {
+        strengthsList.innerHTML = '<li>—</li>';
+    }
+
+    // Зоны роста
+    const weaknessesList = document.getElementById('familyWeaknesses');
+    if (weaknessesList && family.weaknesses) {
+        weaknessesList.innerHTML = '';
+        family.weaknesses.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w;
+            weaknessesList.appendChild(li);
+        });
+    } else if (weaknessesList) {
+        weaknessesList.innerHTML = '<li>—</li>';
+    }
+
+    // Стиль семейной жизни (новое)
+    setElementText('familyStyle', family.familyStyle || '');
+
+    // Подход к детям (новое)
+    setElementText('familyChildrenApproach', family.childrenApproach || '');
+
+    // Тип идеального партнера (новое)
+    setElementText('familyPartnerType', family.partnerType || '');
+
+    // Факторы успеха (новое)
+    const successFactorsList = document.getElementById('familySuccessFactors');
+    if (successFactorsList && family.successFactors) {
+        successFactorsList.innerHTML = '';
+        family.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Факторы риска (новое)
+    const failureFactorsList = document.getElementById('familyFailureFactors');
+    if (failureFactorsList && family.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        family.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Путь развития (новое)
+    setElementText('familyDevelopmentPath', family.developmentPath || family.advice || '');
+
+    // Числа партнера и детей
+    setElementText('familyPartnerNum', family.partnerNumber);
+    setElementText('familyPartnerDesc', family.partnerDescription || '');
+    setElementText('familyChildrenNum', family.childrenNumber);
+    setElementText('familyChildrenDesc', family.childrenDescription || '');
+
+    // Совет
+    setElementText('familyAdvice', family.advice || '');
+}
+
+function displayLoveInterpretation(love) {
+    if (!love) return;
+
+    setElementText('loveNumber', love.loveNumber);
+    setElementText('loveTitle', love.title || 'Любовная совместимость');
+    setElementText('loveDescription', love.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('loveDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = love.detailedDescription || love.description || '';
+    }
+
+    setElementText('loveStyle', love.loveStyle || '');
+
+    // Сильные стороны
+    const strengthsList = document.getElementById('loveStrengths');
+    if (strengthsList && love.strengths) {
+        strengthsList.innerHTML = '';
+        love.strengths.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            strengthsList.appendChild(li);
+        });
+    }
+
+    // Зоны роста
+    const weaknessesList = document.getElementById('loveWeaknesses');
+    if (weaknessesList && love.weaknesses) {
+        weaknessesList.innerHTML = '';
+        love.weaknesses.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w;
+            weaknessesList.appendChild(li);
+        });
+    }
+
+    setElementText('idealPartner', love.idealPartner || '');
+
+    // Тип партнера (новое поле)
+    setElementText('lovePartnerType', love.partnerType || '');
+
+    // Отношение к браку (новое поле)
+    setElementText('loveMarriageView', love.marriageView || '');
+
+    // Совместимость
+    if (love.compatibility !== undefined) {
+        const progressBar = document.getElementById('compatibilityProgress');
+        if (progressBar) {
+            progressBar.style.width = love.compatibility + '%';
         }
+        setElementText('compatibilityLevel', love.compatibilityLevel || `Совместимость: ${love.compatibility}%`);
+    }
+
+    // Путь развития (новое поле)
+    setElementText('loveDevelopmentPath', love.developmentPath || love.advice || '');
+
+    // Факторы успеха (новое поле)
+    const successFactorsList = document.getElementById('loveSuccessFactors');
+    if (successFactorsList && love.successFactors) {
+        successFactorsList.innerHTML = '';
+        love.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    }
+
+    // Факторы риска (новое поле)
+    const failureFactorsList = document.getElementById('loveFailureFactors');
+    if (failureFactorsList && love.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        love.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    }
+
+    setElementText('loveAdvice', love.advice || '');
+}
+
+function displayMoneyInterpretation(money) {
+    if (!money) return;
+
+    console.log('📊 Отображение финансов:', money);
+
+    // Основная информация
+    setElementText('moneyNumber', money.moneyNumber);
+    setElementText('moneyTitle', money.title || 'Финансовый поток');
+    setElementText('moneyDescription', money.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('moneyDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = money.detailedDescription || money.description || '';
+    }
+
+    // Финансовый стиль
+    setElementText('moneyStyle', money.moneyStyle || '');
+
+    // Сильные стороны
+    const strengthsList = document.getElementById('moneyStrengths');
+    if (strengthsList && money.strengths) {
+        strengthsList.innerHTML = '';
+        money.strengths.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            strengthsList.appendChild(li);
+        });
+    } else if (strengthsList) {
+        strengthsList.innerHTML = '<li>—</li>';
+    }
+
+    // Зоны роста
+    const weaknessesList = document.getElementById('moneyWeaknesses');
+    if (weaknessesList && money.weaknesses) {
+        weaknessesList.innerHTML = '';
+        money.weaknesses.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w;
+            weaknessesList.appendChild(li);
+        });
+    } else if (weaknessesList) {
+        weaknessesList.innerHTML = '<li>—</li>';
+    }
+
+    // Источники дохода
+    const sourcesList = document.getElementById('moneySources');
+    if (sourcesList && money.sources) {
+        sourcesList.innerHTML = '';
+        money.sources.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            sourcesList.appendChild(li);
+        });
+    } else if (sourcesList) {
+        sourcesList.innerHTML = '<li>—</li>';
+    }
+
+    // Финансовая стратегия (новое)
+    setElementText('moneyStrategy', money.moneyStrategy || '');
+
+    // Отношение к риску (новое)
+    setElementText('moneyRiskAttitude', money.riskAttitude || '');
+
+    // Лучшие инвестиции (новое)
+    const investmentsList = document.getElementById('moneyInvestments');
+    if (investmentsList && money.bestInvestments) {
+        investmentsList.innerHTML = '';
+        money.bestInvestments.forEach(i => {
+            const li = document.createElement('li');
+            li.innerHTML = i;
+            investmentsList.appendChild(li);
+        });
+    } else if (investmentsList) {
+        investmentsList.innerHTML = '<li>—</li>';
+    }
+
+    // Факторы успеха (новое)
+    const successFactorsList = document.getElementById('moneySuccessFactors');
+    if (successFactorsList && money.successFactors) {
+        successFactorsList.innerHTML = '';
+        money.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Факторы риска (новое)
+    const failureFactorsList = document.getElementById('moneyFailureFactors');
+    if (failureFactorsList && money.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        money.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
+    }
+
+    // Путь развития (новое)
+    setElementText('moneyDevelopmentPath', money.developmentPath || money.advice || '');
+
+    // Число изобилия
+    setElementText('moneyAbundanceNum', money.abundanceNumber);
+    setElementText('moneyAbundanceDesc', money.abundanceDescription || '');
+
+    // Совет
+    setElementText('moneyAdvice', money.advice || '');
+}
+
+function displayHealthInterpretation(health) {
+    if (!health) return;
+
+    setElementText('healthNumber', health.healthNumber);
+    setElementText('healthTitle', health.title || 'Энергия здоровья');
+    setElementText('healthDescription', health.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('healthDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = health.detailedDescription || health.description || '';
+    }
+
+    // Энергия
+    if (health.energyLevel !== undefined) {
+        const energyProgress = document.getElementById('energyProgress');
+        if (energyProgress) {
+            const percent = (health.energyLevel / 10) * 100;
+            energyProgress.style.width = percent + '%';
+        }
+        setElementText('energyLevel', `Уровень энергии: ${health.energyLevel}/10`);
+    }
+
+    // Сильные стороны
+    const strengthsList = document.getElementById('healthStrengths');
+    if (strengthsList && health.strengths) {
+        strengthsList.innerHTML = '';
+        health.strengths.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            strengthsList.appendChild(li);
+        });
+    }
+
+    // Зоны роста
+    const weaknessesList = document.getElementById('healthWeaknesses');
+    if (weaknessesList && health.weaknesses) {
+        weaknessesList.innerHTML = '';
+        health.weaknesses.forEach(w => {
+            const li = document.createElement('li');
+            li.innerHTML = w;
+            weaknessesList.appendChild(li);
+        });
+    }
+
+    // Уязвимые органы
+    const vulnerableList = document.getElementById('healthVulnerable');
+    if (vulnerableList && health.vulnerable) {
+        vulnerableList.innerHTML = '';
+        health.vulnerable.forEach(v => {
+            const li = document.createElement('li');
+            li.innerHTML = v;
+            vulnerableList.appendChild(li);
+        });
+    }
+
+    // Рекомендации
+    const recommendationsList = document.getElementById('healthRecommendations');
+    if (recommendationsList && health.recommendations) {
+        recommendationsList.innerHTML = '';
+        health.recommendations.forEach(r => {
+            const li = document.createElement('li');
+            li.innerHTML = r;
+            recommendationsList.appendChild(li);
+        });
+    }
+
+    // Тип энергетики (новое поле)
+    setElementText('healthEnergyType', health.energyType || '');
+
+    // Риски по сезонам (новое поле)
+    setElementText('healthSeasonalRisks', health.seasonalRisks || '');
+
+    // Профилактика (новое поле)
+    const preventionList = document.getElementById('healthPrevention');
+    if (preventionList && health.prevention) {
+        preventionList.innerHTML = '';
+        health.prevention.forEach(p => {
+            const li = document.createElement('li');
+            li.innerHTML = p;
+            preventionList.appendChild(li);
+        });
+    }
+
+    // Путь развития (новое поле)
+    setElementText('healthDevelopmentPath', health.developmentPath || health.advice || '');
+
+    // Факторы успеха (новое поле)
+    const successFactorsList = document.getElementById('healthSuccessFactors');
+    if (successFactorsList && health.successFactors) {
+        successFactorsList.innerHTML = '';
+        health.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    }
+
+    // Факторы риска (новое поле)
+    const failureFactorsList = document.getElementById('healthFailureFactors');
+    if (failureFactorsList && health.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        health.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    }
+
+    setElementText('healthAdvice', health.advice || '');
+}
+
+function displayTalentInterpretation(talent) {
+    if (!talent) return;
+
+    setElementText('talentNumber', talent.talentNumber);
+    setElementText('talentTitle', talent.title || 'Скрытые таланты');
+    setElementText('talentDescription', talent.description || '');
+
+    // Детальное описание
+    const detailedDescElement = document.getElementById('talentDetailedDescription');
+    if (detailedDescElement) {
+        detailedDescElement.innerHTML = talent.detailedDescription || talent.description || '';
+    }
+
+    // Таланты
+    const talentList = document.getElementById('talentList');
+    if (talentList && talent.talents) {
+        talentList.innerHTML = '';
+        talent.talents.forEach(t => {
+            const li = document.createElement('li');
+            li.innerHTML = t;
+            talentList.appendChild(li);
+        });
+    }
+
+    setElementText('talentDevelopment', talent.development || '');
+
+    // Сферы реализации
+    const suitableList = document.getElementById('talentSuitable');
+    if (suitableList && talent.suitable) {
+        suitableList.innerHTML = '';
+        talent.suitable.forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = s;
+            suitableList.appendChild(li);
+        });
+    }
+
+    // Как развивать (новое поле)
+    const howToDevelopList = document.getElementById('talentHowToDevelop');
+    if (howToDevelopList && talent.howToDevelop) {
+        howToDevelopList.innerHTML = '';
+        talent.howToDevelop.forEach(h => {
+            const li = document.createElement('li');
+            li.innerHTML = h;
+            howToDevelopList.appendChild(li);
+        });
+    }
+
+    // С чем сочетается (новое поле)
+    setElementText('talentCombinesWith', talent.combinesWith || '');
+
+    // Потенциал
+    if (talent.potential !== undefined) {
+        const potentialProgress = document.getElementById('potentialProgress');
+        if (potentialProgress) {
+            potentialProgress.style.width = talent.potential + '%';
+        }
+        setElementText('potentialDescription', talent.potentialDescription || `Потенциал: ${talent.potential}%`);
+    }
+
+    // Путь развития (новое поле)
+    setElementText('talentDevelopmentPath', talent.developmentPath || talent.advice || '');
+
+    // Факторы успеха (новое поле)
+    const successFactorsList = document.getElementById('talentSuccessFactors');
+    if (successFactorsList && talent.successFactors) {
+        successFactorsList.innerHTML = '';
+        talent.successFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            successFactorsList.appendChild(li);
+        });
+    }
+
+    // Факторы риска (новое поле)
+    const failureFactorsList = document.getElementById('talentFailureFactors');
+    if (failureFactorsList && talent.failureFactors) {
+        failureFactorsList.innerHTML = '';
+        talent.failureFactors.forEach(f => {
+            const li = document.createElement('li');
+            li.innerHTML = f;
+            failureFactorsList.appendChild(li);
+        });
+    }
+
+    setElementText('talentAdvice', talent.advice || '');
+}
+
+function setupInterpretationTabs() {
+    const tabBtns = document.querySelectorAll('.interpretation-tabs .tab-btn');
+
+    if (!tabBtns.length) return;
+
+    tabBtns.forEach(btn => {
+        btn.removeEventListener('click', handleInterpretationTabClick);
+        btn.addEventListener('click', handleInterpretationTabClick);
     });
 
-    // ========== 2. Анализ контрастов (разрыв между числами) ==========
-    const numbersArray = [base.fate, base.name, base.surname, base.patronymic];
-    const maxNum = Math.max(...numbersArray);
-    const minNum = Math.min(...numbersArray);
-    const range = maxNum - minNum;
-
-    if (range > 15) {
-        patterns.push('⚡ **Экстремальный диапазон энергий** — в вас сочетаются очень разные, почти противоположные качества. Это делает вас многогранной личностью, но может создавать внутренние конфликты. Учитесь интегрировать свои противоречия.');
-    } else if (range > 10) {
-        patterns.push('🎭 **Внутренний контраст** — ваши энергии находятся в заметном напряжении. Это дает вам глубину и способность видеть ситуацию с разных сторон.');
-    } else if (range < 5) {
-        patterns.push('🌈 **Гармоничный профиль** — ваши энергии сбалансированы и дополняют друг друга. Вы целостная личность, но остерегайтесь застоя — иногда нужен вызов для роста.');
-    }
-
-    if (Math.abs(base.fate - base.name) > 10) {
-        patterns.push('⚖️ **Конфликт предназначения и личности** — ваше число судьбы (предназначение) сильно отличается от числа имени (самовыражение). Вы не всегда позволяете себе быть собой из-за внешних обязательств. Поиск компромисса между долгом и желаниями — ваша главная задача.');
-    }
-
-    if (base.surname === base.patronymic) {
-        patterns.push('🌳 **Сильная связь с родом** — поддержка предков ощущается на подсознательном уровне. Вы несете мудрость нескольких поколений, но иногда это может быть грузом. Важно отделить свое от навязанного родом.');
-    }
-
-    if (achilles && achilles.number === control.number) {
-        patterns.push('🔑 **Золотой ключ** — ваша уязвимость (ахиллесова пята) является одновременно вашей суперсилой (числом управления). Приняв свою слабость, вы обретете невероятную мощь. Ваша главная сила — в умении превращать недостатки в достоинства.');
-    }
-
-    // ========== 3. Анализ по числу управления ==========
-    if (control && control.number) {
-        const controlPatterns = {
-            1: '🎯 **Ваша сверхспособность: Инициатива** — вы управляете миром через действие. Там, где другие думают, вы делаете. Ваша задача — научиться иногда останавливаться и слушать.',
-            2: '🕊️ **Ваша сверхспособность: Дипломатия** — ваша сила в терпении и умении ждать. Вы создаете гармонию из хаоса. Не позволяйте другим использовать вашу мягкость как слабость.',
-            3: '✨ **Ваша сверхспособность: Творчество** — вы творите реальность через радость и самовыражение. Ваша энергия заразительна. Научитесь дисциплине, чтобы ваши идеи воплощались.',
-            4: '🏗️ **Ваша сверхспособность: Структура** — вы создаете порядок и системы. Вы — архитектор реальности. Но помните: лучшие структуры достаточно гибки, чтобы меняться.',
-            5: '🦋 **Ваша сверхспособность: Адаптивность** — вы — ветер перемен. Ваша стихия — движение и свобода. Вы открываете новые двери. Найдите якорь, чтобы не потерять себя в путешествиях.',
-            6: '💖 **Ваша сверхспособность: Забота** — вы — сердце. Ваш путь — служение и любовь. Вы исцеляете одним присутствием. Но научитесь заботиться и о себе.',
-            7: '🔍 **Ваша сверхспособность: Анализ** — вы — воин света. Ваша сила — в вере и способности преодолевать. Вы не сдаетесь, даже когда весь мир против. Доверяйте своей интуиции.',
-            8: '⚖️ **Ваша сверхспособность: Справедливость** — вы — хранитель равновесия. Ваш дар — в чувстве баланса. Вы там, где восстанавливается порядок. Но будьте милосердны.',
-            9: '🌍 **Ваша сверхспособность: Мудрость** — вы — мудрец. Ваша глубина пугает и притягивает. Вы видите то, что скрыто от других. Делитесь своей мудростью, не ждите, пока попросят.',
-            10: '🍀 **Ваша сверхспособность: Удача** — вы — любимец фортуны. Ваша энергия притягивает успех и возможности. Делитесь удачей с другими — это приумножит вашу.',
-            11: '💫 **Ваша сверхспособность: Вдохновение** — вы — источник света. Ваша харизма зажигает сердца. За вами идут, даже не зная куда. Ведите ответственно.',
-            12: '🙏 **Ваша сверхспособность: Принятие** — ваш дар — в умении принимать мир. Вы — тихая гавань для уставших душ. Но не позволяйте другим тонуть в вашей гавани — у них свои корабли.',
-            13: '🔄 **Ваша сверхспособность: Трансформация** — вы — феникс. Ваша сила — в способности проходить через кризисы и возрождаться. Вы пример для других, как не бояться перемен.',
-            14: '🌈 **Ваша сверхспособность: Гармония** — вы — дирижер оркестра жизни. Вы соединяете несоединимое. Создавайте красоту, но помните, что хаос тоже часть гармонии.',
-            15: '🌑 **Ваша сверхспособность: Преодоление** — ваша сила — в прохождении через тьму. Вы знаете цену свободы, потому что сами были в плену. Помогите другим увидеть свет.',
-            16: '💥 **Ваша сверхспособность: Прорыв** — вы не боитесь рушить старое. Вы расчищаете завалы для будущего. Но разрушайте только то, что действительно отжило.',
-            17: '⭐ **Ваша сверхспособность: Надежда** — вы верите, когда верить не во что. Вы — звезда в ночном небе. Светите ярко, даже когда кажется, что вас никто не видит.',
-            18: '🌙 **Ваша сверхспособность: Интуиция** — ваша сила — в связи с подсознанием. Вы слышите то, что не сказано. Доверяйте своим снам и предчувствиям.',
-            19: '☀️ **Ваша сверхспособность: Свет** — вы радуетесь жизни и заражаете других. Вы — солнце. Но помните: даже солнце иногда уходит за горизонт, чтобы дать место звездам.',
-            20: '⏰ **Ваша сверхспособность: Пробуждение** — вы видите истинную суть вещей. Вы — будильник для спящих душ. Будите мягко, не все готовы проснуться.',
-            21: '🌐 **Ваша сверхспособность: Целостность** — вы объединяете разрозненное. Вы собираете пазл мира. Завершайте начатое, чтобы освободить место для нового.',
-            22: '🦋 **Ваша сверхспособность: Свобода** — ваша сила — в умении начинать с чистого листа. Вы — чистое начало. Не бойтесь ошибаться — каждый лист можно перевернуть.'
-        };
-
-        if (controlPatterns[control.number]) {
-            patterns.push(controlPatterns[control.number]);
+    const hasActive = Array.from(tabBtns).some(btn => btn.classList.contains('active'));
+    if (!hasActive && tabBtns.length > 0) {
+        tabBtns[0].classList.add('active');
+        const firstPane = document.getElementById('interpretation-' + tabBtns[0].dataset.interpretation);
+        if (firstPane) {
+            firstPane.classList.add('active');
         }
     }
+}
+function handleInterpretationTabClick(e) {
+    const btn = e.currentTarget;
+    const interpretation = btn.dataset.interpretation;
 
-    // ========== 4. Анализ по ахиллесовой пяте ==========
-    if (achilles && achilles.number) {
-        const achillesPatterns = {
-            1: '🦁 **Страх одиночества** — вы боитесь остаться незамеченным, но именно в моменты, когда никто не смотрит, вы обретаете настоящую силу. Учитесь быть собой без зрителей.',
-            2: '🤔 **Зависимость от мнения других** — вы слишком чувствительны к оценке окружающих. Помните: чужое мнение — это просто мнение, а не истина. Ваша ценность не зависит от того, сколько лайков вы собрали.',
-            3: '🎭 **Страх быть смешным** — вы боитесь нелепости, но именно спонтанность и легкость могут стать вашим главным козырем. Разрешите себе быть неидеальным.',
-            4: '🏰 **Страх перемен** — вы держитесь за стабильность, но мир меняется, и ваша гибкость — залог выживания. Самые крепкие стены когда-нибудь рушатся, освобождая место для сада.',
-            5: '🕊️ **Страх свободы** — вы боитесь отпустить контроль, но именно в полете расправляются крылья. Доверьтесь потоку — он знает, куда течь.',
-            6: '💔 **Чувство вины** — вы всегда кому-то что-то должны. Но правда в том, что вы должны быть счастливы в первую очередь. Ваше "нет" так же ценно, как и "да".',
-            7: '⚔️ **Страх поражения** — вы боитесь проиграть, но без поражений нет побед. Каждое падение — это опыт. Величайшие победители проигрывали чаще, чем вы думаете.',
-            8: '⚖️ **Непереносимость несправедливости** — вы остро реагируете на нечестность. Но мир не черно-белый, и ваша задача — принять его многогранность. Иногда справедливость одного — несправедливость для другого.',
-            9: '🌫️ **Уход в иллюзии** — вы избегаете реальности в мечтах. Но настоящая магия происходит здесь и сейчас. Ваши мечты — это карта, а не территория.',
-            10: '🎭 **Страх непризнания** — вам нужно, чтобы вас ценили. Но ваша ценность не зависит от чужого признания. Вы ценны просто потому, что вы есть.',
-            11: '🦅 **Внутренняя борьба** — вы разрываетесь между силой и слабостью. Примите обе свои стороны. Ваша сила — в умении быть уязвимым, а слабость — в нежелании это признать.',
-            12: '🙏 **Страх отказать** — вы не умеете говорить "нет". Но ваше "да" обесценивается, когда вы соглашаетесь на все подряд. Границы — это не стены, это ворота, которые вы открываете только для тех, кто уважает ваш дом.',
-            13: '🌪️ **Страх перемен** — вы боитесь, что привычный мир рухнет. Иногда это именно то, что нужно. За руинами старого сада всегда вырастает новый.',
-            14: '🌊 **Эмоциональная нестабильность** — ваши чувства захлестывают вас. Учитесь быть их капитаном, а не пассажиром. Эмоции — это волны, а вы — океан.',
-            15: '🔥 **Зависимости** — вы легко поддаетесь искушениям. Осознание — первый шаг к свободе. За каждой зависимостью стоит потребность в любви и принятии. Дайте это себе сами.',
-            16: '🏚️ **Страх разрушения** — вы боится, что все пойдет прахом. Но разрушение всегда предшествует новому строительству. Иногда нужно сжечь старый сарай, чтобы построить дом мечты.',
-            17: '🌈 **Нереалистичные ожидания** — вы ждете слишком многого от себя и других. Реальность прекрасна по-своему. Идеальность — враг хорошего.',
-            18: '🌑 **Страх темноты** — вы боитесь заглядывать вглубь себя. Но там ваши главные сокровища. В пещере своей души вы найдете не монстров, а забытые мечты.',
-            19: '☀️ **Страх быть в тени** — вам нужно внимание любой ценой. Но светить можно и не будучи в центре. Иногда самая важная работа делается в тишине.',
-            20: '⚖️ **Страх осуждения** — вы боитесь, что вас осудят. Самый строгий судья — внутри вас. Научитесь быть себе адвокатом, а не прокурором.',
-            21: '🔄 **Неумение отпускать** — вы держитесь за прошлое. Чтобы принять новое, нужно разжать руки. Прошлое — это багаж, который либо учит, либо тянет на дно.',
-            22: '👶 **Страх ответственности** — вы боитесь взрослых решений. Но свобода начинается с ответственности. Взрослеть — не значит становиться скучным, это значит выбирать свой путь.'
-        };
+    if (!interpretation) return;
 
-        if (achillesPatterns[achilles.number]) {
-            patterns.push(`💔 **Ваша ахиллесова пята (число ${achilles.number})**: ${achillesPatterns[achilles.number]}`);
-        }
+    // Деактивируем все кнопки и панели
+    document.querySelectorAll('.interpretation-tabs .tab-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+    document.querySelectorAll('.interpretation-pane').forEach(p => {
+        p.classList.remove('active');
+    });
+
+    // Активируем выбранные
+    btn.classList.add('active');
+    const pane = document.getElementById('interpretation-' + interpretation);
+    if (pane) {
+        pane.classList.add('active');
+
+        // Эффект появления
+        pane.style.animation = 'none';
+        pane.offsetHeight; // reflow
+        pane.style.animation = 'fadeIn 0.5s ease';
     }
-
-    // ========== 5. Анализ по окликам ==========
-    if (calls) {
-        if (calls.close === calls.social && calls.close === calls.world) {
-            patterns.push('🎯 **Целостность образа** — вы одинаковы в семье, в социуме и для незнакомцев. Это редкая искренность, но иногда вам не хватает гибкости. Не бойтесь быть разным в разных контекстах — это не лицемерие, это адаптация.');
-        } else if (calls.close === calls.social) {
-            patterns.push('🏠 **Домашний и социальный образ совпадают** — вы искренни и последовательны. Люди видят вас таким, какой вы есть. Это вызывает доверие, но может быть утомительно — иногда полезно менять маски.');
-        } else if (calls.close === calls.world) {
-            patterns.push('🌍 **Дома и на людях вы одинаковы, но в социуме другой** — возможно, работа или общественные обязанности заставляют вас надевать маску, от которой вы отдыхаете дома и с незнакомцами.');
-        } else if (calls.social === calls.world) {
-            patterns.push('🎭 **В социуме и для незнакомцев вы одинаковы, но дома другой** — дома вы позволяете себе быть настоящим. Это говорит о глубоком доверии к семье и усталости от социальных ролей.');
-        }
-
-        if (calls.close === 22 || calls.social === 22 || calls.world === 22) {
-            patterns.push('🆕 **Вечный начинающий** — вы постоянно в начале нового пути. Это дает свежесть восприятия, но мешает завершать начатое. Учитесь ставить точки.');
-        }
-
-        if (calls.close === 11 || calls.social === 11 || calls.world === 11) {
-            patterns.push('✨ **Харизматичный образ** — где бы вы ни появились, вы привлекаете внимание. Используйте это во благо, но не дайте харизме затмить вашу суть.');
-        }
-
-        // Анализ дисбаланса окликов
-        const callsArray = [calls.close, calls.social, calls.world];
-        const maxCall = Math.max(...callsArray);
-        const minCall = Math.min(...callsArray);
-
-        if (maxCall - minCall > 10) {
-            patterns.push('🎪 **Сильный разрыв между социальными масками** — вы очень по-разному проявляете себя в разных ситуациях. Это может сбивать с толку окружающих и вас самого. Найдите свою "золотую середину".');
-        }
-    }
-
-    // ========== 6. Анализ по зодиаку ==========
-    if (data.zodiac) {
-        const zodiac = data.zodiac;
-
-        // Стихийный баланс
-        const fireSigns = ['Овен', 'Лев', 'Стрелец'];
-        const earthSigns = ['Телец', 'Дева', 'Козерог'];
-        const airSigns = ['Близнецы', 'Весы', 'Водолей'];
-        const waterSigns = ['Рак', 'Скорпион', 'Рыбы'];
-
-        if (fireSigns.includes(zodiac.name)) {
-            patterns.push('🔥 **Огненная натура** — ваша стихия — огонь. Вы энергичны, страстны и импульсивны. Ваша задача — направлять огонь на созидание, не давая ему сжигать все вокруг.');
-        } else if (earthSigns.includes(zodiac.name)) {
-            patterns.push('🌱 **Земная натура** — ваша стихия — земля. Вы практичны, надежны и стабильны. Ваша задача — не закостенеть, оставаться плодородной почвой для новых идей.');
-        } else if (airSigns.includes(zodiac.name)) {
-            patterns.push('💨 **Воздушная натура** — ваша стихия — воздух. Вы коммуникабельны, любознательны и легки на подъем. Ваша задача — находить глубину за множеством интересов.');
-        } else if (waterSigns.includes(zodiac.name)) {
-            patterns.push('💧 **Водная натура** — ваша стихия — вода. Вы эмоциональны, интуитивны и глубоки. Ваша задача — не растворяться в других, сохранять свои границы.');
-        }
-
-        // Крест качества
-        if (zodiac.quality) {
-            if (zodiac.quality === 'Кардинальный') {
-                patterns.push('🚀 **Кардинальный знак** — вы инициатор, лидер, тот, кто начинает новое. Ваша задача — не бросать начатое на полпути.');
-            } else if (zodiac.quality === 'Фиксированный') {
-                patterns.push('🏔️ **Фиксированный знак** — вы стабильны, упорны, надежны. Ваша задача — не превращать стабильность в застой.');
-            } else if (zodiac.quality === 'Мутабельный') {
-                patterns.push('🦎 **Мутабельный знак** — вы гибки, адаптивны, легко меняетесь. Ваша задача — не терять себя в этой гибкости.');
-            }
-        }
-    }
-
-    // ========== 7. Анализ по фен-шуй ==========
-    if (data.fengShui) {
-        const fengShui = data.fengShui;
-        patterns.push(`🌿 **Ваш элемент по фен-шуй: ${fengShui.element}**. ${fengShui.element === 'Металл' ? 'Вы цените структуру и порядок, но учитесь гибкости.' :
-            fengShui.element === 'Вода' ? 'Вы глубоки и интуитивны, но не позволяйте эмоциям затопить вас.' :
-                fengShui.element === 'Дерево' ? 'Вы растете и развиваетесь, но не забывайте укореняться.' :
-                    fengShui.element === 'Огонь' ? 'Вы страстны и энергичны, но не сжигайте себя.' :
-                        'Вы надежны и стабильны, но не забывайте про движение.'}`);
-
-        if (fengShui.color) {
-            patterns.push(`🎨 **Ваш цвет силы: ${fengShui.color}**. Окружите себя этим цветом для гармонизации энергии.`);
-        }
-
-        if (fengShui.direction) {
-            patterns.push(`🧭 **Ваше направление удачи: ${fengShui.direction}**. В важных делах старайтесь смотреть или двигаться в эту сторону.`);
-        }
-    }
-
-    // ========== 8. Анализ по Таро ==========
-    if (data.tarot) {
-        const tarot = data.tarot;
-
-        if (tarot.fate && tarot.personality && tarot.fate.number === tarot.personality.number) {
-            patterns.push('🎴 **Кармическая задача** — ваша карта судьбы совпадает с картой личности. Это означает, что ваша главная жизненная задача — стать собой. Никаких масок, только подлинность.');
-        }
-
-        if (tarot.fate && [0, 13, 16, 20].includes(tarot.fate.number)) {
-            patterns.push('🔄 **Трансформатор** — ваша карта судьбы указывает на глубокие трансформации в жизни. Перемены — ваша стихия, а кризисы — точки роста. Не бойтесь разрушения старого — на его месте вырастет новое.');
-        }
-
-        if (tarot.personality && [1, 8, 11, 21].includes(tarot.personality.number)) {
-            patterns.push('👑 **Прирожденный лидер** — ваша карта личности говорит о лидерских качествах. Вы не ведомый, вы ведущий. Даже в пассивности чувствуется скрытая сила, готовая проявиться.');
-        }
-
-        if (tarot.control && [2, 6, 9, 12].includes(tarot.control.number)) {
-            patterns.push('🤲 **Служитель и целитель** — ваша карта пути указывает на предназначение помогать другим. Но помните: чтобы заботиться о других, нужно сначала наполнить себя.');
-        }
-
-        // Добавляем краткое описание карт
-        if (tarot.fate) {
-            patterns.push(`🔮 **Карта Судьбы: ${tarot.fate.name}**. ${tarot.fate.keywords}. ${tarot.fate.advice.split('.')[0]}.`);
-        }
-
-        if (tarot.personality && tarot.personality.number !== tarot.fate.number) {
-            patterns.push(`🎭 **Карта Личности: ${tarot.personality.name}**. ${tarot.personality.keywords}. ${tarot.personality.advice.split('.')[0]}.`);
-        }
-
-        if (tarot.control && tarot.control.number !== tarot.fate.number && tarot.control.number !== tarot.personality.number) {
-            patterns.push(`🛤️ **Карта Пути: ${tarot.control.name}**. ${tarot.control.keywords}. ${tarot.control.advice.split('.')[0]}.`);
-        }
-    }
-
-    // ========== 9. Анализ по психологии ==========
-    if (data.psychology) {
-        const psych = data.psychology;
-
-        if (psych.modality) {
-            patterns.push(`🧠 **Ваша ведущая модальность: ${psych.modality.title}**. ${psych.modality.description.split('.')[0]}. ${psych.modality.accessKeys.split('.')[0]}.`);
-        }
-
-        if (psych.archetype) {
-            patterns.push(`🏛️ **Ваш архетип: ${psych.archetype.name}**. ${psych.archetype.description.split('.')[0]}. Дар: ${psych.archetype.gift.toLowerCase()}.`);
-
-            if (psych.archetype.mantra) {
-                patterns.push(`📿 **Мантра для вас**: "${psych.archetype.mantra}"`);
-            }
-        }
-
-        if (psych.attachment) {
-            patterns.push(`🤝 **Тип привязанности: ${psych.attachment.name}**. ${psych.attachment.description.split('.')[0]}.`);
-        }
-    }
-
-    // ========== 10. Анализ по дате рождения (нумерологический портрет) ==========
-    if (base.fate) {
-        const fateDescriptions = {
-            1: '🎯 Ваша миссия — быть первым, прокладывать путь, вдохновлять примером. Вы лидер, но помните: за лидером должны идти, а не бежать.',
-            2: '🤝 Ваша миссия — создавать гармонию, объединять, быть дипломатом. Вы мост между мирами, но не дайте другим ходить по вам.',
-            3: '🎨 Ваша миссия — творить, радоваться, вдохновлять. Вы художник жизни, но не забывайте, что искусство требует дисциплины.',
-            4: '🏛️ Ваша миссия — строить, создавать основы, быть надежной опорой. Вы фундамент, но не позволяйте себя замуровать.',
-            5: '🦋 Ваша миссия — исследовать, меняться, быть свободным. Вы ветер странствий, но иногда нужно возвращаться домой.',
-            6: '💖 Ваша миссия — заботиться, любить, служить. Вы сердце, но помните: сердцу нужен отдых.',
-            7: '🔍 Ваша миссия — искать истину, анализировать, углубляться. Вы мудрец, но не забывайте о простых радостях жизни.',
-            8: '⚖️ Ваша миссия — управлять, балансировать, достигать. Вы магнат, но истинное богатство не в кошельке, а в душе.',
-            9: '🌍 Ваша миссия — завершать, прощать, отпускать. Вы мудрец, завершающий циклы. Но после завершения всегда приходит новое начало.',
-            11: '💫 Ваша миссия — вдохновлять, быть проводником высших идей. Вы источник света, но не дайте ему ослепить вас.',
-            22: '🏗️ Ваша миссия — строить масштабные проекты, воплощать мечты в реальность. Вы архитектор будущего, но не забывайте о настоящем.'
-        };
-
-        if (fateDescriptions[base.fate]) {
-            patterns.push(fateDescriptions[base.fate]);
-        }
-    }
-
-    // ========== 11. Комбинаторные паттерны ==========
-
-    // Сочетание судьбы и имени
-    const fateNameSum = (base.fate + base.name) % 9 || 9;
-    if (fateNameSum === 1) {
-        patterns.push('🌟 **Лидерский тандем** — ваше предназначение и самовыражение работают в унисон на лидерство. Вы рождены, чтобы вести.');
-    } else if (fateNameSum === 2) {
-        patterns.push('🤲 **Дипломатичный тандем** — ваше предназначение и самовыражение направлены на гармонию и сотрудничество. Вы — прирожденный миротворец.');
-    } else if (fateNameSum === 3) {
-        patterns.push('🎭 **Творческий тандем** — ваше предназначение и самовыражение сливаются в творчестве. Вы здесь, чтобы создавать красоту.');
-    } else if (fateNameSum === 4) {
-        patterns.push('🏛️ **Структурный тандем** — ваше предназначение и самовыражение направлены на создание порядка и стабильности. Вы — строитель.');
-    } else if (fateNameSum === 5) {
-        patterns.push('🦋 **Свободный тандем** — ваше предназначение и самовыражение ищут свободы и перемен. Вы — исследователь жизни.');
-    } else if (fateNameSum === 6) {
-        patterns.push('💖 **Заботливый тандем** — ваше предназначение и самовыражение направлены на служение и любовь. Вы — целитель.');
-    } else if (fateNameSum === 7) {
-        patterns.push('🔮 **Аналитический тандем** — ваше предназначение и самовыражение ищут истину. Вы — философ и исследователь.');
-    } else if (fateNameSum === 8) {
-        patterns.push('⚖️ **Управленческий тандем** — ваше предназначение и самовыражение направлены на власть и баланс. Вы — прирожденный управленец.');
-    } else if (fateNameSum === 9) {
-        patterns.push('🌐 **Гуманитарный тандем** — ваше предназначение и самовыражение направлены на служение миру. Вы — гуманист.');
-    }
-
-    // Сочетание рода и предков
-    const surnamePatronymicSum = (base.surname + base.patronymic) % 9 || 9;
-    if (surnamePatronymicSum === 1) {
-        patterns.push('👑 **Сильный род** — ваш род имеет мощную лидерскую энергию. Вы несете ответственность быть достойным своих предков.');
-    } else if (surnamePatronymicSum === 2) {
-        patterns.push('🤝 **Гармоничный род** — в вашем роду сильны традиции сотрудничества и дипломатии. Вы — продолжатель дела миротворцев.');
-    } else if (surnamePatronymicSum === 3) {
-        patterns.push('🎨 **Творческий род** — в вашей семье много талантливых людей. Вы унаследовали творческую искру — не дайте ей погаснуть.');
-    } else if (surnamePatronymicSum === 4) {
-        patterns.push('🏛️ **Род строителей** — ваши предки создавали фундамент, на котором вы стоите. Ваша задача — продолжать их дело, не разрушая накопленного.');
-    } else if (surnamePatronymicSum === 5) {
-        patterns.push('🦋 **Род странников** — в вашей семье были путешественники, переселенцы, искатели приключений. Вы несете их жажду свободы.');
-    } else if (surnamePatronymicSum === 6) {
-        patterns.push('💖 **Род целителей** — в вашей семье сильны традиции заботы и служения. Вы призваны продолжать это дело.');
-    } else if (surnamePatronymicSum === 7) {
-        patterns.push('🔮 **Род мудрецов** — ваши предки обладали глубокими знаниями. Вы несете их мудрость, но должны применить ее по-своему.');
-    } else if (surnamePatronymicSum === 8) {
-        patterns.push('⚖️ **Род управленцев** — в вашей семье были лидеры и руководители. Вы призваны нести ответственность за дело рода.');
-    } else if (surnamePatronymicSum === 9) {
-        patterns.push('🌐 **Род гуманистов** — ваши предки служили людям. Вы продолжаете их миссию, но в новых условиях.');
-    }
-
-    // Баланс мужской и женской энергии (на основе фамилии и отчества)
-    if (base.surname > base.patronymic) {
-        patterns.push('⚔️ **Преобладание мужской энергии рода** — в вашем роду сильна линия отца. Вы можете чувствовать давление патриархальных традиций, но это также дает вам силу и защиту.');
-    } else if (base.surname < base.patronymic) {
-        patterns.push('🌸 **Преобладание женской энергии рода** — в вашем роду сильна линия матери. Вы можете чувствовать глубокую эмоциональную связь с предками по женской линии.');
-    } else {
-        patterns.push('⚖️ **Гармония мужской и женской энергии** — в вашем роду баланс. Вы умеете сочетать силу и мягкость, действие и принятие.');
-    }
-
-    // Если паттернов слишком мало, добавляем общие, но все равно персонализированные
-    if (patterns.length < 5) {
-        const defaultPatterns = [
-            `✨ У вас уникальное сочетание чисел: Судьба ${base.fate}, Имя ${base.name}, Род ${base.surname}, Предки ${base.patronymic}. Это создает неповторимый энергетический рисунок вашей личности.`,
-            `🔢 Ваше число жизненного пути ${base.fate} говорит о том, что вы пришли в этот мир, чтобы ${base.fate === 1 ? 'лидировать и начинать новое' :
-                base.fate === 2 ? 'сотрудничать и создавать гармонию' :
-                    base.fate === 3 ? 'творить и радоваться жизни' :
-                        base.fate === 4 ? 'строить и создавать порядок' :
-                            base.fate === 5 ? 'исследовать и быть свободным' :
-                                base.fate === 6 ? 'заботиться и любить' :
-                                    base.fate === 7 ? 'познавать и анализировать' :
-                                        base.fate === 8 ? 'управлять и достигать' :
-                                            base.fate === 9 ? 'завершать и служить' :
-                                                base.fate === 11 ? 'вдохновлять и вести за собой' :
-                                                    'строить масштабные проекты'}.`,
-            `🌱 Ваше имя с числом ${base.name} добавляет к этому оттенок ${base.name === 1 ? 'лидерства' :
-                base.name === 2 ? 'дипломатичности' :
-                    base.name === 3 ? 'креативности' :
-                        base.name === 4 ? 'основательности' :
-                            base.name === 5 ? 'любознательности' :
-                                base.name === 6 ? 'заботливости' :
-                                    base.name === 7 ? 'глубины' :
-                                        base.name === 8 ? 'авторитетности' :
-                                            base.name === 9 ? 'гуманизма' :
-                                                base.name === 11 ? 'харизмы' :
-                                                    'масштабности'}.`
-        ];
-
-        defaultPatterns.forEach(p => patterns.push(p));
-    }
-
-    // Убираем дубликаты (если вдруг что-то повторилось)
-    const uniquePatterns = [...new Set(patterns)];
-
-    // Ограничиваем количество, но оставляем достаточно для информативности
-    return uniquePatterns.slice(0, 15);
 }
 
-function generateFullInterpretation(data) {
-    const { base, calls } = data.numerology || {};
-
-    return `
-        <div class="interpretation-section">
-            <h4>🌟 ЗВЕЗДНЫЙ КОД ЛИЧНОСТИ</h4>
-            <p>Твоя душа выбрала этот мир в момент <strong>${data.birthDate || '—'}</strong>. 
-            Твое имя <strong>${data.fullName || '—'}</strong> — не случайный набор звуков, а вибрация, которая определяет твой путь.</p>
-        </div>
-        
-        <div class="interpretation-section">
-            <h4>🔢 ЧИСЛОВАЯ МАТРИЦА</h4>
-            <p>Число судьбы: <strong>${base?.fate || '—'}</strong> — твой компас.<br>
-            Число имени: <strong>${base?.name || '—'}</strong> — твой инструмент.<br>
-            Число рода: <strong>${base?.surname || '—'}</strong> — багаж из прошлого.</p>
-        </div>
-        
-        <div class="interpretation-section">
-            <h4>🎭 ТВОИ СОЦИАЛЬНЫЕ МАСКИ</h4>
-            <p>✨ Для близких: ${getCallDescription(calls?.close, 'close')}</p>
-            <p>✨ Для социума: ${getCallDescription(calls?.social, 'social')}</p>
-            <p>✨ Для мира: ${getCallDescription(calls?.world, 'world')}</p>
-        </div>
-    `;
-}
+// Добавляем стили для уведомлений
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);

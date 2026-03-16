@@ -10,7 +10,7 @@ class ControlCalculator {
      * @returns {Object} объект с числом и описанием
      */
     calculate(baseNumbers) {
-        const sum = baseNumbers.fate + baseNumbers.name +
+        let sum = baseNumbers.fate + baseNumbers.name +
             baseNumbers.surname + baseNumbers.patronymic;
 
         const controlNumber = this.reduceNumber(sum);
