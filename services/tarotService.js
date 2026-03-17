@@ -1,3 +1,5 @@
+// services/tarotService.js
+
 class TarotService {
     constructor() {
         this.majorArcana = {
@@ -178,158 +180,83 @@ class TarotService {
                 advice: `Наслаждайтесь результатами. Вы завершили важный этап. Чувствуйте свою связь со всем миром.`
             }
         };
-    }
 
-    /**
-     * Расчет карт Таро на основе нумерологических чисел
-     * ГАРАНТИРОВАННО ВОЗВРАЩАЕТ ТРИ УНИКАЛЬНЫЕ КАРТЫ
-     * @param {Object} numbers - объект с числами fate, name, surname, patronymic
-     * @returns {Object} три уникальные карты Таро
-     */
-    calculateFromNumbers(numbers) {
-        if (!numbers || typeof numbers !== 'object') {
-            return this.getFallbackCards();
-        }
+        // Словарь для интерпретации карт в разных позициях
+        this.positionMeanings = {
+            'Ситуация': 'описывает текущее состояние дел, то, что происходит вокруг вашего вопроса прямо сейчас',
+            'Препятствие': 'показывает, что стоит на вашем пути, главное препятствие или вызов',
+            'Совет': 'дает рекомендацию, как лучше поступить в данной ситуации',
+            'Внешнее влияние': 'указывает на внешние силы или людей, которые влияют на ситуацию',
+            'Итог': 'прогнозирует вероятный исход, если вы будете действовать согласно текущему курсу',
+            'Прошлое': 'отражает события или энергии, которые привели вас к текущей ситуации',
+            'Настоящее': 'описывает ваше текущее состояние и положение дел',
+            'Будущее': 'показывает вероятное развитие событий в ближайшем будущем',
+            'Ответ': 'дает прямой ответ на ваш вопрос',
+            'Суть вопроса': 'раскрывает глубинный смысл вашего вопроса, то, что действительно важно',
+            'Цель': 'показывает вашу истинную цель, даже если вы ее не осознаете',
+            'Сознание': 'отражает то, что вы думаете о ситуации, ваши осознанные мысли',
+            'Подсознание': 'раскрывает скрытые мотивы, страхи и желания',
+            'Надежды и страхи': 'показывает ваши ожидания и опасения относительно ситуации'
+        };
 
-        // Получаем числа
-        const fateNum = numbers.fate || 0;
-        const nameNum = numbers.name || 0;
-        const surnameNum = numbers.surname || 0;
-        const patronymicNum = numbers.patronymic || 0;
-
-        // Преобразуем числа 1-22 в 0-21 для Старших Арканов (22 -> 0 для Шута)
-        const fateArcana = this.normalizeToArcana(fateNum);
-        const nameArcana = this.normalizeToArcana(nameNum);
-
-        // Для третьей карты используем детерминированный алгоритм,
-        // который гарантирует уникальность
-        const pathArcana = this.calculateUniquePathArcana(
-            fateArcana,
-            nameArcana,
-            fateNum,
-            nameNum,
-            surnameNum,
-            patronymicNum
-        );
-
-        return {
-            fate: {
-                number: fateArcana,
-                ...this.getArcanaData(fateArcana)
-            },
-            personality: {
-                number: nameArcana,
-                ...this.getArcanaData(nameArcana)
-            },
-            control: {
-                number: pathArcana,
-                ...this.getArcanaData(pathArcana)
-            }
+        // Мапа для определения типа вопроса
+        this.questionCategories = {
+            'любов': 'love',
+            'отношени': 'love',
+            'партнер': 'love',
+            'брак': 'love',
+            'семь': 'family',
+            'работ': 'career',
+            'бизнес': 'career',
+            'карьер': 'career',
+            'деньг': 'money',
+            'финанс': 'money',
+            'заработ': 'money',
+            'здоров': 'health',
+            'болезн': 'health',
+            'самочувств': 'health',
+            'развити': 'personal',
+            'себ': 'personal',
+            'путь': 'personal',
+            'предназначени': 'personal'
         };
     }
 
-    /**
-     * Нормализует число в диапазон 0-21 для Старших Арканов
-     * @param {number} num - исходное число (обычно 1-22)
-     * @returns {number} число в диапазоне 0-21
-     */
-    normalizeToArcana(num) {
-        if (num === 22) return 0; // Шут
-        if (num >= 0 && num <= 21) return num;
-        // Если число больше 22, редуцируем
-        let reduced = num;
-        while (reduced > 22) {
-            reduced = String(reduced).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
-        }
-        return reduced === 22 ? 0 : reduced;
-    }
+    // ... существующие методы calculateFromNumbers, normalizeToArcana и т.д. ...
 
     /**
-     * Вычисляет УНИКАЛЬНУЮ карту пути, которая не совпадает с картами судьбы и личности
-     * Использует несколько детерминированных формул и гарантирует уникальность
-     */
-    calculateUniquePathArcana(fateArcana, nameArcana, fateNum, nameNum, surnameNum, patronymicNum) {
-        // Множество уже занятых карт
-        const usedCards = new Set([fateArcana, nameArcana]);
-
-        // Если все карты уже заняты (маловероятно, но на всякий случай)
-        if (usedCards.size >= 22) {
-            // Возвращаем карту, циклически сдвинутую от карты судьбы
-            return (fateArcana + 1) % 22;
-        }
-
-        // Пробуем разные формулы в порядке приоритета
-        const candidates = [
-            // Формула 1: на основе фамилии
-            this.normalizeToArcana(surnameNum),
-            // Формула 2: на основе отчества
-            this.normalizeToArcana(patronymicNum),
-            // Формула 3: сумма всех чисел
-            this.normalizeToArcana(fateNum + nameNum + surnameNum + patronymicNum),
-            // Формула 4: произведение
-            this.normalizeToArcana((fateNum * nameNum) % 23),
-            // Формула 5: разность
-            this.normalizeToArcana(Math.abs(fateNum - nameNum) + surnameNum),
-            // Формула 6: (сумма * 3) % 22
-            this.normalizeToArcana((fateNum + nameNum + surnameNum + patronymicNum) * 3),
-            // Формула 7: (fateNum^2 + nameNum^2) % 22
-            this.normalizeToArcana((fateNum * fateNum + nameNum * nameNum) % 23)
-        ];
-
-        // Выбираем первый уникальный кандидат
-        for (let candidate of candidates) {
-            if (!usedCards.has(candidate)) {
-                return candidate;
-            }
-        }
-
-        // Если все кандидаты заняты (очень редкий случай),
-        // ищем первое свободное число от 0 до 21
-        for (let i = 0; i < 22; i++) {
-            if (!usedCards.has(i)) {
-                return i;
-            }
-        }
-
-        // Абсолютный fallback (никогда не должен сработать)
-        return (fateArcana + 1) % 22;
-    }
-
-    getArcanaData(num) {
-        return this.majorArcana[num] || this.getDefaultArcana(num);
-    }
-
-    getDefaultArcana(num) {
-        return {
-            number: num,
-            name: `Аркан ${num === 0 ? 22 : num}`,
-            image: '/images/tarot/back.jpg',
-            keywords: 'Тайна, ожидающая раскрытия',
-            description: `Число ${num === 0 ? 22 : num} несет в себе уникальную энергию, которую предстоит расшифровать лично вам. Это ваша индивидуальная карта, история, которую только вы можете написать.`,
-            advice: `Исследуйте значение числа ${num === 0 ? 22 : num} в своей жизни. Какие события, люди, ситуации связаны с ним? Там скрыт ответ.`
-        };
-    }
-
-    getFallbackCards() {
-        return {
-            fate: this.getDefaultArcana(0),
-            personality: this.getDefaultArcana(1),
-            control: this.getDefaultArcana(2)
-        };
-    }
-
-    /**
-     * Метод для гадания (оставляем как есть)
+     * Метод для гадания
      */
     performReading(question, spreadType = 'three') {
-        // ... существующий код метода performReading ...
-        // (оставляем без изменений)
         try {
             const spreads = {
-                single: { name: 'Одна карта', positions: ['Ответ'], description: 'Быстрый ответ на конкретный вопрос', cardCount: 1 },
-                three: { name: 'Три карты', positions: ['Прошлое', 'Настоящее', 'Будущее'], description: 'Анализ ситуации во времени', cardCount: 3 },
-                five: { name: 'Пять карт', positions: ['Ситуация', 'Препятствие', 'Совет', 'Внешнее влияние', 'Итог'], description: 'Глубокий анализ ситуации', cardCount: 5 },
-                celtic: { name: 'Кельтский крест', positions: ['Суть вопроса', 'Препятствие', 'Цель', 'Прошлое', 'Будущее', 'Сознание', 'Подсознание', 'Внешнее влияние', 'Надежды и страхи', 'Итог'], description: 'Полный анализ ситуации', cardCount: 10 }
+                single: {
+                    name: 'Одна карта',
+                    positions: ['Ответ'],
+                    description: 'Быстрый ответ на конкретный вопрос',
+                    cardCount: 1
+                },
+                three: {
+                    name: 'Три карты',
+                    positions: ['Прошлое', 'Настоящее', 'Будущее'],
+                    description: 'Анализ ситуации во времени',
+                    cardCount: 3
+                },
+                five: {
+                    name: 'Пять карт',
+                    positions: ['Ситуация', 'Препятствие', 'Совет', 'Внешнее влияние', 'Итог'],
+                    description: 'Глубокий анализ ситуации',
+                    cardCount: 5
+                },
+                celtic: {
+                    name: 'Кельтский крест',
+                    positions: [
+                        'Суть вопроса', 'Препятствие', 'Цель', 'Прошлое', 'Будущее',
+                        'Сознание', 'Подсознание', 'Внешнее влияние', 'Надежды и страхи', 'Итог'
+                    ],
+                    description: 'Полный анализ ситуации',
+                    cardCount: 10
+                }
             };
 
             const spread = spreads[spreadType] || spreads.three;
@@ -344,7 +271,12 @@ class TarotService {
                 success: true,
                 data: {
                     question: question,
-                    spread: { type: spreadType, name: spread.name, positions: spread.positions, description: spread.description },
+                    spread: {
+                        type: spreadType,
+                        name: spread.name,
+                        positions: spread.positions,
+                        description: spread.description
+                    },
                     cards: cards,
                     interpretation: this.generateInterpretation(question, spread, cards)
                 }
@@ -358,8 +290,8 @@ class TarotService {
     getRandomCards(count) {
         const arcanaKeys = Object.keys(this.majorArcana);
         const shuffled = [...arcanaKeys].sort(() => 0.5 - Math.random());
-
         const cards = [];
+
         for (let i = 0; i < count; i++) {
             const key = shuffled[i];
             cards.push({ ...this.majorArcana[key] });
@@ -367,10 +299,435 @@ class TarotService {
         return cards;
     }
 
+    /**
+     * Определяет категорию вопроса
+     */
+    detectQuestionCategory(question) {
+        const lowerQuestion = question.toLowerCase();
+
+        for (const [keyword, category] of Object.entries(this.questionCategories)) {
+            if (lowerQuestion.includes(keyword)) {
+                return category;
+            }
+        }
+        return 'general';
+    }
+
+    /**
+     * Генерирует полную интерпретацию расклада с учетом вопроса
+     */
     generateInterpretation(question, spread, cards) {
-        // ... существующий код генерации интерпретации ...
-        // (оставляем без изменений)
-        return "Интерпретация расклада...";
+        const category = this.detectQuestionCategory(question);
+        const uprightCount = cards.filter(c => !c.isReversed).length;
+        const reversedCount = cards.filter(c => c.isReversed).length;
+
+        let interpretation = `🔮 **РАСКЛАД ТАРО** 🔮\n\n`;
+        interpretation += `**Ваш вопрос:** "${question}"\n`;
+        interpretation += `**Расклад:** ${spread.name}\n`;
+        interpretation += `_${spread.description}_\n\n`;
+
+        // 1. Детальный разбор каждой карты
+        interpretation += `**✨ КАРТЫ ВАШЕГО РАСКЛАДА**\n\n`;
+
+        cards.forEach((card, index) => {
+            const orientation = card.isReversed ? 'перевернутом' : 'прямом';
+            const meaning = card.isReversed
+                ? this.getReversedMeaning(card)
+                : card.keywords;
+
+            // Значение в зависимости от позиции
+            const positionMeaning = this.positionMeanings[card.position] || `относится к аспекту "${card.position}"`;
+
+            interpretation += `**${index + 1}. ${card.position}** — ${card.name} (${orientation})\n`;
+            interpretation += `▸ **Ключевое значение:** ${meaning}\n`;
+            interpretation += `▸ **Описание карты:** ${card.description.split('.')[0]}.\n`;
+            interpretation += `▸ **Толкование в этой позиции:** Эта карта ${positionMeaning}. `;
+
+            if (card.isReversed) {
+                interpretation += `В перевернутом положении она указывает на блокировки, задержки или необходимость пересмотреть свой подход. `;
+            } else {
+                interpretation += `В прямом положении она несет свою энергию в чистом виде, указывая на благоприятные возможности. `;
+            }
+
+            // Специфическое толкование для первой и последней карты
+            if (index === 0) {
+                interpretation += `Это отправная точка вашего расклада, задающая тон всему анализу. `;
+            }
+            if (index === cards.length - 1) {
+                interpretation += `Это финальная карта, подводящая итог и указывающая направление. `;
+            }
+
+            interpretation += `\n\n`;
+        });
+
+        // 2. Общий анализ баланса энергий
+        interpretation += `**📊 БАЛАНС ЭНЕРГИЙ**\n\n`;
+        interpretation += `В вашем раскладе **${uprightCount}** карт в прямом положении и **${reversedCount}** в перевернутом. `;
+
+        if (uprightCount === cards.length) {
+            interpretation += `Исключительно прямой расклад — мощный знак! Все энергии работают на вас. Ситуация развивается по наиболее благоприятному сценарию.`;
+        } else if (reversedCount === cards.length) {
+            interpretation += `Все карты в перевернутом положении — это указывает на серьезные вызовы. Возможно, вы идете против течения. Сейчас время переосмыслить ситуацию.`;
+        } else if (uprightCount > reversedCount) {
+            const ratio = Math.round((uprightCount / cards.length) * 100);
+            interpretation += `Преобладают прямые карты (${ratio}%). Это говорит о том, что в ситуации доминируют позитивные энергии.`;
+        } else if (reversedCount > uprightCount) {
+            const ratio = Math.round((reversedCount / cards.length) * 100);
+            interpretation += `Преобладают перевернутые карты (${ratio}%). Это указывает на наличие препятствий и вызовов, но они указывают на зоны роста.`;
+        } else {
+            interpretation += `Идеальный баланс — равное количество прямых и перевернутых карт. В вашей ситуации есть как поддерживающие, так и мешающие факторы.`;
+        }
+
+        interpretation += `\n\n`;
+
+        // 3. Анализ в зависимости от типа вопроса
+        interpretation += `**💫 ОТВЕТ НА ВАШ ВОПРОС**\n\n`;
+
+        switch(category) {
+            case 'love':
+                interpretation += this.getLoveInterpretation(cards, question);
+                break;
+            case 'career':
+                interpretation += this.getCareerInterpretation(cards, question);
+                break;
+            case 'money':
+                interpretation += this.getMoneyInterpretation(cards, question);
+                break;
+            case 'health':
+                interpretation += this.getHealthInterpretation(cards, question);
+                break;
+            case 'family':
+                interpretation += this.getFamilyInterpretation(cards, question);
+                break;
+            case 'personal':
+                interpretation += this.getPersonalInterpretation(cards, question);
+                break;
+            default:
+                interpretation += this.getGeneralInterpretation(cards, question);
+        }
+
+        interpretation += `\n\n`;
+
+        // 4. Совет от ключевой карты
+        const significantCard = this.findMostSignificantCard(cards);
+        interpretation += `**💡 КЛЮЧЕВОЙ СОВЕТ**\n\n`;
+        interpretation += `Наиболее значимая карта этого расклада — **${significantCard.name}**. `;
+
+        if (significantCard.isReversed) {
+            interpretation += `В перевернутом положении она призывает вас обратить внимание на теневые аспекты. `;
+        } else {
+            interpretation += `В прямом положении она несет мощную энергию, которая станет вашим главным союзником. `;
+        }
+
+        interpretation += significantCard.advice;
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для вопросов о любви
+     */
+    getLoveInterpretation(cards, question) {
+        let interpretation = '';
+
+        // Анализ первой и последней карты (начало и итог отношений)
+        const firstCard = cards[0];
+        const lastCard = cards[cards.length - 1];
+
+        interpretation += `В контексте любовных отношений этот расклад показывает, что `;
+
+        if (!firstCard.isReversed && !lastCard.isReversed) {
+            interpretation += `ваши отношения имеют позитивную динамику. Начало и итог отмечены благоприятными картами, что говорит о хороших перспективах. `;
+        } else if (firstCard.isReversed && lastCard.isReversed) {
+            interpretation += `сейчас в отношениях много сложностей, но помните, что перевернутые карты указывают на зоны роста. Работайте над проблемами. `;
+        } else if (!firstCard.isReversed && lastCard.isReversed) {
+            interpretation += `несмотря на хорошее начало, в будущем возможны трудности. Будьте внимательны к партнеру. `;
+        } else if (firstCard.isReversed && !lastCard.isReversed) {
+            interpretation += `даже если сейчас есть сложности, итог будет благоприятным. Не сдавайтесь. `;
+        }
+
+        // Поиск карт, связанных с любовью
+        const loveCards = cards.filter(c =>
+            c.name === 'Влюбленные' ||
+            c.name === 'Императрица' ||
+            c.name === 'Император' ||
+            c.name === 'Звезда' ||
+            c.name === 'Солнце'
+        );
+
+        if (loveCards.length > 0) {
+            interpretation += `\n\nОсобое значение имеет карта **${loveCards[0].name}** — она указывает на `;
+            if (loveCards[0].name === 'Влюбленные') {
+                interpretation += `важность выбора в отношениях. Возможно, вам предстоит принять важное решение.`;
+            } else if (loveCards[0].name === 'Императрица') {
+                interpretation += `период расцвета чувств, гармонии и взаимопонимания.`;
+            } else if (loveCards[0].name === 'Император') {
+                interpretation += `необходимость взять ответственность за отношения или укрепить их структуру.`;
+            } else if (loveCards[0].name === 'Звезда') {
+                interpretation += `надежду на лучшее, исцеление после разочарований.`;
+            } else if (loveCards[0].name === 'Солнце') {
+                interpretation += `светлые, радостные отношения, полные тепла.`;
+            }
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для карьерных вопросов
+     */
+    getCareerInterpretation(cards, question) {
+        let interpretation = '';
+
+        // Анализ карт, связанных с карьерой
+        const careerCards = cards.filter(c =>
+            c.name === 'Маг' ||
+            c.name === 'Император' ||
+            c.name === 'Колесница' ||
+            c.name === 'Отшельник' ||
+            c.name === 'Справедливость'
+        );
+
+        interpretation += `В вопросах карьеры и работы этот расклад показывает, что `;
+
+        if (careerCards.length > 0) {
+            interpretation += `ключевое влияние имеет карта **${careerCards[0].name}**. `;
+
+            switch(careerCards[0].name) {
+                case 'Маг':
+                    interpretation += `У вас есть все ресурсы для достижения цели. Используйте свои навыки и таланты.`;
+                    break;
+                case 'Император':
+                    interpretation += `Нужно проявить лидерские качества и взять ситуацию под контроль.`;
+                    break;
+                case 'Колесница':
+                    interpretation += `Время двигаться вперед, преодолевая препятствия. Успех близок.`;
+                    break;
+                case 'Отшельник':
+                    interpretation += `Возможно, стоит взять паузу для анализа и переоценки целей.`;
+                    break;
+                case 'Справедливость':
+                    interpretation += `Важно быть честным и справедливым. Результат будет соответствовать вложенным усилиям.`;
+                    break;
+            }
+        } else {
+            interpretation += `вам нужно обратить внимание на свои истинные цели. `;
+            interpretation += `Карта **${cards[0].name}** в позиции "${cards[0].position}" задает тон вашей карьерной ситуации. `;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для финансовых вопросов
+     */
+    getMoneyInterpretation(cards, question) {
+        let interpretation = '';
+
+        const moneyCards = cards.filter(c =>
+            c.name === 'Императрица' ||
+            c.name === 'Император' ||
+            c.name === 'Колесо Фортуны' ||
+            c.name === 'Мир'
+        );
+
+        interpretation += `В финансовых вопросах этот расклад указывает на `;
+
+        if (moneyCards.length > 0) {
+            switch(moneyCards[0].name) {
+                case 'Императрица':
+                    interpretation += `период изобилия и роста. Ваши вложения начнут приносить плоды.`;
+                    break;
+                case 'Император':
+                    interpretation += `необходимость структурировать доходы и расходы. Создайте финансовый план.`;
+                    break;
+                case 'Колесо Фортуны':
+                    interpretation += `перемены в финансовой сфере. Удача на вашей стороне, но не рискуйте безрассудно.`;
+                    break;
+                case 'Мир':
+                    interpretation += `успешное завершение финансовых проектов, достижение целей.`;
+                    break;
+            }
+        } else {
+            interpretation += `необходимость более внимательного подхода к деньгам. `;
+            interpretation += `Карта **${cards[0].name}** советует ${cards[0].advice.toLowerCase()}`;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для вопросов здоровья
+     */
+    getHealthInterpretation(cards, question) {
+        let interpretation = '';
+
+        const healthCards = cards.filter(c =>
+            c.name === 'Сила' ||
+            c.name === 'Отшельник' ||
+            c.name === 'Звезда' ||
+            c.name === 'Солнце' ||
+            c.name === 'Умеренность'
+        );
+
+        interpretation += `В вопросах здоровья этот расклад показывает, что `;
+
+        if (healthCards.length > 0) {
+            switch(healthCards[0].name) {
+                case 'Сила':
+                    interpretation += `у вас достаточно внутренних ресурсов для выздоровления. Верьте в себя.`;
+                    break;
+                case 'Отшельник':
+                    interpretation += `важно прислушаться к сигналам тела и, возможно, обратиться к специалисту.`;
+                    break;
+                case 'Звезда':
+                    interpretation += `надежда на исцеление есть. Верьте в лучшее и следуйте рекомендациям.`;
+                    break;
+                case 'Солнце':
+                    interpretation += `отличный прогноз. Ваше здоровье улучшится, энергии прибавится.`;
+                    break;
+                case 'Умеренность':
+                    interpretation += `нужен баланс во всем: питании, отдыхе, нагрузках.`;
+                    break;
+            }
+        } else {
+            interpretation += `важно обратить внимание на общее состояние. `;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для семейных вопросов
+     */
+    getFamilyInterpretation(cards, question) {
+        let interpretation = '';
+
+        const familyCards = cards.filter(c =>
+            c.name === 'Императрица' ||
+            c.name === 'Император' ||
+            c.name === 'Влюбленные' ||
+            c.name === 'Мир'
+        );
+
+        interpretation += `В семейных вопросах этот расклад говорит о `;
+
+        if (familyCards.length > 0) {
+            switch(familyCards[0].name) {
+                case 'Императрица':
+                    interpretation += `гармонии и плодородии. Хорошее время для укрепления семейных уз.`;
+                    break;
+                case 'Император':
+                    interpretation += `необходимости установить правила и границы в семье.`;
+                    break;
+                case 'Влюбленные':
+                    interpretation += `важности выбора и принятия решений, касающихся близких.`;
+                    break;
+                case 'Мир':
+                    interpretation += `гармонии и единству в семье. Вы на верном пути.`;
+                    break;
+            }
+        } else {
+            interpretation += `том, что семья требует вашего внимания. `;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Интерпретация для личных вопросов
+     */
+    getPersonalInterpretation(cards, question) {
+        let interpretation = '';
+
+        interpretation += `В вопросах личного развития этот расклад показывает, что `;
+        interpretation += `ваш путь отмечен картой **${cards[0].name}**. ${cards[0].description.split('.')[0]}. `;
+
+        if (cards.some(c => c.name === 'Отшельник')) {
+            interpretation += `\n\nКарта Отшельника говорит о необходимости уединения и поиска ответов внутри себя. Сейчас время для самоанализа.`;
+        }
+
+        if (cards.some(c => c.name === 'Шут')) {
+            interpretation += `\n\nШут призывает к новым начинаниям. Не бойтесь сделать шаг в неизвестность.`;
+        }
+
+        return interpretation;
+    }
+
+    /**
+     * Общая интерпретация
+     */
+    getGeneralInterpretation(cards, question) {
+        let interpretation = '';
+
+        interpretation += `Рассматривая ваш вопрос в общем контексте, карты указывают на `;
+
+        const firstCard = cards[0];
+        const lastCard = cards[cards.length - 1];
+
+        interpretation += `то, что текущая ситуация характеризуется энергией **${firstCard.name}**, а вероятный итог — картой **${lastCard.name}**. `;
+
+        if (firstCard.number === lastCard.number) {
+            interpretation += `Интересно, что начало и конец отмечены одной картой — это указывает на циклический процесс. `;
+        }
+
+        interpretation += `\n\n**${firstCard.name}** в начале говорит: "${firstCard.advice}" `;
+        interpretation += `\n\n**${lastCard.name}** в итоге советует: "${lastCard.advice}" `;
+
+        return interpretation;
+    }
+
+    /**
+     * Находит наиболее значимую карту в раскладе
+     */
+    findMostSignificantCard(cards) {
+        // Приоритет: центральная карта > карта с номером 0 > карта с номером 21 > первая карта
+        if (cards.length % 2 === 1) {
+            const midIndex = Math.floor(cards.length / 2);
+            return cards[midIndex];
+        }
+
+        // Ищем Шута (0) или Мир (21) как особые карты
+        const fool = cards.find(c => c.number === 0);
+        if (fool) return fool;
+
+        const world = cards.find(c => c.number === 21);
+        if (world) return world;
+
+        // Иначе возвращаем первую карту
+        return cards[0];
+    }
+
+    /**
+     * Получение значения для перевернутой карты
+     */
+    getReversedMeaning(card) {
+        const reversedMeanings = {
+            'Шут': 'Безрассудство, глупость, рискованные решения',
+            'Маг': 'Манипуляции, неиспользованный потенциал',
+            'Верховная Жрица': 'Секреты, подавленная интуиция',
+            'Императрица': 'Творческий блок, зависимость',
+            'Император': 'Тирания, жесткость, отсутствие контроля',
+            'Иерофант': 'Бунтарство, отказ от традиций',
+            'Влюбленные': 'Разлад, неправильный выбор',
+            'Колесница': 'Потеря контроля, агрессия',
+            'Сила': 'Слабость, неуверенность',
+            'Отшельник': 'Изоляция, одиночество',
+            'Колесо Фортуны': 'Неудача, сопротивление переменам',
+            'Справедливость': 'Несправедливость, дисбаланс',
+            'Повешенный': 'Застой, нежелание меняться',
+            'Смерть': 'Сопротивление переменам',
+            'Умеренность': 'Дисбаланс, конфликты',
+            'Дьявол': 'Освобождение, прозрение',
+            'Башня': 'Избегание перемен',
+            'Звезда': 'Отчаяние, потеря веры',
+            'Луна': 'Прояснение, выход из иллюзий',
+            'Солнце': 'Временные трудности',
+            'Суд': 'Сожаление, нежелание прощать',
+            'Мир': 'Незавершенность, застой'
+        };
+
+        return reversedMeanings[card.name] || 'Негативное проявление энергии карты';
     }
 }
 
