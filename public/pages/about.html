@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>О проекте | АЛГОРИТМ СУДЬБЫ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .about-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .about-section {
+      margin-bottom: 40px;
+      background: rgba(18, 18, 26, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+
+    .about-section h2 {
+      color: var(--accent-gold);
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+      border-bottom: 1px solid rgba(201, 165, 75, 0.3);
+      padding-bottom: 10px;
+    }
+
+    .about-section h3 {
+      color: #fff;
+      margin: 25px 0 15px;
+      font-size: 1.4rem;
+    }
+
+    .about-section p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .about-section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .about-section li {
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      padding-left: 25px;
+      position: relative;
+    }
+
+    .about-section li:before {
+      content: "✦";
+      color: var(--accent-gold);
+      position: absolute;
+      left: 0;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .team-card {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--border-radius);
+      border-left: 3px solid var(--accent-gold);
+    }
+
+    .team-card .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-gold), var(--accent-violet));
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #0a0a0f;
+    }
+
+    .team-card h4 {
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    .team-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .mission-box {
+      background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(155, 107, 192, 0.1));
+      border-left: 4px solid var(--accent-gold);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      margin: 30px 0;
+      font-style: italic;
+    }
+
+    .mission-box p {
+      font-size: 1.2rem;
+      margin: 0;
+      color: #fff;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .stat-item {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--border-radius);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      color: var(--accent-gold);
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- Меню будет загружено через menu-loader.js -->
+<div id="menu-placeholder"></div>
+
+<header class="site-header">
+  <div class="container">
+    <div class="header-content">
+      <div class="logo">
+        <a href="/">
+          <span class="logo-icon">⛤</span>
+          <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+        </a>
+      </div>
+      <div id="nav-placeholder"></div>
+    </div>
+  </div>
+</header>
+
+<!-- Основной фон -->
+<div class="site-background">
+  <div class="bg-gradient"></div>
+  <div class="bg-pattern"></div>
+</div>
+
+<main class="main-content">
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">О проекте</h1>
+      <p class="page-subtitle">Философия и миссия "АЛГОРИТМ СУДЬБЫ"</p>
+    </div>
+
+    <div class="about-content">
+      <!-- Миссия -->
+      <div class="mission-box">
+        <p>«Познай самого себя, и ты познаешь Вселенную и богов» — Гермес Трисмегист</p>
+      </div>
+
+      <!-- О проекте -->
+      <div class="about-section">
+        <h2>О проекте</h2>
+        <p><strong>«АЛГОРИТМ СУДЬБЫ»</strong> — это уникальная платформа, объединяющая древние эзотерические знания и современные технологии. Мы создали систему автоматических расчетов, которая позволяет каждому человеку заглянуть в глубины своей личности, понять свои таланты, предназначение и кармические задачи.</p>
+        <p>Наша миссия — сделать эзотерические знания доступными каждому, сохраняя при этом их глубину и аутентичность. Мы не просто даем сухие расчеты — мы создаем персонализированные отчеты, которые помогают людям лучше понять себя и свой жизненный путь.</p>
+      </div>
+
+      <!-- Что мы предлагаем -->
+      <div class="about-section">
+        <h2>Что мы предлагаем</h2>
+        <ul>
+          <li><strong>🔢 Нумерология</strong> — расчет матрицы судьбы по дате рождения и имени</li>
+          <li><strong>🌠 Натальная карта</strong> — астрологический портрет с точными расчетами</li>
+          <li><strong>🧠 Соционика</strong> — определение типа личности и межтипных отношений</li>
+          <li><strong>🌞 Астропсихология</strong> — психологический портрет по звездам</li>
+          <li><strong>🎴 Таро</strong> — расклады на любые жизненные ситуации</li>
+          <li><strong>ᚠ Руны</strong> — древние символы и их толкование</li>
+          <li><strong>🌳 Родология</strong> — сила рода и память предков</li>
+          <li><strong>📜 И-Цзин</strong> — 64 гексаграммы Книги Перемен</li>
+          <li><strong>🌀 Да Лю Жэнь</strong> — высшая китайская метафизика</li>
+          <li><strong>⚜️ Герметизм</strong> — 7 принципов мироздания</li>
+          <li><strong>📖 Зоар</strong> — каббала и книга сияния</li>
+        </ul>
+      </div>
+
+      <!-- Статистика -->
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">11</div>
+          <div class="stat-label">эзотерических практик</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">15k+</div>
+          <div class="stat-label">выполненных расчетов</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">доступ к сервису</div>
+        </div>
+      </div>
+
+      <!-- Наша команда -->
+      <div class="about-section">
+        <h2>Наша команда</h2>
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="avatar">⛤</div>
+            <h4>А.Л. Горизонтов</h4>
+            <p>Доктор астрологических наук, основатель проекта</p>
+          </div>
+          <div class="team-card">
+            <div class="avatar">🔮</div>
+            <h4>Е.В. Климентьва</h4>
+            <p>Ведущий таролог, нумеролог-практик</p>
+          </div>
+          <div class="team-card">
+            <div class="avatar">⚡</div>
+            <h4>С.А. Миронов</h4>
+            <p>Технический директор, разработчик</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Принципы работы -->
+      <div class="about-section">
+        <h2>Наши принципы</h2>
+        <ul>
+          <li><strong>🔒 Конфиденциальность</strong> — все ваши данные надежно защищены</li>
+          <li><strong>🎯 Точность</strong> — расчеты основаны на классических методиках</li>
+          <li><strong>💫 Доступность</strong> — большинство расчетов бесплатны</li>
+          <li><strong>🌍 Этичность</strong> — мы помогаем, а не предсказываем судьбу</li>
+          <li><strong>📚 Образование</strong> — мы учим понимать, а не просто верить</li>
+        </ul>
+      </div>
+
+      <!-- История создания -->
+      <div class="about-section">
+        <h2>История создания</h2>
+        <p>Проект «АЛГОРИТМ СУДЬБЫ» родился в 2024 году из желания объединить древние эзотерические знания с современными технологиями. Мы поняли, что многие люди интересуются нумерологией, астрологией и Таро, но не имеют доступа к качественным расчетам и интерпретациям.</p>
+        <p>За два года мы разработали сложную систему автоматических расчетов, которая использует классические методики и современные алгоритмы. Сегодня наш проект помогает тысячам людей лучше понять себя и свой жизненный путь.</p>
+      </div>
+
+      <!-- Контакты кратко -->
+      <div class="about-section">
+        <h2>Свяжитесь с нами</h2>
+        <p>Мы всегда открыты к диалогу, предложениям и сотрудничеству. Вы можете связаться с нами через:</p>
+        <ul>
+          <li><strong>📧 Email:</strong> info@yournumerology.ru</li>
+          <li><strong>📱 Telegram:</strong> @algorithm_fate_bot</li>
+          <li><strong>📍 Социальные сети:</strong> @yournumerology</li>
+        </ul>
+        <p style="margin-top: 20px; text-align: center;">
+          <a href="/contacts" class="mystic-button" style="display: inline-block; width: auto;">Перейти к контактам</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-info">
+        <div class="footer-logo">
+          <span class="logo-icon">⛤</span>
+          <span>АЛГОРИТМ СУДЬБЫ</span>
+        </div>
+        <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+      </div>
+      <div class="footer-links">
+        <a href="/about">О проекте</a>
+        <a href="/privacy">Конфиденциальность</a>
+        <a href="/contacts">Контакты</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/menu-loader.js"></script>
+</body>
+</html>

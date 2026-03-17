@@ -87,7 +87,7 @@ app.get('/', (req, res) => {
 // Страницы практик
 const pages = [
     'numerology', 'rodology', 'iching', 'daliuren', 'hermetic',
-    'zoar', 'socionics', 'astropsychology', 'runes', 'natal-chart', 'tarot'
+    'zoar', 'socionics', 'astropsychology', 'runes', 'natal-chart', 'tarot', 'about', 'privacy', 'contacts'
 ];
 
 pages.forEach(page => {
@@ -435,6 +435,15 @@ app.post('/api/calculate/:practice', (req, res) => {
     }
 });
 
+// Отдаем robots.txt
+app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+// Отдаем sitemap.xml
+app.get('/sitemap.xml', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
 // ==================== ОБРАБОТКА 404 ====================
 
 /**
