@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Главная страница -->
+    <url>
+        <loc>https://yournumerology.ru/</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- Основные разделы -->
+    <url>
+        <loc>https://yournumerology.ru/numerology</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/natal-chart</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/socionics</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/astropsychology</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/tarot</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/runes</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/rodology</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/iching</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/daliuren</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/hermetic</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://yournumerology.ru/zoar</loc>
+        <lastmod>2026-03-17</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>

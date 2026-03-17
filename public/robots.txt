@@ -1,0 +1,40 @@
+# robots.txt для сайта yournumerology.ru
+User-agent: *
+Allow: /
+
+# Запрещаем индексацию служебных страниц
+Disallow: /api/
+Disallow: /includes/
+Disallow: /temp/
+Disallow: /js/vendor/
+Disallow: /css/vendor/
+
+# Указываем путь к карте сайта
+Sitemap: https://yournumerology.ru/sitemap.xml
+
+# Хост (для Яндекс)
+Host: https://yournumerology.ru
+
+# Правила для специфических поисковиков
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /includes/
+Disallow: /temp/
+Crawl-delay: 2
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /includes/
+Disallow: /temp/
+Crawl-delay: 1
+
+User-agent: Mail.RU
+Disallow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /includes/
+Disallow: /temp/

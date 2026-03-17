@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система логирования</title>
+    <link rel="stylesheet" href="/logs/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Highlight.js для подсветки JSON -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <!-- Левое меню -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-history"></i>
+                <span>Logs</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="active" data-page="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Дашборд</span>
+                </li>
+                <li data-page="logs">
+                    <i class="fas fa-list"></i>
+                    <span>Все логи</span>
+                </li>
+                <li data-page="errors">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Ошибки</span>
+                </li>
+                <li data-page="payments">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Платежи</span>
+                </li>
+                <li data-page="orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Заказы</span>
+                </li>
+                <li data-page="api">
+                    <i class="fas fa-cloud"></i>
+                    <span>API запросы</span>
+                </li>
+                <li data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>admin</span>
+            </div>
+            <a href="/waiter-web" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Правый контент -->
+    <main class="main-content">
+        <!-- Шапка -->
+        <header class="content-header">
+            <h1 id="pageTitle">Дашборд логов</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <div class="date-range">
+                    <input type="datetime-local" id="dateFrom" class="date-input">
+                    <span>—</span>
+                    <input type="datetime-local" id="dateTo" class="date-input">
+                </div>
+            </div>
+        </header>
+
+        <!-- Контент страницы -->
+        <div class="content-body" id="contentBody">
+            <!-- Динамически загружается -->
+        </div>
+    </main>
+</div>
+
+<!-- Модальное окно деталей лога -->
+<div id="logModal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="modalTitle">Детали лога</h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+            <button id="modalCloseBtn" class="btn btn-primary">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script src="/logs/js/logs-app.js"></script>
+</body>
+</html>

@@ -4013,3 +4013,92 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
         min-width: auto;
     }
 }
+.compatibility-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.compatibility-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #c9a54b, #b08c3a);
+    border-radius: 5px;
+    transition: width 1s ease;
+}
+
+.compatibility-level-text {
+    color: #a0a0b0;
+    font-style: italic;
+    margin-top: 5px;
+    text-align: center;
+}
+.energy-bar-container {
+    margin: 15px 0;
+}
+
+.energy-bar {
+    width: 100%;
+    height: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.energy-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+
+.energy-level-text {
+    color: #a0a0b0;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.potential-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.potential-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #c9a54b, #b08c3a);
+    border-radius: 5px;
+    transition: width 1s ease;
+}
+
+.potential-level-text {
+    color: #a0a0b0;
+    font-style: italic;
+    margin-top: 5px;
+    text-align: center;
+}
+.pdf-actions {
+    margin-top: 20px;
+    border-top: 1px solid rgba(201,165,75,0.2);
+    padding-top: 20px;
+}
+
+#downloadPdfBtn {
+    background: linear-gradient(135deg, #e2a05d, #4c3e30);
+    border: 1px solid #c9a54b;
+}
+
+#downloadPdfBtn:hover {
+    background: linear-gradient(135deg, #3a2e26, #2a1f18);
+    box-shadow: 0 0 20px rgba(201,165,75,0.3);
+}
+
+#downloadPdfBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

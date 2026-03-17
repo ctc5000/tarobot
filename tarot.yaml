@@ -1,0 +1,1855 @@
+openapi: 3.0.0
+info:
+  title: API АЛГОРИТМ СУДЬБЫ
+  description: |
+    Мистический API для нумерологических расчетов, прогнозов и управления пользователями.
+    
+    ## Основные возможности:
+    * 🔮 Нумерологические расчеты
+    * 📅 Персональные прогнозы на день/неделю/месяц/год
+    * 👥 Управление пользователями и балансами
+    * 💳 Платежная система
+    * 🎴 Таро и другие практики
+
+    ## Авторизация
+    Для доступа к защищенным эндпоинтам используйте Bearer токен в заголовке:
+    Authorization: Bearer <ваш_токен>
+  version: 1.0.0
+  contact:
+    name: АЛГОРИТМ СУДЬБЫ
+    url: https://algoritmsudby.ru
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000/api
+    description: Локальный сервер разработки
+  - url: https://api.algoritmsudby.ru/api
+    description: Продакшн сервер
+
+tags:
+  - name: Auth
+    description: 🔐 Авторизация и регистрация
+  - name: Users
+    description: 👥 Управление пользователями
+  - name: Balance
+    description: 💰 Баланс и транзакции
+  - name: Services
+    description: 📦 Услуги и их стоимость
+  - name: Subscriptions
+    description: 📅 Подписки
+  - name: Numerology
+    description: 🔢 Нумерологические расчеты
+  - name: Forecast
+    description: 📊 Прогнозы на день/неделю/месяц/год
+  - name: Tarot
+    description: 🎴 Гадание на Таро
+  - name: Zodiac
+    description: ♈ Знаки зодиака
+  - name: FengShui
+    description: 🌀 Фен-шуй
+  - name: Psychology
+    description: 🧠 Психологический портрет
+  - name: Languages
+    description: 🌐 Управление переводами
+  - name: Payments
+    description: 💳 Платежная система
+  - name: Admin
+    description: 👑 Административные функции
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Введите JWT токен в формате "Bearer {token}"
+
+  schemas:
+    # ========== БАЗОВЫЕ СХЕМЫ ==========
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Сообщение об ошибке"
+      required:
+        - success
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Данные ответа
+        message:
+          type: string
+          example: "Операция выполнена успешно"
+      required:
+        - success
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        totalPages:
+          type: integer
+          example: 5
+
+    # ========== ПОЛЬЗОВАТЕЛИ ==========
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        fullName:
+          type: string
+          example: "Иванова Мария Сергеевна"
+        birthDate:
+          type: string
+          format: date
+          example: "1987-06-15"
+        phone:
+          type: string
+          example: "+79161234567"
+        balance:
+          type: number
+          format: float
+          example: 1500.50
+        role:
+          type: string
+          enum: [user, admin]
+          example: "user"
+        telegramId:
+          type: string
+          example: "123456789"
+        telegramUsername:
+          type: string
+          example: "@username"
+        settings:
+          type: object
+          properties:
+            notifications:
+              type: object
+              properties:
+                email:
+                  type: boolean
+                  example: true
+                telegram:
+                  type: boolean
+                  example: false
+                forecast:
+                  type: boolean
+                  example: true
+            language:
+              type: string
+              example: "ru"
+            theme:
+              type: string
+              enum: [light, dark]
+              example: "light"
+        isActive:
+          type: boolean
+          example: true
+        lastLogin:
+          type: string
+          format: date-time
+        emailVerified:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserCreate:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+        - birthDate
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+        fullName:
+          type: string
+          example: "Иванова Мария Сергеевна"
+        birthDate:
+          type: string
+          format: date
+          example: "1987-06-15"
+        phone:
+          type: string
+          example: "+79161234567"
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePassword123"
+
+    TelegramLogin:
+      type: object
+      required:
+        - telegramId
+      properties:
+        telegramId:
+          type: string
+          example: "123456789"
+        telegramUsername:
+          type: string
+          example: "@username"
+        fullName:
+          type: string
+          example: "Telegram User"
+        birthDate:
+          type: string
+          format: date
+          example: "2000-01-01"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            expiresIn:
+              type: string
+              example: "15m"
+
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+
+    PasswordReset:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          example: "abc123def456..."
+        newPassword:
+          type: string
+          format: password
+          example: "newSecurePassword123"
+
+    ChangePassword:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          example: "oldPassword123"
+        newPassword:
+          type: string
+          format: password
+          example: "newPassword123"
+
+    # ========== УСЛУГИ ==========
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: "forecast_day"
+        name:
+          type: string
+          example: "Прогноз на день"
+        description:
+          type: string
+          example: "Персональный нумерологический прогноз на текущий день"
+        price:
+          type: number
+          format: float
+          example: 50.00
+        currency:
+          type: string
+          example: "RUB"
+        type:
+          type: string
+          enum: [one-time, subscription]
+          example: "one-time"
+        category:
+          type: string
+          enum: [forecast, compatibility, full_report, subscription]
+          example: "forecast"
+        duration:
+          type: integer
+          example: 30
+        isActive:
+          type: boolean
+          example: true
+        sortOrder:
+          type: integer
+          example: 10
+
+    ServiceCreate:
+      type: object
+      required:
+        - code
+        - name
+        - price
+        - category
+      properties:
+        code:
+          type: string
+          example: "new_service"
+        name:
+          type: string
+          example: "Новая услуга"
+        description:
+          type: string
+          example: "Описание услуги"
+        price:
+          type: number
+          example: 100.00
+        currency:
+          type: string
+          example: "RUB"
+        type:
+          type: string
+          enum: [one-time, subscription]
+          default: "one-time"
+        category:
+          type: string
+          enum: [forecast, compatibility, full_report, subscription]
+        duration:
+          type: integer
+          example: 30
+        isActive:
+          type: boolean
+          default: true
+        sortOrder:
+          type: integer
+          default: 0
+
+    # ========== ТРАНЗАКЦИИ ==========
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        calculationId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum: [deposit, withdrawal, payment, refund]
+        amount:
+          type: number
+          format: float
+        balanceBefore:
+          type: number
+          format: float
+        balanceAfter:
+          type: number
+          format: float
+        currency:
+          type: string
+          example: "RUB"
+        status:
+          type: string
+          enum: [pending, completed, failed, cancelled]
+        paymentMethod:
+          type: string
+          example: "card"
+        paymentId:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TransactionStats:
+      type: object
+      properties:
+        currentBalance:
+          type: number
+          example: 1500.50
+        totalDeposits:
+          type: number
+          example: 5000.00
+        totalSpent:
+          type: number
+          example: 3500.00
+        totalPurchases:
+          type: integer
+          example: 15
+        lastTransaction:
+          type: string
+          format: date-time
+
+    # ========== ПОДПИСКИ ==========
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        service:
+          $ref: '#/components/schemas/Service'
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, expired, cancelled]
+        autoRenew:
+          type: boolean
+        price:
+          type: number
+        paymentMethod:
+          type: string
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ========== НУМЕРОЛОГИЯ ==========
+
+    NumerologyBase:
+      type: object
+      properties:
+        fate:
+          type: integer
+          example: 7
+        name:
+          type: integer
+          example: 3
+        surname:
+          type: integer
+          example: 5
+        patronymic:
+          type: integer
+          example: 2
+
+    Achilles:
+      type: object
+      properties:
+        number:
+          type: integer
+          example: 5
+        description:
+          type: string
+
+    Control:
+      type: object
+      properties:
+        number:
+          type: integer
+          example: 8
+        description:
+          type: string
+
+    Calls:
+      type: object
+      properties:
+        close:
+          type: integer
+          example: 4
+        social:
+          type: integer
+          example: 7
+        world:
+          type: integer
+          example: 9
+        descriptions:
+          type: object
+          properties:
+            close:
+              type: string
+            social:
+              type: string
+            world:
+              type: string
+
+    NumerologyRequest:
+      type: object
+      required:
+        - fullName
+        - birthDate
+      properties:
+        fullName:
+          type: string
+          example: "Иванова Мария Сергеевна"
+        birthDate:
+          type: string
+          example: "15.06.1987"
+
+    NumerologyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            fullName:
+              type: string
+            birthDate:
+              type: string
+            numerology:
+              type: object
+              properties:
+                base:
+                  $ref: '#/components/schemas/NumerologyBase'
+                achilles:
+                  $ref: '#/components/schemas/Achilles'
+                control:
+                  $ref: '#/components/schemas/Control'
+                calls:
+                  $ref: '#/components/schemas/Calls'
+                interpretations:
+                  type: object
+            zodiac:
+              type: object
+            fengShui:
+              type: object
+            tarot:
+              type: object
+            psychology:
+              type: object
+            patterns:
+              type: array
+              items:
+                type: string
+
+    # ========== ПРОГНОЗЫ ==========
+
+    ForecastDay:
+      type: object
+      properties:
+        date:
+          type: string
+          example: "18.03.2026"
+        personalDay:
+          type: integer
+          example: 5
+        personalMonth:
+          type: integer
+          example: 3
+        personalYear:
+          type: integer
+          example: 8
+        lifePathNumber:
+          type: integer
+          example: 7
+        description:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        luckyHours:
+          type: string
+          example: "7:00-9:00, 17:00-19:00"
+        color:
+          type: string
+          example: "Синий, фиолетовый"
+        advice:
+          type: string
+
+    ForecastRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+        targetDate:
+          type: string
+          example: "2026-03-18"
+
+    # ========== ТАРО ==========
+
+    TarotCard:
+      type: object
+      properties:
+        number:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Маг"
+        image:
+          type: string
+          example: "/images/tarot/01.jpg"
+        keywords:
+          type: string
+          example: "Воля, мастерство, концентрация"
+        description:
+          type: string
+        advice:
+          type: string
+
+    TarotReadingRequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+          example: "Какое будущее меня ждет в любви?"
+        spread:
+          type: string
+          enum: [one, three, five, cross]
+          default: "three"
+
+    # ========== БАЛАНС ==========
+
+    BalanceAdjustment:
+      type: object
+      required:
+        - userId
+        - amount
+        - reason
+      properties:
+        userId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          example: 100.00
+        reason:
+          type: string
+          example: "Подарок за регистрацию"
+
+    # ========== ЯЗЫКИ ==========
+
+    Language:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: "ru"
+        flag:
+          type: string
+          example: "🇷🇺"
+        default:
+          type: boolean
+        restoranId:
+          type: integer
+        displayName:
+          type: string
+          example: "Русский"
+        flagEmoji:
+          type: string
+          example: "🇷🇺"
+
+    LanguageCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "en"
+        flag:
+          type: string
+          example: "🇬🇧"
+        default:
+          type: boolean
+          default: false
+
+    LanguageToggle:
+      type: object
+      required:
+        - langid
+      properties:
+        langid:
+          type: integer
+        restoranId:
+          type: integer
+          default: 1
+
+    # ========== ПЛАТЕЖИ ==========
+
+    PaymentCreate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "ID заказа"
+        type:
+          type: string
+          enum: [card, sbp]
+          default: "card"
+        tips:
+          type: number
+          default: 0
+        lang:
+          type: string
+          default: "ru"
+
+    PaymentCheck:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "ID платежа"
+        paymentId:
+          type: string
+        orderId:
+          type: string
+          description: "ID заказа"
+
+paths:
+  # ========== AUTH ==========
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        201:
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      message:
+                        type: string
+        400:
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Вход в систему
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        200:
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        401:
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/telegram:
+    post:
+      tags:
+        - Auth
+      summary: Вход через Telegram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramLogin'
+      responses:
+        200:
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Обновление access токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        200:
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        401:
+          description: Недействительный refresh токен
+
+  /auth/verify/{token}:
+    get:
+      tags:
+        - Auth
+      summary: Подтверждение email
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Email подтвержден
+        400:
+          description: Недействительный токен
+
+  /auth/reset-request:
+    post:
+      tags:
+        - Auth
+      summary: Запрос на сброс пароля
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        200:
+          description: Инструкции отправлены на email
+
+  /auth/reset:
+    post:
+      tags:
+        - Auth
+      summary: Сброс пароля
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordReset'
+      responses:
+        200:
+          description: Пароль изменен
+        400:
+          description: Недействительный токен
+
+  # ========== PROFILE ==========
+  /profile:
+    get:
+      tags:
+        - Users
+      summary: Получение профиля текущего пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        401:
+          description: Не авторизован
+
+    put:
+      tags:
+        - Users
+      summary: Обновление профиля
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                phone:
+                  type: string
+                settings:
+                  type: object
+      responses:
+        200:
+          description: Профиль обновлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+
+  /profile/change-password:
+    post:
+      tags:
+        - Users
+      summary: Смена пароля
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+      responses:
+        200:
+          description: Пароль изменен
+        400:
+          description: Неверный старый пароль
+
+  # ========== BALANCE ==========
+  /balance:
+    get:
+      tags:
+        - Balance
+      summary: Получение текущего баланса
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Текущий баланс
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      balance:
+                        type: number
+
+  /transactions:
+    get:
+      tags:
+        - Balance
+      summary: История транзакций
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        200:
+          description: Список транзакций
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      transactions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+
+  /transactions/stats:
+    get:
+      tags:
+        - Balance
+      summary: Статистика транзакций
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Статистика
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/TransactionStats'
+
+  # ========== SERVICES ==========
+  /services:
+    get:
+      tags:
+        - Services
+      summary: Список доступных услуг
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+            enum: [forecast, compatibility, full_report, subscription]
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [one-time, subscription]
+        - in: query
+          name: active
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: Список услуг
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+
+  /services/{code}:
+    get:
+      tags:
+        - Services
+      summary: Получение услуги по коду
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Информация об услуге
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Service'
+        404:
+          description: Услуга не найдена
+
+  # ========== SUBSCRIPTIONS ==========
+  /subscriptions:
+    get:
+      tags:
+        - Subscriptions
+      summary: Список подписок пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: active
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: Список подписок
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subscription'
+
+  /subscriptions/active:
+    get:
+      tags:
+        - Subscriptions
+      summary: Активная подписка
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Активная подписка (или null)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/Subscription'
+                      - type: 'null'
+
+  /subscriptions/{id}/cancel:
+    post:
+      tags:
+        - Subscriptions
+      summary: Отмена подписки
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Подписка отменена
+        400:
+          description: Ошибка отмены
+
+  # ========== NUMEROLOGY ==========
+  /calculate/numerology:
+    post:
+      tags:
+        - Numerology
+      summary: Полный нумерологический расчет
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NumerologyRequest'
+      responses:
+        200:
+          description: Результаты расчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NumerologyResponse'
+        400:
+          description: Ошибка в данных
+
+  # ========== FORECAST ==========
+  /forecast/day:
+    post:
+      tags:
+        - Forecast
+      summary: Прогноз на день
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForecastRequest'
+      responses:
+        200:
+          description: Прогноз на день
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ForecastDay'
+        402:
+          description: Недостаточно средств
+
+  /forecast/week:
+    post:
+      tags:
+        - Forecast
+      summary: Прогноз на неделю
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForecastRequest'
+      responses:
+        200:
+          description: Прогноз на неделю
+
+  /forecast/month:
+    post:
+      tags:
+        - Forecast
+      summary: Прогноз на месяц
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForecastRequest'
+      responses:
+        200:
+          description: Прогноз на месяц
+
+  /forecast/year:
+    post:
+      tags:
+        - Forecast
+      summary: Прогноз на год
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForecastRequest'
+      responses:
+        200:
+          description: Прогноз на год
+
+  # ========== TAROT ==========
+  /tarot/reading:
+    post:
+      tags:
+        - Tarot
+      summary: Гадание на Таро
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TarotReadingRequest'
+      responses:
+        200:
+          description: Результат гадания
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      question:
+                        type: string
+                      spread:
+                        type: string
+                      cards:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TarotCard'
+                      interpretation:
+                        type: string
+
+  /tarot/quick:
+    post:
+      tags:
+        - Tarot
+      summary: Быстрый расклад (5 карт)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+      responses:
+        200:
+          description: Результат быстрого гадания
+
+  # ========== LANGUAGES ==========
+  /languages:
+    get:
+      tags:
+        - Languages
+      summary: Список всех языков
+      responses:
+        200:
+          description: Список языков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Language'
+
+    post:
+      tags:
+        - Languages
+      summary: Создание нового языка
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LanguageCreate'
+      responses:
+        201:
+          description: Язык создан
+
+  /languages/active:
+    get:
+      tags:
+        - Languages
+      summary: Активные языки ресторана
+      parameters:
+        - in: query
+          name: restoranId
+          schema:
+            type: integer
+            default: 1
+      responses:
+        200:
+          description: Список активных языков
+
+  /languages/setactive:
+    post:
+      tags:
+        - Languages
+      summary: Активировать язык
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LanguageToggle'
+      responses:
+        200:
+          description: Язык активирован
+
+  /languages/deactivate:
+    post:
+      tags:
+        - Languages
+      summary: Деактивировать язык
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                langid:
+                  type: integer
+      responses:
+        200:
+          description: Язык деактивирован
+
+  /languages/translateitem:
+    post:
+      tags:
+        - Languages
+      summary: Перевод товара
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item:
+                  type: integer
+                lang:
+                  type: integer
+      responses:
+        200:
+          description: Товар переведен
+
+  /languages/items/{itemId}/translations/{langId}:
+    put:
+      tags:
+        - Languages
+      summary: Ручное редактирование перевода товара
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: langId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        200:
+          description: Перевод сохранен
+
+  # ========== PAYMENTS ==========
+  /payments/module:
+    get:
+      tags:
+        - Payments
+      summary: Информация об активном платежном модуле
+      responses:
+        200:
+          description: Информация о платежном модуле
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: string
+                    enum: [ameriabank, youpay]
+                  ameriapay:
+                    type: boolean
+
+  /payments/create:
+    get:
+      tags:
+        - Payments
+      summary: Создание платежа
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [card, sbp]
+            default: card
+        - in: query
+          name: tips
+          schema:
+            type: number
+            default: 0
+        - in: query
+          name: lang
+          schema:
+            type: string
+            default: ru
+      responses:
+        200:
+          description: Ссылка на оплату
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  paymentUrl:
+                    type: string
+                  paymentId:
+                    type: string
+
+  /payments/check:
+    get:
+      tags:
+        - Payments
+      summary: Проверка статуса платежа
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+        - in: query
+          name: paymentId
+          schema:
+            type: string
+        - in: query
+          name: orderId
+          schema:
+            type: string
+      responses:
+        200:
+          description: Статус платежа
+
+  # ========== ADMIN ==========
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: Список пользователей (админ)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [user, admin]
+      responses:
+        200:
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+  /admin/users/{id}:
+    get:
+      tags:
+        - Admin
+      summary: Получение пользователя по ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Информация о пользователе
+        404:
+          description: Пользователь не найден
+
+    put:
+      tags:
+        - Admin
+      summary: Обновление пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                phone:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+                settings:
+                  type: object
+      responses:
+        200:
+          description: Пользователь обновлен
+
+    delete:
+      tags:
+        - Admin
+      summary: Удаление пользователя (мягкое)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        200:
+          description: Пользователь удален
+
+  /admin/users/{id}/toggle-status:
+    post:
+      tags:
+        - Admin
+      summary: Блокировка/разблокировка пользователя
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        200:
+          description: Статус изменен
+
+  /admin/balance/adjust:
+    post:
+      tags:
+        - Admin
+      summary: Корректировка баланса пользователя
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BalanceAdjustment'
+      responses:
+        200:
+          description: Баланс скорректирован
+
+  /admin/services:
+    post:
+      tags:
+        - Admin
+      summary: Создание новой услуги
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceCreate'
+      responses:
+        201:
+          description: Услуга создана
+
+  /admin/services/{id}:
+    put:
+      tags:
+        - Admin
+      summary: Обновление услуги
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: Услуга обновлена
+
+    delete:
+      tags:
+        - Admin
+      summary: Удаление услуги
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+      responses:
+        200:
+          description: Услуга удалена
+
+  # ========== HEALTH ==========
+  /version:
+    get:
+      tags:
+        - System
+      summary: Версия приложения
+      responses:
+        200:
+          description: Информация о версии
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  timestamp:
+                    type: integer
+                  build:
+                    type: string

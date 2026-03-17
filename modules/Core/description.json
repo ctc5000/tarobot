@@ -1,0 +1,7 @@
+{
+  "moduleName": "Core",
+  "moduleVersion": "1.0.0",
+  "description": "Ядро системы - пользователи, балансы, авторизация",
+  "dependencies": [],
+  "order": 1
+}

@@ -1,0 +1,222 @@
+{
+  "moduleName": "Logs",
+  "version": "1.0.0",
+  "order": 2,
+  "description": "Централизованная система логирования для всех модулей приложения",
+  "dependencies": ["Core"],
+
+  "overview": {
+    "summary": "Модуль предоставляет единый интерфейс для логирования событий из всех частей приложения. Поддерживает различные уровни логирования, фильтрацию, статистику и веб-интерфейс для просмотра и управления логами.",
+    "architecture": "Модуль построен по принципу сервиса, который можно импортировать и использовать в любом другом модуле. Все логи сохраняются в БД и могут просматриваться через веб-интерфейс."
+  },
+
+  "technicalDetails": {
+    "dependencies": [
+      "sequelize - для работы с БД",
+      "jsonwebtoken - для проверки авторизации"
+    ],
+    "environmentVariables": {
+      "LOG_LEVEL": "Минимальный уровень логирования (debug, info, warning, error, critical). По умолчанию: info",
+      "LOG_CONSOLE": "Вывод в консоль (true/false). По умолчанию: true",
+      "LOG_DATABASE": "Сохранение в БД (true/false). По умолчанию: true",
+      "LOG_MAX_AGE_DAYS": "Максимальный возраст логов в днях (старше удаляются). По умолчанию: 30"
+    },
+    "databaseModels": {
+      "Log": {
+        "id": "Уникальный идентификатор",
+        "level": "Уровень логирования (debug, info, warning, error, critical)",
+        "type": "Тип события (payment, order, user, system, api, etc)",
+        "message": "Текст сообщения",
+        "details": "Детальные данные в формате JSON",
+        "module": "Модуль, откуда пришел лог",
+        "userId": "ID пользователя (если есть)",
+        "orderId": "ID заказа (если есть)",
+        "ip": "IP адрес",
+        "userAgent": "User Agent",
+        "url": "URL запроса",
+        "method": "HTTP метод",
+        "statusCode": "HTTP статус ответа",
+        "responseTime": "Время выполнения в мс",
+        "isRead": "Отмечен как прочитанный",
+        "isResolved": "Отмечен как решенный (для ошибок)",
+        "resolvedBy": "Кто отметил как решенное",
+        "resolvedAt": "Дата решения",
+        "resolutionComment": "Комментарий к решению"
+      }
+    }
+  },
+
+  "loggerService": {
+    "methods": {
+      "log(level, type, message, options)": "Основной метод логирования",
+      "debug(type, message, options)": "Логирование уровня debug",
+      "info(type, message, options)": "Логирование уровня info",
+      "warning(type, message, options)": "Логирование уровня warning",
+      "error(type, message, options)": "Логирование уровня error",
+      "critical(type, message, options)": "Логирование уровня critical",
+      "getLogs(filters, pagination)": "Получение логов с фильтрацией",
+      "getStats(days)": "Получение статистики",
+      "markAsRead(logIds, userId)": "Отметить как прочитанное",
+      "markAsResolved(logIds, userId, comment)": "Отметить как решенное",
+      "deleteLogs(logIds)": "Удалить логи",
+      "cleanup(olderThanDays)": "Очистить старые логи"
+    },
+    "options": {
+      "details": "Детальные данные (объект)",
+      "module": "Название модуля",
+      "userId": "ID пользователя",
+      "orderId": "ID заказа",
+      "ip": "IP адрес",
+      "userAgent": "User Agent",
+      "url": "URL",
+      "method": "HTTP метод",
+      "statusCode": "HTTP статус",
+      "responseTime": "Время выполнения"
+    }
+  },
+
+  "endpoints": {
+    "base": "/api/logs",
+
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/",
+        "description": "Получение списка логов с фильтрацией и пагинацией",
+        "auth": true,
+        "admin": true,
+        "params": {
+          "level": "Уровень логирования",
+          "type": "Тип события",
+          "module": "Модуль",
+          "userId": "ID пользователя",
+          "orderId": "ID заказа",
+          "search": "Поиск по сообщению",
+          "isRead": "Прочитано/не прочитано",
+          "isResolved": "Решено/не решено",
+          "dateFrom": "Начальная дата",
+          "dateTo": "Конечная дата",
+          "page": "Номер страницы",
+          "limit": "Лимит записей"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/:id",
+        "description": "Получение лога по ID",
+        "auth": true,
+        "admin": true
+      },
+      {
+        "method": "GET",
+        "path": "/stats",
+        "description": "Получение статистики по логам",
+        "auth": true,
+        "admin": true
+      },
+      {
+        "method": "GET",
+        "path": "/filters",
+        "description": "Получение доступных фильтров",
+        "auth": true,
+        "admin": true
+      },
+      {
+        "method": "POST",
+        "path": "/mark-read",
+        "description": "Отметить логи как прочитанные",
+        "auth": true,
+        "admin": true,
+        "body": {
+          "logIds": "Массив ID логов"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/mark-resolved",
+        "description": "Отметить ошибки как решенные",
+        "auth": true,
+        "admin": true,
+        "body": {
+          "logIds": "Массив ID логов",
+          "comment": "Комментарий к решению"
+        }
+      },
+      {
+        "method": "DELETE",
+        "path": "/batch",
+        "description": "Удаление логов",
+        "auth": true,
+        "admin": true,
+        "body": {
+          "logIds": "Массив ID логов"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/cleanup",
+        "description": "Очистка старых логов",
+        "auth": true,
+        "admin": true,
+        "body": {
+          "days": "Количество дней (старше удаляются)"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/export",
+        "description": "Экспорт логов",
+        "auth": true,
+        "admin": true,
+        "params": {
+          "format": "Формат экспорта (json или csv)",
+          "level": "Фильтр по уровню",
+          "type": "Фильтр по типу",
+          "module": "Фильтр по модулю",
+          "dateFrom": "Начальная дата",
+          "dateTo": "Конечная дата"
+        }
+      }
+    ]
+  },
+
+  "usage": {
+    "inAnyModule": "const LoggerService = require('../Logs/Services/LoggerService'); const logger = new LoggerService();",
+
+    "examples": {
+      "simple": "await logger.info('payment', 'Платеж создан', { orderId: 123, amount: 1000 });",
+      "withUser": "await logger.error('order', 'Ошибка создания заказа', { userId: 5, details: { error: err.message } });",
+      "httpRequest": "await logger.info('api', 'API запрос', { method: 'GET', url: '/api/orders', statusCode: 200, responseTime: 150 });",
+      "critical": "await logger.critical('system', 'База данных недоступна', { stack: err.stack });"
+    }
+  },
+
+  "webInterface": {
+    "url": "/logs",
+    "features": [
+      "Просмотр логов с фильтрацией по уровню, типу, модулю, дате",
+      "Поиск по сообщению",
+      "Пагинация",
+      "Статистика по логам",
+      "Отметка прочитанных/непрочитанных",
+      "Отметка решенных ошибок",
+      "Удаление логов",
+      "Экспорт в JSON/CSV",
+      "Автообновление",
+      "Цветовая кодировка уровней логирования"
+    ]
+  },
+
+  "security": {
+    "authentication": "JWT токен в заголовке Authorization: Bearer <token>",
+    "access": "Только администраторы имеют доступ к логам",
+    "protectedEndpoints": "Все endpoints требуют авторизации и прав администратора"
+  },
+
+  "changelog": {
+    "1.0.0": "Первая версия модуля логирования. Поддержка всех уровней, фильтрации, статистики, веб-интерфейса."
+  },
+
+  "author": "OrderMaster Team",
+  "license": "Proprietary"
+}
