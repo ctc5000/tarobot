@@ -562,13 +562,23 @@
                                     <span class="interpretation-number" id="loveNumber">--</span>
                                     <h4 id="loveTitle">Любовная совместимость</h4>
                                 </div>
+
+                                <!-- Основное описание -->
                                 <div class="interpretation-description" id="loveDescription"></div>
 
-                                <div class="interpretation-section">
-                                    <h5>💕 Ваш стиль любви</h5>
-                                    <p id="loveStyle"></p>
+                                <!-- Детальное описание -->
+                                <div class="interpretation-section detailed-section">
+                                    <h5>📝 Подробное описание</h5>
+                                    <div class="detailed-text" id="loveDetailedDescription"></div>
                                 </div>
 
+                                <!-- Стиль любви -->
+                                <div class="interpretation-section">
+                                    <h5>💕 Ваш стиль любви</h5>
+                                    <p id="loveStyle" class="info-text"></p>
+                                </div>
+
+                                <!-- Сетка сильных сторон и зон роста -->
                                 <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
@@ -580,19 +590,55 @@
                                     </div>
                                 </div>
 
+                                <!-- Идеальный партнер (кратко) -->
                                 <div class="interpretation-section">
                                     <h5>💑 Идеальный партнер</h5>
-                                    <p id="idealPartner"></p>
+                                    <p id="idealPartner" class="info-text"></p>
                                 </div>
 
+                                <!-- Тип идеального партнера (подробно) -->
                                 <div class="interpretation-section">
-                                    <h5>📊 Совместимость</h5>
-                                    <div class="compatibility-bar">
-                                        <div class="compatibility-progress" id="compatibilityProgress" style="width: 0%"></div>
-                                    </div>
-                                    <p id="compatibilityLevel"></p>
+                                    <h5>🎭 Тип идеального партнера</h5>
+                                    <p id="lovePartnerType" class="info-text"></p>
                                 </div>
 
+                                <!-- Модель отношений -->
+                                <div class="interpretation-section">
+                                    <h5>🔄 Модель отношений</h5>
+                                    <p id="loveRelationshipPattern" class="info-text"></p>
+                                </div>
+
+                                <!-- Факторы успеха и риска -->
+                                <div class="interpretation-grid">
+                                    <div class="grid-half">
+                                        <h5>✅ Факторы успеха</h5>
+                                        <ul id="loveSuccessFactors"></ul>
+                                    </div>
+                                    <div class="grid-half">
+                                        <h5>❌ Факторы риска</h5>
+                                        <ul id="loveFailureFactors"></ul>
+                                    </div>
+                                </div>
+
+                                <!-- Путь развития -->
+                                <div class="interpretation-section">
+                                    <h5>🛤️ Путь развития</h5>
+                                    <p id="loveDevelopmentPath" class="info-text"></p>
+                                </div>
+
+                                <!-- Совместимость -->
+                                <div class="interpretation-section numbers-section">
+                                    <div class="number-item">
+                                        <span class="number-label">📊 Совместимость:</span>
+                                        <span class="number-value" id="loveCompatibilityPercent"></span>
+                                    </div>
+                                    <div class="compatibility-bar">
+                                        <div class="compatibility-progress" id="loveCompatibilityProgress" style="width: 0%"></div>
+                                    </div>
+                                    <p id="loveCompatibilityLevel" class="compatibility-level-text"></p>
+                                </div>
+
+                                <!-- Совет -->
                                 <div class="interpretation-advice" id="loveAdvice"></div>
                             </div>
 
@@ -691,37 +737,77 @@
                                     <span class="interpretation-number" id="healthNumber">--</span>
                                     <h4 id="healthTitle">Энергия здоровья</h4>
                                 </div>
+
+                                <!-- Основное описание -->
                                 <div class="interpretation-description" id="healthDescription"></div>
 
-                                <div class="interpretation-section">
-                                    <h5>⚡ Уровень энергии</h5>
-                                    <div class="energy-bar">
-                                        <div class="energy-progress" id="energyProgress" style="width: 0%"></div>
-                                    </div>
-                                    <p id="energyLevel"></p>
+                                <!-- Детальное описание -->
+                                <div class="interpretation-section detailed-section">
+                                    <h5>📝 Подробное описание</h5>
+                                    <div class="detailed-text" id="healthDetailedDescription"></div>
                                 </div>
 
+                                <!-- Энергия -->
+                                <div class="interpretation-section">
+                                    <h5>⚡ Уровень энергии</h5>
+                                    <div class="energy-bar-container">
+                                        <div class="energy-bar">
+                                            <div class="energy-progress" id="healthEnergyProgress" style="width: 0%"></div>
+                                        </div>
+                                        <p id="healthEnergyLevel" class="energy-level-text"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Тип энергетики -->
+                                <div class="interpretation-section">
+                                    <h5>🔋 Тип энергетики</h5>
+                                    <p id="healthEnergyType" class="info-text"></p>
+                                </div>
+
+                                <!-- Сетка сильных сторон и зон роста -->
                                 <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="healthStrengths"></ul>
                                     </div>
                                     <div class="grid-half">
-                                        <h5>⚠️ Зоны внимания</h5>
+                                        <h5>🌙 Зоны роста</h5>
                                         <ul id="healthWeaknesses"></ul>
                                     </div>
                                 </div>
 
+                                <!-- Уязвимые органы -->
                                 <div class="interpretation-section">
-                                    <h5>🔍 Уязвимые органы</h5>
+                                    <h5>🔍 Уязвимые органы и системы</h5>
                                     <ul id="healthVulnerable"></ul>
                                 </div>
 
+                                <!-- Рекомендации -->
                                 <div class="interpretation-section">
-                                    <h5>✅ Рекомендации</h5>
+                                    <h5>✅ Рекомендации для здоровья</h5>
                                     <ul id="healthRecommendations"></ul>
                                 </div>
 
+                                <!-- Сезонные риски -->
+                                <div class="interpretation-section">
+                                    <h5>📅 Сезонные риски</h5>
+                                    <p id="healthSeasonalRisks" class="info-text"></p>
+                                </div>
+
+                                <!-- Профилактика -->
+                                <div class="interpretation-section">
+                                    <h5>🛡️ Профилактика</h5>
+                                    <ul id="healthPrevention"></ul>
+                                </div>
+
+
+                                <!-- Путь развития -->
+                                <div class="interpretation-section">
+                                    <h5>🛤️ Путь развития</h5>
+                                    <p id="healthDevelopmentPath" class="info-text"></p>
+                                </div>
+
+                                <!-- Совет -->
                                 <div class="interpretation-advice" id="healthAdvice"></div>
                             </div>
 
@@ -731,37 +817,87 @@
                                     <span class="interpretation-number" id="talentNumber">--</span>
                                     <h4 id="talentTitle">Скрытые таланты</h4>
                                 </div>
+
+                                <!-- Основное описание -->
                                 <div class="interpretation-description" id="talentDescription"></div>
 
+                                <!-- Детальное описание -->
+                                <div class="interpretation-section detailed-section">
+                                    <h5>📝 Подробное описание</h5>
+                                    <div class="detailed-text" id="talentDetailedDescription"></div>
+                                </div>
+
+                                <!-- Ваши таланты -->
                                 <div class="interpretation-section">
                                     <h5>🎯 Ваши таланты</h5>
                                     <ul id="talentList"></ul>
                                 </div>
 
+                                <!-- Как развивать -->
                                 <div class="interpretation-section">
-                                    <h5>📚 Путь развития</h5>
-                                    <p id="talentDevelopment"></p>
+                                    <h5>📚 Как развивать</h5>
+                                    <ul id="talentHowToDevelop"></ul>
                                 </div>
 
+                                <!-- Сферы реализации -->
                                 <div class="interpretation-section">
                                     <h5>💼 Сферы реализации</h5>
                                     <ul id="talentSuitable"></ul>
                                 </div>
 
+                                <!-- С чем сочетается -->
                                 <div class="interpretation-section">
-                                    <h5>📊 Потенциал реализации</h5>
-                                    <div class="potential-bar">
-                                        <div class="potential-progress" id="potentialProgress" style="width: 0%"></div>
-                                    </div>
-                                    <p id="potentialDescription"></p>
+                                    <h5>🔄 С чем сочетается</h5>
+                                    <p id="talentCombinations" class="info-text"></p>
                                 </div>
 
+                                <!-- Идеальная среда -->
+                                <div class="interpretation-section">
+                                    <h5>🌍 Идеальная среда</h5>
+                                    <p id="talentEnvironment" class="info-text"></p>
+                                </div>
+
+                                <!-- Факторы успеха и риска -->
+                                <div class="interpretation-grid">
+                                    <div class="grid-half">
+                                        <h5>✅ Факторы успеха</h5>
+                                        <ul id="talentSuccessFactors"></ul>
+                                    </div>
+                                    <div class="grid-half">
+                                        <h5>❌ Факторы риска</h5>
+                                        <ul id="talentFailureFactors"></ul>
+                                    </div>
+                                </div>
+
+                                <!-- Путь развития -->
+                                <div class="interpretation-section">
+                                    <h5>🛤️ Путь развития</h5>
+                                    <p id="talentDevelopmentPath" class="info-text"></p>
+                                </div>
+
+                                <!-- Потенциал -->
+                                <div class="interpretation-section numbers-section">
+                                    <div class="number-item">
+                                        <span class="number-label">📊 Потенциал реализации:</span>
+                                        <span class="number-value" id="talentPotentialPercent"></span>
+                                    </div>
+                                    <div class="potential-bar">
+                                        <div class="potential-progress" id="talentPotentialProgress" style="width: 0%"></div>
+                                    </div>
+                                    <p id="talentPotentialDescription" class="potential-level-text"></p>
+                                </div>
+
+                                <!-- Совет -->
                                 <div class="interpretation-advice" id="talentAdvice"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
+                <div class="pdf-actions" style="display: flex; gap: 10px; justify-content: center; margin: 20px 0;">
+                    <button class="mystic-button small" id="downloadPdfBtn">
+                        <span class="button-text">📄 Скачать PDF отчет</span>
+                    </button>
+                </div>
                 <button class="mystic-button small" id="newCalculationBtn">
                     <span class="button-text">Новый расчет</span>
                 </button>

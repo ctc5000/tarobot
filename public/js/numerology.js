@@ -173,12 +173,108 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', async function() {
+            await downloadPDFReport();
+        });
+    }
     // Добавляем эффекты
     addFormFieldEffects();
     addResultCardEffects();
 });
+async function downloadPDFReport() {
+    try {
+        // Проверяем, есть ли данные
+        if (!window.currentNumerologyData) {
+            showNotification('❌ Сначала выполните расчет', 'error');
+            return;
+        }
 
+        // Получаем данные из формы
+        const fullName = document.getElementById('resultFullName').textContent;
+        const birthDate = document.getElementById('resultBirthDate').textContent;
+
+        if (!fullName || !birthDate) {
+            showNotification('❌ Данные не найдены', 'error');
+            return;
+        }
+
+        console.log('📄 Отправка запроса на PDF для:', fullName);
+        showNotification('📄 Генерируем PDF отчет...', 'info');
+
+        // Показываем индикатор загрузки
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        const originalText = downloadBtn.innerHTML;
+        downloadBtn.innerHTML = '<span class="button-text">⏳ Генерация...</span>';
+        downloadBtn.disabled = true;
+
+        // Отправляем запрос на сервер
+        const response = await fetch('/api/numerology/pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fullName: fullName,
+                birthDate: birthDate,
+                data: window.currentNumerologyData
+            })
+        });
+
+        console.log('📄 Статус ответа:', response.status);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+        }
+
+        // Получаем PDF как blob
+        const blob = await response.blob();
+        console.log('📄 Получен blob, размер:', blob.size, 'байт');
+
+        if (blob.size === 0) {
+            throw new Error('Получен пустой файл');
+        }
+
+        // Получаем имя файла из заголовка Content-Disposition
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = 'numerology-report.pdf';
+
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            if (match && match[1]) {
+                filename = match[1].replace(/['"]/g, '');
+                // Убеждаемся, что имя файла не заканчивается на подчеркивание
+                filename = filename.replace(/_+\.pdf$/i, '.pdf');
+                // Убираем возможные лишние символы
+                filename = filename.trim();
+            }
+        }
+        console.log('📄 Имя файла для скачивания:', filename);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename; // Используем очищенное имя
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showNotification('✅ PDF отчет готов!', 'success');
+
+    } catch (error) {
+        console.error('❌ Ошибка скачивания PDF:', error);
+        showNotification('❌ Ошибка при создании PDF: ' + error.message, 'error');
+    } finally {
+        // Восстанавливаем кнопку
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        if (downloadBtn) {
+            downloadBtn.innerHTML = '<span class="button-text">📄 Скачать PDF отчет</span>';
+            downloadBtn.disabled = false;
+        }
+    }
+}
 // ==================== ВАЛИДАЦИЯ ====================
 function validateForm(fullName, birthDate) {
     if (!fullName || !birthDate) {
@@ -759,6 +855,9 @@ function displayFamilyInterpretation(family) {
 function displayLoveInterpretation(love) {
     if (!love) return;
 
+    console.log('📊 Отображение любви:', love);
+
+    // Основная информация
     setElementText('loveNumber', love.loveNumber);
     setElementText('loveTitle', love.title || 'Любовная совместимость');
     setElementText('loveDescription', love.description || '');
@@ -769,6 +868,7 @@ function displayLoveInterpretation(love) {
         detailedDescElement.innerHTML = love.detailedDescription || love.description || '';
     }
 
+    // Стиль любви
     setElementText('loveStyle', love.loveStyle || '');
 
     // Сильные стороны
@@ -780,6 +880,8 @@ function displayLoveInterpretation(love) {
             li.innerHTML = s;
             strengthsList.appendChild(li);
         });
+    } else if (strengthsList) {
+        strengthsList.innerHTML = '<li>—</li>';
     }
 
     // Зоны роста
@@ -791,29 +893,20 @@ function displayLoveInterpretation(love) {
             li.innerHTML = w;
             weaknessesList.appendChild(li);
         });
+    } else if (weaknessesList) {
+        weaknessesList.innerHTML = '<li>—</li>';
     }
 
+    // Идеальный партнер (кратко)
     setElementText('idealPartner', love.idealPartner || '');
 
-    // Тип партнера (новое поле)
+    // Тип идеального партнера (подробно)
     setElementText('lovePartnerType', love.partnerType || '');
 
-    // Отношение к браку (новое поле)
-    setElementText('loveMarriageView', love.marriageView || '');
+    // Модель отношений
+    setElementText('loveRelationshipPattern', love.relationshipPattern || '');
 
-    // Совместимость
-    if (love.compatibility !== undefined) {
-        const progressBar = document.getElementById('compatibilityProgress');
-        if (progressBar) {
-            progressBar.style.width = love.compatibility + '%';
-        }
-        setElementText('compatibilityLevel', love.compatibilityLevel || `Совместимость: ${love.compatibility}%`);
-    }
-
-    // Путь развития (новое поле)
-    setElementText('loveDevelopmentPath', love.developmentPath || love.advice || '');
-
-    // Факторы успеха (новое поле)
+    // Факторы успеха
     const successFactorsList = document.getElementById('loveSuccessFactors');
     if (successFactorsList && love.successFactors) {
         successFactorsList.innerHTML = '';
@@ -822,9 +915,11 @@ function displayLoveInterpretation(love) {
             li.innerHTML = f;
             successFactorsList.appendChild(li);
         });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
     }
 
-    // Факторы риска (новое поле)
+    // Факторы риска
     const failureFactorsList = document.getElementById('loveFailureFactors');
     if (failureFactorsList && love.failureFactors) {
         failureFactorsList.innerHTML = '';
@@ -833,8 +928,26 @@ function displayLoveInterpretation(love) {
             li.innerHTML = f;
             failureFactorsList.appendChild(li);
         });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
     }
 
+    // Путь развития
+    setElementText('loveDevelopmentPath', love.developmentPath || love.advice || '');
+
+    // Совместимость
+    if (love.compatibility !== undefined) {
+        setElementText('loveCompatibilityPercent', love.compatibility + '%');
+
+        const progressBar = document.getElementById('loveCompatibilityProgress');
+        if (progressBar) {
+            progressBar.style.width = love.compatibility + '%';
+        }
+
+        setElementText('loveCompatibilityLevel', love.compatibilityLevel || `Совместимость: ${love.compatibility}%`);
+    }
+
+    // Совет
     setElementText('loveAdvice', love.advice || '');
 }
 
@@ -955,6 +1068,9 @@ function displayMoneyInterpretation(money) {
 function displayHealthInterpretation(health) {
     if (!health) return;
 
+    console.log('📊 Отображение здоровья:', health);
+
+    // Основная информация
     setElementText('healthNumber', health.healthNumber);
     setElementText('healthTitle', health.title || 'Энергия здоровья');
     setElementText('healthDescription', health.description || '');
@@ -967,13 +1083,16 @@ function displayHealthInterpretation(health) {
 
     // Энергия
     if (health.energyLevel !== undefined) {
-        const energyProgress = document.getElementById('energyProgress');
+        const energyProgress = document.getElementById('healthEnergyProgress');
         if (energyProgress) {
             const percent = (health.energyLevel / 10) * 100;
             energyProgress.style.width = percent + '%';
         }
-        setElementText('energyLevel', `Уровень энергии: ${health.energyLevel}/10`);
+        setElementText('healthEnergyLevel', `Уровень энергии: ${health.energyLevel}/10`);
     }
+
+    // Тип энергетики
+    setElementText('healthEnergyType', health.energyType || '');
 
     // Сильные стороны
     const strengthsList = document.getElementById('healthStrengths');
@@ -984,6 +1103,8 @@ function displayHealthInterpretation(health) {
             li.innerHTML = s;
             strengthsList.appendChild(li);
         });
+    } else if (strengthsList) {
+        strengthsList.innerHTML = '<li>—</li>';
     }
 
     // Зоны роста
@@ -995,6 +1116,8 @@ function displayHealthInterpretation(health) {
             li.innerHTML = w;
             weaknessesList.appendChild(li);
         });
+    } else if (weaknessesList) {
+        weaknessesList.innerHTML = '<li>—</li>';
     }
 
     // Уязвимые органы
@@ -1006,6 +1129,8 @@ function displayHealthInterpretation(health) {
             li.innerHTML = v;
             vulnerableList.appendChild(li);
         });
+    } else if (vulnerableList) {
+        vulnerableList.innerHTML = '<li>—</li>';
     }
 
     // Рекомендации
@@ -1017,15 +1142,14 @@ function displayHealthInterpretation(health) {
             li.innerHTML = r;
             recommendationsList.appendChild(li);
         });
+    } else if (recommendationsList) {
+        recommendationsList.innerHTML = '<li>—</li>';
     }
 
-    // Тип энергетики (новое поле)
-    setElementText('healthEnergyType', health.energyType || '');
-
-    // Риски по сезонам (новое поле)
+    // Сезонные риски
     setElementText('healthSeasonalRisks', health.seasonalRisks || '');
 
-    // Профилактика (новое поле)
+    // Профилактика
     const preventionList = document.getElementById('healthPrevention');
     if (preventionList && health.prevention) {
         preventionList.innerHTML = '';
@@ -1034,12 +1158,11 @@ function displayHealthInterpretation(health) {
             li.innerHTML = p;
             preventionList.appendChild(li);
         });
+    } else if (preventionList) {
+        preventionList.innerHTML = '<li>—</li>';
     }
 
-    // Путь развития (новое поле)
-    setElementText('healthDevelopmentPath', health.developmentPath || health.advice || '');
-
-    // Факторы успеха (новое поле)
+    // Факторы успеха
     const successFactorsList = document.getElementById('healthSuccessFactors');
     if (successFactorsList && health.successFactors) {
         successFactorsList.innerHTML = '';
@@ -1048,9 +1171,11 @@ function displayHealthInterpretation(health) {
             li.innerHTML = f;
             successFactorsList.appendChild(li);
         });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
     }
 
-    // Факторы риска (новое поле)
+    // Факторы риска
     const failureFactorsList = document.getElementById('healthFailureFactors');
     if (failureFactorsList && health.failureFactors) {
         failureFactorsList.innerHTML = '';
@@ -1059,14 +1184,23 @@ function displayHealthInterpretation(health) {
             li.innerHTML = f;
             failureFactorsList.appendChild(li);
         });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
     }
 
+    // Путь развития
+    setElementText('healthDevelopmentPath', health.developmentPath || health.advice || '');
+
+    // Совет
     setElementText('healthAdvice', health.advice || '');
 }
 
 function displayTalentInterpretation(talent) {
     if (!talent) return;
 
+    console.log('📊 Отображение талантов:', talent);
+
+    // Основная информация
     setElementText('talentNumber', talent.talentNumber);
     setElementText('talentTitle', talent.title || 'Скрытые таланты');
     setElementText('talentDescription', talent.description || '');
@@ -1077,7 +1211,7 @@ function displayTalentInterpretation(talent) {
         detailedDescElement.innerHTML = talent.detailedDescription || talent.description || '';
     }
 
-    // Таланты
+    // Список талантов
     const talentList = document.getElementById('talentList');
     if (talentList && talent.talents) {
         talentList.innerHTML = '';
@@ -1086,9 +1220,22 @@ function displayTalentInterpretation(talent) {
             li.innerHTML = t;
             talentList.appendChild(li);
         });
+    } else if (talentList) {
+        talentList.innerHTML = '<li>—</li>';
     }
 
-    setElementText('talentDevelopment', talent.development || '');
+    // Как развивать
+    const howToDevelopList = document.getElementById('talentHowToDevelop');
+    if (howToDevelopList && talent.howToDevelop) {
+        howToDevelopList.innerHTML = '';
+        talent.howToDevelop.forEach(h => {
+            const li = document.createElement('li');
+            li.innerHTML = h;
+            howToDevelopList.appendChild(li);
+        });
+    } else if (howToDevelopList) {
+        howToDevelopList.innerHTML = '<li>—</li>';
+    }
 
     // Сферы реализации
     const suitableList = document.getElementById('talentSuitable');
@@ -1099,35 +1246,17 @@ function displayTalentInterpretation(talent) {
             li.innerHTML = s;
             suitableList.appendChild(li);
         });
+    } else if (suitableList) {
+        suitableList.innerHTML = '<li>—</li>';
     }
 
-    // Как развивать (новое поле)
-    const howToDevelopList = document.getElementById('talentHowToDevelop');
-    if (howToDevelopList && talent.howToDevelop) {
-        howToDevelopList.innerHTML = '';
-        talent.howToDevelop.forEach(h => {
-            const li = document.createElement('li');
-            li.innerHTML = h;
-            howToDevelopList.appendChild(li);
-        });
-    }
+    // С чем сочетается
+    setElementText('talentCombinations', talent.combinations || '');
 
-    // С чем сочетается (новое поле)
-    setElementText('talentCombinesWith', talent.combinesWith || '');
+    // Идеальная среда
+    setElementText('talentEnvironment', talent.environment || '');
 
-    // Потенциал
-    if (talent.potential !== undefined) {
-        const potentialProgress = document.getElementById('potentialProgress');
-        if (potentialProgress) {
-            potentialProgress.style.width = talent.potential + '%';
-        }
-        setElementText('potentialDescription', talent.potentialDescription || `Потенциал: ${talent.potential}%`);
-    }
-
-    // Путь развития (новое поле)
-    setElementText('talentDevelopmentPath', talent.developmentPath || talent.advice || '');
-
-    // Факторы успеха (новое поле)
+    // Факторы успеха
     const successFactorsList = document.getElementById('talentSuccessFactors');
     if (successFactorsList && talent.successFactors) {
         successFactorsList.innerHTML = '';
@@ -1136,9 +1265,11 @@ function displayTalentInterpretation(talent) {
             li.innerHTML = f;
             successFactorsList.appendChild(li);
         });
+    } else if (successFactorsList) {
+        successFactorsList.innerHTML = '<li>—</li>';
     }
 
-    // Факторы риска (новое поле)
+    // Факторы риска
     const failureFactorsList = document.getElementById('talentFailureFactors');
     if (failureFactorsList && talent.failureFactors) {
         failureFactorsList.innerHTML = '';
@@ -1147,8 +1278,26 @@ function displayTalentInterpretation(talent) {
             li.innerHTML = f;
             failureFactorsList.appendChild(li);
         });
+    } else if (failureFactorsList) {
+        failureFactorsList.innerHTML = '<li>—</li>';
     }
 
+    // Путь развития
+    setElementText('talentDevelopmentPath', talent.developmentPath || talent.advice || '');
+
+    // Потенциал
+    if (talent.potential !== undefined) {
+        setElementText('talentPotentialPercent', talent.potential + '%');
+
+        const progressBar = document.getElementById('talentPotentialProgress');
+        if (progressBar) {
+            progressBar.style.width = talent.potential + '%';
+        }
+
+        setElementText('talentPotentialDescription', talent.potentialDescription || `Потенциал: ${talent.potential}%`);
+    }
+
+    // Совет
     setElementText('talentAdvice', talent.advice || '');
 }
 

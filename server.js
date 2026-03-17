@@ -19,6 +19,8 @@ const SocionicsService = require('./services/socionicsService');
 const AstropsychologyService = require('./services/astropsychologyService');
 const RunesService = require('./services/runesService');
 const NatalChartSimpleService = require('./services/natalChartSimpleService');
+const PDFGeneratorService = require('./services/pdfGeneratorService');
+const pdfGenerator = new PDFGeneratorService();
 
 // Инициализация сервисов
 const services = {
@@ -95,7 +97,104 @@ pages.forEach(page => {
 });
 
 // ==================== API МАРШРУТЫ ====================
+/**
+ * API для генерации PDF отчета по нумерологии
+ */
+app.post('/api/numerology/pdf', async (req, res) => {
+    try {
+        const { fullName, birthDate, data } = req.body;
 
+        console.log('📄 Запрос на генерацию PDF для:', fullName);
+
+        if (!fullName || !birthDate || !data) {
+            return res.status(400).json({
+                success: false,
+                error: 'Необходимы данные для генерации отчета'
+            });
+        }
+
+        // Добавляем полное имя и дату в данные
+        const reportData = {
+            ...data,
+            fullName,
+            birthDate
+        };
+
+        console.log('📄 Генерация PDF...');
+        const pdfBuffer = await pdfGenerator.generateNumerologyPDF(reportData);
+        console.log('📄 PDF сгенерирован, размер:', pdfBuffer.length, 'байт');
+
+        // Функция для транслитерации
+        function transliterate(text) {
+            const ru = {
+                'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+                'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+                'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+                'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '',
+                'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+                'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
+                'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+                'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+                'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '',
+                'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+                ' ': '_', '-': '_', '.': '_'
+            };
+            return text.split('').map(char => ru[char] || char).join('');
+        }
+
+        // Функция для создания безопасного имени файла
+        function createSafeFileName(name) {
+            // Транслитерируем
+            let safe = transliterate(name);
+
+            // Заменяем все не-буквы и не-цифры на подчеркивание
+            safe = safe.replace(/[^a-zA-Z0-9]/g, '_');
+
+            // Убираем множественные подчеркивания
+            safe = safe.replace(/_+/g, '_');
+
+            // Убираем подчеркивания в начале и конце
+            safe = safe.replace(/^_+|_+$/g, '');
+
+            // Ограничиваем длину
+            safe = safe.substring(0, 50);
+
+            // Если имя пустое, используем timestamp
+            if (!safe || safe.length === 0) {
+                safe = `report-${Date.now()}`;
+            }
+
+            return safe;
+        }
+
+        // Создаем имя файла
+        const safeFileName = createSafeFileName(fullName);
+        const fileName = `numerology-${safeFileName}.pdf`;
+
+        console.log('📄 Имя файла для отправки (чистое):', fileName);
+
+        // Отправляем PDF - используем writeHead для большей надежности
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${fileName}"`,
+            'Content-Length': pdfBuffer.length,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+
+        res.end(pdfBuffer);
+
+        console.log('✅ PDF успешно отправлен');
+
+    } catch (error) {
+        console.error('❌ Ошибка генерации PDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
 /**
  * API для получения версии приложения
  */
