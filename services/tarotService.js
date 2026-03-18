@@ -181,7 +181,6 @@ class TarotService {
             }
         };
 
-        // Словарь для интерпретации карт в разных позициях
         this.positionMeanings = {
             'Ситуация': 'описывает текущее состояние дел, то, что происходит вокруг вашего вопроса прямо сейчас',
             'Препятствие': 'показывает, что стоит на вашем пути, главное препятствие или вызов',
@@ -199,7 +198,6 @@ class TarotService {
             'Надежды и страхи': 'показывает ваши ожидания и опасения относительно ситуации'
         };
 
-        // Мапа для определения типа вопроса
         this.questionCategories = {
             'любов': 'love',
             'отношени': 'love',
@@ -222,7 +220,118 @@ class TarotService {
         };
     }
 
-    // ... существующие методы calculateFromNumbers, normalizeToArcana и т.д. ...
+    /**
+     * Расчет карт Таро на основе нумерологических чисел
+     */
+    calculateFromNumbers(numbers) {
+        if (!numbers || typeof numbers !== 'object') {
+            return this.getFallbackCards();
+        }
+
+        const fateNum = numbers.fate || 0;
+        const nameNum = numbers.name || 0;
+        const surnameNum = numbers.surname || 0;
+        const patronymicNum = numbers.patronymic || 0;
+
+        const fateArcana = this.normalizeToArcana(fateNum);
+        const nameArcana = this.normalizeToArcana(nameNum);
+
+        const pathArcana = this.calculateUniquePathArcana(
+            fateArcana,
+            nameArcana,
+            fateNum,
+            nameNum,
+            surnameNum,
+            patronymicNum
+        );
+
+        return {
+            fate: {
+                number: fateArcana,
+                ...this.getArcanaData(fateArcana)
+            },
+            personality: {
+                number: nameArcana,
+                ...this.getArcanaData(nameArcana)
+            },
+            control: {
+                number: pathArcana,
+                ...this.getArcanaData(pathArcana)
+            }
+        };
+    }
+
+    /**
+     * Нормализует число в диапазон 0-21 для Старших Арканов
+     */
+    normalizeToArcana(num) {
+        if (num === 22) return 0;
+        if (num >= 0 && num <= 21) return num;
+
+        let reduced = num;
+        while (reduced > 22) {
+            reduced = String(reduced).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+        }
+        return reduced === 22 ? 0 : reduced;
+    }
+
+    /**
+     * Вычисляет уникальную карту пути
+     */
+    calculateUniquePathArcana(fateArcana, nameArcana, fateNum, nameNum, surnameNum, patronymicNum) {
+        const usedCards = new Set([fateArcana, nameArcana]);
+
+        if (usedCards.size >= 22) {
+            return (fateArcana + 1) % 22;
+        }
+
+        const candidates = [
+            this.normalizeToArcana(surnameNum),
+            this.normalizeToArcana(patronymicNum),
+            this.normalizeToArcana(fateNum + nameNum + surnameNum + patronymicNum),
+            this.normalizeToArcana((fateNum * nameNum) % 23),
+            this.normalizeToArcana(Math.abs(fateNum - nameNum) + surnameNum),
+            this.normalizeToArcana((fateNum + nameNum + surnameNum + patronymicNum) * 3),
+            this.normalizeToArcana((fateNum * fateNum + nameNum * nameNum) % 23)
+        ];
+
+        for (let candidate of candidates) {
+            if (!usedCards.has(candidate)) {
+                return candidate;
+            }
+        }
+
+        for (let i = 0; i < 22; i++) {
+            if (!usedCards.has(i)) {
+                return i;
+            }
+        }
+
+        return (fateArcana + 1) % 22;
+    }
+
+    getArcanaData(num) {
+        return this.majorArcana[num] || this.getDefaultArcana(num);
+    }
+
+    getDefaultArcana(num) {
+        return {
+            number: num,
+            name: `Аркан ${num === 0 ? 22 : num}`,
+            image: '/images/tarot/back.jpg',
+            keywords: 'Тайна, ожидающая раскрытия',
+            description: `Число ${num === 0 ? 22 : num} несет в себе уникальную энергию, которую предстоит расшифровать лично вам. Это ваша индивидуальная карта, история, которую только вы можете написать.`,
+            advice: `Исследуйте значение числа ${num === 0 ? 22 : num} в своей жизни. Какие события, люди, ситуации связаны с ним? Там скрыт ответ.`
+        };
+    }
+
+    getFallbackCards() {
+        return {
+            fate: this.getDefaultArcana(0),
+            personality: this.getDefaultArcana(1),
+            control: this.getDefaultArcana(2)
+        };
+    }
 
     /**
      * Метод для гадания
@@ -314,7 +423,7 @@ class TarotService {
     }
 
     /**
-     * Генерирует полную интерпретацию расклада с учетом вопроса
+     * Генерирует полную интерпретацию расклада
      */
     generateInterpretation(question, spread, cards) {
         const category = this.detectQuestionCategory(question);
@@ -326,7 +435,6 @@ class TarotService {
         interpretation += `**Расклад:** ${spread.name}\n`;
         interpretation += `_${spread.description}_\n\n`;
 
-        // 1. Детальный разбор каждой карты
         interpretation += `**✨ КАРТЫ ВАШЕГО РАСКЛАДА**\n\n`;
 
         cards.forEach((card, index) => {
@@ -335,7 +443,6 @@ class TarotService {
                 ? this.getReversedMeaning(card)
                 : card.keywords;
 
-            // Значение в зависимости от позиции
             const positionMeaning = this.positionMeanings[card.position] || `относится к аспекту "${card.position}"`;
 
             interpretation += `**${index + 1}. ${card.position}** — ${card.name} (${orientation})\n`;
@@ -349,7 +456,6 @@ class TarotService {
                 interpretation += `В прямом положении она несет свою энергию в чистом виде, указывая на благоприятные возможности. `;
             }
 
-            // Специфическое толкование для первой и последней карты
             if (index === 0) {
                 interpretation += `Это отправная точка вашего расклада, задающая тон всему анализу. `;
             }
@@ -360,7 +466,6 @@ class TarotService {
             interpretation += `\n\n`;
         });
 
-        // 2. Общий анализ баланса энергий
         interpretation += `**📊 БАЛАНС ЭНЕРГИЙ**\n\n`;
         interpretation += `В вашем раскладе **${uprightCount}** карт в прямом положении и **${reversedCount}** в перевернутом. `;
 
@@ -380,7 +485,6 @@ class TarotService {
 
         interpretation += `\n\n`;
 
-        // 3. Анализ в зависимости от типа вопроса
         interpretation += `**💫 ОТВЕТ НА ВАШ ВОПРОС**\n\n`;
 
         switch(category) {
@@ -408,7 +512,6 @@ class TarotService {
 
         interpretation += `\n\n`;
 
-        // 4. Совет от ключевой карты
         const significantCard = this.findMostSignificantCard(cards);
         interpretation += `**💡 КЛЮЧЕВОЙ СОВЕТ**\n\n`;
         interpretation += `Наиболее значимая карта этого расклада — **${significantCard.name}**. `;
@@ -424,13 +527,9 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для вопросов о любви
-     */
     getLoveInterpretation(cards, question) {
         let interpretation = '';
 
-        // Анализ первой и последней карты (начало и итог отношений)
         const firstCard = cards[0];
         const lastCard = cards[cards.length - 1];
 
@@ -446,7 +545,6 @@ class TarotService {
             interpretation += `даже если сейчас есть сложности, итог будет благоприятным. Не сдавайтесь. `;
         }
 
-        // Поиск карт, связанных с любовью
         const loveCards = cards.filter(c =>
             c.name === 'Влюбленные' ||
             c.name === 'Императрица' ||
@@ -473,13 +571,9 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для карьерных вопросов
-     */
     getCareerInterpretation(cards, question) {
         let interpretation = '';
 
-        // Анализ карт, связанных с карьерой
         const careerCards = cards.filter(c =>
             c.name === 'Маг' ||
             c.name === 'Император' ||
@@ -518,9 +612,6 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для финансовых вопросов
-     */
     getMoneyInterpretation(cards, question) {
         let interpretation = '';
 
@@ -556,9 +647,6 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для вопросов здоровья
-     */
     getHealthInterpretation(cards, question) {
         let interpretation = '';
 
@@ -597,9 +685,6 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для семейных вопросов
-     */
     getFamilyInterpretation(cards, question) {
         let interpretation = '';
 
@@ -634,9 +719,6 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Интерпретация для личных вопросов
-     */
     getPersonalInterpretation(cards, question) {
         let interpretation = '';
 
@@ -654,9 +736,6 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Общая интерпретация
-     */
     getGeneralInterpretation(cards, question) {
         let interpretation = '';
 
@@ -677,30 +756,21 @@ class TarotService {
         return interpretation;
     }
 
-    /**
-     * Находит наиболее значимую карту в раскладе
-     */
     findMostSignificantCard(cards) {
-        // Приоритет: центральная карта > карта с номером 0 > карта с номером 21 > первая карта
         if (cards.length % 2 === 1) {
             const midIndex = Math.floor(cards.length / 2);
             return cards[midIndex];
         }
 
-        // Ищем Шута (0) или Мир (21) как особые карты
         const fool = cards.find(c => c.number === 0);
         if (fool) return fool;
 
         const world = cards.find(c => c.number === 21);
         if (world) return world;
 
-        // Иначе возвращаем первую карту
         return cards[0];
     }
 
-    /**
-     * Получение значения для перевернутой карты
-     */
     getReversedMeaning(card) {
         const reversedMeanings = {
             'Шут': 'Безрассудство, глупость, рискованные решения',
