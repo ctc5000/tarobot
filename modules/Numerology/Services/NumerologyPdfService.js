@@ -13,7 +13,9 @@ class NumerologyPdfService {
         this.tempDir = path.join(__dirname, '../temp');
         this.ensureTempDir();
     }
-
+    async generatePdf(data) {
+        return this.generateNumerologyPDF(data);
+    }
     async ensureTempDir() {
         try {
             await mkdirAsync(this.tempDir, { recursive: true });

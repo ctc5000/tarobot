@@ -799,6 +799,11 @@ class TarotService {
 
         return reversedMeanings[card.name] || 'Негативное проявление энергии карты';
     }
+    getCardByNumber(number) {
+        const index = number === 22 ? 0 : number - 1;
+        return this.cards[index] || this.cards[0];
+    }
+
 }
 
 module.exports = TarotService;

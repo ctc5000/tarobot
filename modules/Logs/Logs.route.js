@@ -6,8 +6,8 @@
 
 const LogsRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
     // Используем переданный routeController, а не импортируем заново
-    console.log(`🔧 Регистрация маршрутов для /api/${routeName}`);
-    console.log(`📋 Доступные методы:`, Object.keys(routeController));
+   /* console.log(`🔧 Регистрация маршрутов для /api/${routeName}`);
+    console.log(`📋 Доступные методы:`, Object.keys(routeController));*/
     /**
      * =========================================================================
      * API ЭНДПОИНТЫ ДЛЯ РАБОТЫ С ЛОГАМИ

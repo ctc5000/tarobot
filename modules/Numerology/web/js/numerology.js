@@ -1,1465 +1,2357 @@
-// /js/numerology.js - ПОЛНАЯ ВЕРСИЯ (без preview)
+// /numerology/js/numerology.js
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔮 Numerology.js загружен');
+class NumerologyApp {
+    constructor() {
+        this.user = null;
+        this.activeSubscription = null;
+        this.tariffs = [];
+        this.selectedTariff = null;
+        this.currentCalculation = null;
+        this.hasFullAccess = false;
 
-    const form = document.getElementById('numerologyForm');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const resultSection = document.getElementById('resultSection');
-    const newCalculationBtn = document.getElementById('newCalculationBtn');
-
-    if (!form) {
-        console.error('❌ Форма не найдена');
-        return;
+        this.init();
     }
 
-    let dateMask = null;
+    async init() {
+        console.log('🔮 NumerologyApp инициализация...');
 
-    // ==================== МАСКА ДЛЯ ДАТЫ ====================
-    const birthDateInput = document.getElementById('birthDate');
-    if (birthDateInput && typeof IMask !== 'undefined') {
-        dateMask = IMask(birthDateInput, {
-            mask: '00.00.0000',
-            blocks: {
-                dd: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
-                mm: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
-                yyyy: { mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4 }
-            },
-            lazy: false,
-            autofix: true,
-            placeholderChar: '_'
+        // Получаем ссылки на элементы
+        this.form = document.getElementById('numerologyForm');
+        this.tariffSection = document.getElementById('tariffSection');
+        this.inputSection = document.getElementById('inputSection');
+        this.resultSection = document.getElementById('resultSection');
+        this.subscriptionInfo = document.getElementById('subscriptionInfo');
+        this.tariffGrid = document.getElementById('tariffGrid');
+        this.loadingSpinner = document.getElementById('loadingSpinner');
+        this.compatibilityFields = document.getElementById('compatibilityFields');
+        this.targetDateField = document.getElementById('targetDateField');
+
+        if (!this.form) {
+            console.error('❌ Форма не найдена');
+            return;
+        }
+
+        // Инициализируем маски для дат
+        this.initDateMasks();
+
+        // Загружаем данные пользователя
+        await this.loadUserData();
+
+        // Загружаем тарифы
+        await this.loadTariffs();
+
+        // Проверяем подписку
+        await this.checkSubscription();
+
+        // Обновляем UI в зависимости от авторизации
+        this.updateAuthUI();
+
+        // Добавляем обработчики событий
+        this.addEventListeners();
+
+        // Автоматически заполняем ФИО если есть пользователь
+        if (this.user && this.user.fullName) {
+            document.getElementById('fullName').value = this.user.fullName;
+        }
+    }
+
+    initDateMasks() {
+        const dateInputs = ['birthDate', 'partnerBirthDate', 'targetDate'];
+
+        dateInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input && typeof IMask !== 'undefined') {
+                IMask(input, {
+                    mask: Date,
+                    pattern: 'd{.}`m{.}`Y',
+                    blocks: {
+                        d: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
+                        m: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
+                        Y: { mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4 }
+                    },
+                    format: function(date) {
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        return `${day}.${month}.${year}`;
+                    },
+                    parse: function(str) {
+                        const [day, month, year] = str.split('.');
+                        return new Date(year, month - 1, day);
+                    },
+                    lazy: false,
+                    autofix: true,
+                    placeholderChar: '_'
+                });
+            }
         });
-        birthDateInput.value = '';
     }
 
-    // ==================== ОБРАБОТКА ФОРМЫ ====================
-    form.addEventListener('submit', async function(e) {
+    async loadUserData() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.user = data.data.user;
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки пользователя:', error);
+        }
+    }
+
+    async loadTariffs() {
+        try {
+            const response = await fetch('/api/services?active=true');
+
+            if (response.ok) {
+                const data = await response.json();
+                this.tariffs = data.data;
+                this.renderTariffs();
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки тарифов:', error);
+            this.tariffGrid.innerHTML = '<p class="error-message">Ошибка загрузки тарифов</p>';
+        }
+    }
+
+    async checkSubscription() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/subscriptions/active', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.activeSubscription = data.data;
+                this.hasFullAccess = true;
+                this.renderSubscriptionInfo();
+            }
+        } catch (error) {
+            console.error('Ошибка проверки подписки:', error);
+        }
+    }
+
+    renderSubscriptionInfo() {
+        if (!this.subscriptionInfo || !this.activeSubscription) return;
+
+        const endDate = new Date(this.activeSubscription.endDate);
+        const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+
+        this.subscriptionInfo.style.display = 'block';
+        this.subscriptionInfo.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="background: linear-gradient(135deg, #85703d, #c5a34f); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                    ✨ Активная подписка
+                </div>
+                <div style="color: var(--text-secondary);">
+                    <span style="color: var(--text-muted);">Действует до:</span>
+                    <span style="color: var(--accent-gold); font-weight: 600; margin-left: 5px;">${endDate.toLocaleDateString()}</span>
+                </div>
+                <div style="color: var(--text-secondary);">
+                    <span style="color: var(--text-muted);">Осталось:</span>
+                    <span style="color: var(--accent-gold); font-weight: 600; margin-left: 5px;">${daysLeft} дн.</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <span style="background: #c9a54b; color: #000000; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #c9a54b;">✓ Прогноз на день</span>
+                <span style="background: #c9a54b; color: #000000; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #c9a54b;">✓ Прогноз на неделю</span>
+                <span style="background: #c9a54b; color: #000000; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #c9a54b;">✓ Прогноз на месяц</span>
+                <span style="background: #c9a54b; color: #000000; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #c9a54b;">✓ Прогноз на год</span>
+                <span style="background: var(--accent-gold); color: var(--bg-dark); padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">✨ Скидка 50% на полный расчет</span>
+            </div>
+        `;
+    }
+
+    renderTariffs() {
+        if (!this.tariffGrid) return;
+
+        const forecastTypes = {
+            'forecast_basic': {
+                icon: '🔮',
+                name: 'Базовый расчет',
+                description: 'Основные числа судьбы, свиток судьбы и глубинный портрет',
+                features: [
+                    'Число судьбы, имени, рода',
+                    'Ахиллесова пята',
+                    'Число управления',
+                    'Социальные оклики',
+                    'Свиток судьбы',
+                    'Глубинный портрет'
+                ],
+                free: true
+            },
+            'forecast_day': {
+                icon: '📅',
+                name: 'Прогноз на день',
+                description: 'Персональный прогноз на конкретный день',
+                category: 'forecast'
+            },
+            'forecast_week': {
+                icon: '📆',
+                name: 'Прогноз на неделю',
+                description: 'Прогноз на предстоящую неделю',
+                category: 'forecast'
+            },
+            'forecast_month': {
+                icon: '📊',
+                name: 'Прогноз на месяц',
+                description: 'Прогноз на месяц вперед',
+                category: 'forecast'
+            },
+            'forecast_year': {
+                icon: '📈',
+                name: 'Прогноз на год',
+                description: 'Годовой прогноз',
+                category: 'forecast'
+            },
+            'forecast_full': {
+                icon: '⭐',
+                name: 'Полный расчет',
+                description: 'Полный нумерологический анализ + все дополнительные разделы',
+                features: [
+                    'Все из базового расчета',
+                    'Гороскоп',
+                    'Фен-шуй',
+                    'Карты Таро',
+                    'Психологический портрет',
+                    'Паттерны личности',
+                    'Карьерный анализ',
+                    'Семейная гармония',
+                    'Любовная совместимость',
+                    'Финансовый поток',
+                    'Энергия здоровья',
+                    'Скрытые таланты'
+                ]
+            },
+            'compatibility': {
+                icon: '💑',
+                name: 'Совместимость',
+                description: 'Нумерологическая совместимость с партнером',
+                features: [
+                    'Анализ пары',
+                    'Сильные стороны союза',
+                    'Зоны роста отношений',
+                    'Общие цели'
+                ]
+            }
+        };
+
+        let html = '';
+
+        this.tariffs.forEach(tariff => {
+            const typeInfo = forecastTypes[tariff.code] || {
+                icon: '🔮',
+                name: tariff.name,
+                description: tariff.description
+            };
+
+            // Определяем цену со скидкой для подписчиков
+            let price = tariff.price;
+            let oldPrice = null;
+            let discount = null;
+
+            if (this.activeSubscription && tariff.code !== 'forecast_basic') {
+                if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariff.code)) {
+                    price = 0;
+                    discount = 'По подписке';
+                } else if (tariff.code === 'forecast_full') {
+                    oldPrice = price;
+                    price = Math.round(price * 0.5);
+                    discount = '50% по подписке';
+                }
+            }
+
+            // Определяем класс карточки
+            let cardClass = 'tariff-card';
+            if (tariff.code === 'forecast_basic') cardClass += ' free';
+            if (this.activeSubscription && (price === 0 || discount)) cardClass += ' subscription';
+            if (this.selectedTariff?.id === tariff.id) cardClass += ' selected';
+
+            html += `
+                <div class="${cardClass}" onclick="numerologyApp.selectTariff('${tariff.code}')">
+                    ${tariff.code === 'forecast_full' && !this.activeSubscription ?
+                '<span class="tariff-badge">Популярное</span>' : ''}
+                    <div class="tariff-icon">${typeInfo.icon}</div>
+                    <h3 class="tariff-name">${typeInfo.name}</h3>
+                    <p class="tariff-description">${typeInfo.description}</p>
+                    
+                    <div class="tariff-price">
+                        ${price === 0 ?
+                '<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">Бесплатно</span>' :
+                `<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">${price} ₽</span>`
+            }
+                        ${oldPrice ? `<span style="color: var(--text-muted); text-decoration: line-through; margin-left: 10px; font-size: 1.2rem;">${oldPrice} ₽</span>` : ''}
+                    </div>
+                    
+                    ${discount ? `<div style="background: linear-gradient(135deg, #85703d, #c5a34f); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; display: inline-block; margin-bottom: 15px;">${discount}</div>` : ''}
+                    
+                    <ul class="tariff-features">
+                        ${typeInfo.features ?
+                typeInfo.features.map(f => `<li><i class="fas fa-check" style="color: #4caf50; margin-right: 8px;"></i> ${f}</li>`).join('') :
+                '<li>Все основные расчеты</li>'
+            }
+                    </ul>
+                    
+                    <button class="mystic-button" style="width: 100%; margin-top: 20px;">
+                        ${price === 0 ? 'Выбрать' : price === 0 ? 'Бесплатно' : 'Купить за ' + price + ' ₽'}
+                    </button>
+                </div>
+            `;
+        });
+
+        this.tariffGrid.innerHTML = html;
+    }
+
+    selectTariff(tariffCode) {
+        const tariff = this.tariffs.find(t => t.code === tariffCode);
+        if (!tariff) return;
+
+        this.selectedTariff = tariff;
+
+        // Обновляем заголовок
+        document.getElementById('selectedTariffTitle').textContent = tariff.name;
+        document.getElementById('selectedTariffDescription').textContent = tariff.description || '';
+
+        // Показываем/скрываем дополнительные поля
+        if (tariffCode === 'compatibility') {
+            this.compatibilityFields.style.display = 'block';
+            this.targetDateField.style.display = 'none';
+        } else if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariffCode)) {
+            this.compatibilityFields.style.display = 'none';
+            this.targetDateField.style.display = 'block';
+        } else {
+            this.compatibilityFields.style.display = 'none';
+            this.targetDateField.style.display = 'none';
+        }
+
+        // Обновляем информацию о цене
+        this.updatePriceInfo(tariff);
+
+        // Показываем секцию ввода
+        this.tariffSection.style.display = 'none';
+        this.inputSection.style.display = 'block';
+
+        // Обновляем подсветку в тарифах
+        this.renderTariffs();
+    }
+
+    updatePriceInfo(tariff) {
+        const priceInfo = document.getElementById('selectedTariffPrice');
+        let price = tariff.price;
+        let html = '';
+
+        if (this.activeSubscription) {
+            if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariff.code)) {
+                html = '<span style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 700;">Бесплатно</span> <span style="background: linear-gradient(135deg, #85703d, #c5a34f); color: white; padding: 3px 8px; border-radius: 20px; font-size: 0.8rem; margin-left: 10px;">По подписке</span>';
+            } else if (tariff.code === 'forecast_full') {
+                const discounted = Math.round(price * 0.5);
+                html = `
+                    <span style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 700;">${discounted} ₽</span>
+                    <span style="color: var(--text-muted); text-decoration: line-through; margin-left: 10px; font-size: 1rem;">${price} ₽</span>
+                    <span style="background: linear-gradient(135deg, #85703d, #c5a34f); color: white; padding: 3px 8px; border-radius: 20px; font-size: 0.8rem; margin-left: 10px;">-50%</span>
+                `;
+            } else {
+                html = `<span style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 700;">${price} ₽</span>`;
+            }
+        } else {
+            html = `<span style="color: var(--accent-gold); font-size: 1.5rem; font-weight: 700;">${price} ₽</span>`;
+        }
+
+        priceInfo.innerHTML = html;
+    }
+
+    updateAuthUI() {
+        const authLinks = document.getElementById('authLinks');
+        const mainNav = document.getElementById('mainNav');
+
+        if (!authLinks) return;
+
+        if (this.user) {
+            // Пользователь авторизован
+            const firstName = this.user.fullName.split(' ')[0] || this.user.fullName;
+
+            authLinks.innerHTML = `
+                <a href="/cabinet" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-user" style="font-size: 0.9rem;"></i>
+                    <span>${firstName}</span>
+                </a>
+                <button class="btn btn-primary btn-sm" onclick="numerologyApp.logout()" style="display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-sign-out-alt" style="font-size: 0.9rem;"></i>
+                    <span>Выйти</span>
+                </button>
+            `;
+
+            // Если есть активная подписка, показываем особое приветствие
+            if (this.activeSubscription) {
+                setTimeout(() => {
+                    this.showNotification('✨ У вас активная подписка! Прогнозы бесплатны, скидка 50% на полный расчет', 'success');
+                }, 1000);
+            }
+        } else {
+            // Гость
+            authLinks.innerHTML = `
+                <a href="/login" class="btn btn-outline btn-sm">Войти</a>
+                <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
+            `;
+        }
+
+        // Обновляем навигацию
+        if (mainNav) {
+            const currentPath = window.location.pathname;
+            mainNav.innerHTML = `
+                <a href="/" class="${currentPath === '/' ? 'active' : ''}">Главная</a>
+                <a href="/numerology" class="${currentPath === '/numerology' ? 'active' : ''}">Нумерология</a>
+                <a href="/tarot" class="${currentPath === '/tarot' ? 'active' : ''}">Таро</a>
+                <a href="/natal-chart" class="${currentPath === '/natal-chart' ? 'active' : ''}">Натальная карта</a>
+                ${this.user ? '<a href="/cabinet" class="' + (currentPath === '/cabinet' ? 'active' : '') + '">Кабинет</a>' : ''}
+            `;
+        }
+    }
+
+    logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/';
+    }
+
+    addEventListeners() {
+        if (this.form) {
+            this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
+
+        document.getElementById('newCalculationBtn')?.addEventListener('click', () => this.resetForm());
+        document.getElementById('upgradeCalculationBtn')?.addEventListener('click', () => this.upgradeToFull());
+        document.getElementById('downloadPdfBtn')?.addEventListener('click', () => this.downloadPDFReport());
+
+        // Добавляем обработчики для табов
+        this.setupTabListeners();
+    }
+
+    setupTabListeners() {
+        // Основные табы
+        document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (btn.classList.contains('locked')) {
+                    e.preventDefault();
+                    this.showNotification('🔒 Этот раздел доступен только в полном расчете', 'info');
+                    return;
+                }
+
+                const tabId = btn.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                btn.classList.add('active');
+                const tabContent = document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1));
+                if (tabContent) tabContent.classList.add('active');
+            });
+        });
+
+        // Табы интерпретаций
+        document.querySelectorAll('.interpretation-tabs .tab-btn[data-interpretation]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (btn.classList.contains('locked')) {
+                    e.preventDefault();
+                    this.showNotification('🔒 Этот раздел доступен только в полном расчете', 'info');
+                    return;
+                }
+
+                const interpretation = btn.dataset.interpretation;
+                document.querySelectorAll('.interpretation-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.interpretation-pane').forEach(p => p.classList.remove('active'));
+
+                btn.classList.add('active');
+                const pane = document.getElementById('interpretation-' + interpretation);
+                if (pane) pane.classList.add('active');
+            });
+        });
+    }
+
+    async handleSubmit(e) {
         e.preventDefault();
-        console.log('📤 Форма отправлена');
 
         const fullName = document.getElementById('fullName').value.trim();
         const birthDate = document.getElementById('birthDate').value.trim();
 
-        if (!validateForm(fullName, birthDate)) return;
+        if (!this.validateForm(fullName, birthDate)) return;
 
-        if (loadingSpinner) loadingSpinner.style.display = 'block';
-        form.style.opacity = '0.5';
-        form.style.pointerEvents = 'none';
+        this.showLoading(true);
 
         try {
-            // Получаем токен из localStorage (если пользователь авторизован)
             const token = localStorage.getItem('token');
-
-            // Формируем заголовки
             const headers = { 'Content-Type': 'application/json' };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            // Формируем данные для отправки
+            const requestData = {
+                fullName,
+                birthDate: this.formatDateForServer(birthDate)
+            };
+
+            // Добавляем дополнительные поля
+            if (this.selectedTariff.code === 'compatibility') {
+                requestData.partnerName = document.getElementById('partnerName').value.trim();
+                requestData.partnerBirthDate = this.formatDateForServer(
+                    document.getElementById('partnerBirthDate').value.trim()
+                );
+
+                if (!requestData.partnerName || !requestData.partnerBirthDate) {
+                    this.showNotification('❌ Заполните данные партнера', 'error');
+                    this.showLoading(false);
+                    return;
+                }
+            } else if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(this.selectedTariff.code)) {
+                requestData.targetDate = this.formatDateForServer(
+                    document.getElementById('targetDate').value.trim()
+                );
+
+                if (!requestData.targetDate) {
+                    this.showNotification('❌ Укажите дату прогноза', 'error');
+                    this.showLoading(false);
+                    return;
+                }
             }
 
-            console.log('🔑 Токен:', token ? 'есть' : 'нет');
-            const birthDateFormatted = formatDateForServer(birthDate);
-            // Отправляем запрос на сервер
-            const response = await fetch('/api/numerology/calculate/basic', {
+            // Определяем эндпоинт - ИСПРАВЛЕНО!
+            let endpoint = '';
+
+            if (this.selectedTariff.code === 'forecast_basic') {
+                endpoint = '/api/numerology/calculate/basic';
+            } else if (this.selectedTariff.code === 'forecast_full') {
+                endpoint = '/api/numerology/calculate/full';
+            } else if (this.selectedTariff.code === 'compatibility') {
+                endpoint = '/api/numerology/compatibility';
+            } else if (this.selectedTariff.code.startsWith('forecast_')) {
+                // Для прогнозов: forecast_day -> day
+                const forecastType = this.selectedTariff.code.replace('forecast_', '');
+                endpoint = `/api/numerology/forecast/${forecastType}`;
+            }
+
+            console.log('📡 Отправка запроса на:', endpoint);
+            console.log('📦 Данные:', requestData);
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: headers,
-                body: JSON.stringify({
-                    fullName,
-                    birthDate: birthDateFormatted
-                })
+                headers,
+                body: JSON.stringify(requestData)
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+
+                if (response.status === 401) {
+                    this.showNotification('❌ Необходимо авторизоваться', 'error');
+                    setTimeout(() => window.location.href = '/login', 2000);
+                    return;
+                }
+
+                if (response.status === 402) {
+                    this.showPaymentModal(errorData);
+                    this.showLoading(false);
+                    return;
+                }
+
+                throw new Error(errorData.error || `Ошибка ${response.status}`);
             }
 
             const data = await response.json();
 
             if (data.success) {
-                // Если расчет успешен, но требует оплаты (бесплатный уже использован)
-                if (data.requiresPayment) {
-                    showNotification('❌ Бесплатный расчет уже использован. Для полного расчета войдите в аккаунт.', 'error');
-                    // Предлагаем войти или оплатить
-                    setTimeout(() => {
-                        if (confirm('Хотите войти в аккаунт или оплатить полный расчет?')) {
-                            window.location.href = '/login';
-                        }
-                    }, 1000);
-
-                    form.style.opacity = '1';
-                    form.style.pointerEvents = 'auto';
-                    if (loadingSpinner) loadingSpinner.style.display = 'none';
-                    return;
-                }
-
-                // Сохраняем данные для дополнительных расчетов
                 window.currentNumerologyData = data.data;
-
-                // Отображаем результаты
-                displayResults(data.data);
-
-                if (resultSection) {
-                    resultSection.style.display = 'block';
-                    resultSection.classList.add('fade-in');
-                    resultSection.scrollIntoView({ behavior: 'smooth' });
-                }
-
-                form.style.display = 'none';
-                showNotification('✨ Расчет выполнен!', 'success');
-
+                window.currentCalculationId = data.calculationId;
+                this.currentCalculation = data.data;
+                this.displayResults(data.data);
             } else {
-                showNotification('❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
-                form.style.opacity = '1';
-                form.style.pointerEvents = 'auto';
+                throw new Error(data.error || 'Ошибка расчета');
             }
+
         } catch (error) {
             console.error('❌ Ошибка:', error);
-
-            // Проверяем, это ошибка 402 (требуется оплата)?
-            if (error.message.includes('402') || error.message.includes('payment')) {
-                showNotification('❌ Бесплатный расчет уже использован. Войдите в аккаунт для оплаты.', 'error');
-            } else {
-                showNotification('❌ Ошибка при подключении к серверу: ' + error.message, 'error');
-            }
-
-            form.style.opacity = '1';
-            form.style.pointerEvents = 'auto';
+            this.showNotification('❌ ' + error.message, 'error');
         } finally {
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
+            this.showLoading(false);
         }
-    })
+    }
 
-    // ==================== НОВЫЙ РАСЧЕТ ====================
-    if (newCalculationBtn) {
-        newCalculationBtn.addEventListener('click', function() {
-            if (resultSection) {
-                resultSection.classList.remove('fade-in');
-                resultSection.style.display = 'none';
+    displayResults(data) {
+        // Определяем, полный ли это расчет
+        const isFull = data.tarot && data.zodiac && data.psychology;
+        const isForecast = data.forecast || this.selectedTariff?.code?.startsWith('forecast_');
+        const isCompatibility = this.selectedTariff?.code === 'compatibility';
+
+        // Обновляем заголовок
+        let resultType = '🔮 КОСМОГРАММА ЛИЧНОСТИ';
+        let badge = '';
+
+        if (isFull) {
+            resultType = '⭐ ПОЛНЫЙ НУМЕРОЛОГИЧЕСКИЙ ОТЧЕТ';
+            badge = '<span class="result-badge full">Полный отчет</span>';
+        } else if (isForecast) {
+            const forecastName = this.selectedTariff?.name || 'Прогноз';
+            resultType = `📅 ${forecastName.toUpperCase()}`;
+            badge = '<span class="result-badge forecast">Прогноз</span>';
+        } else if (isCompatibility) {
+            resultType = '💑 АНАЛИЗ СОВМЕСТИМОСТИ';
+            badge = '<span class="result-badge compatibility">Совместимость</span>';
+        } else {
+            badge = '<span class="result-badge basic">Базовый расчет</span>';
+        }
+
+        const resultHeader = document.querySelector('.result-header');
+        if (resultHeader) {
+            resultHeader.innerHTML = `
+            <h2 style="margin: 0;">${resultType}</h2>
+            <div>${badge}</div>
+        `;
+        }
+
+        // Заполняем базовые данные
+        const resultFullName = document.getElementById('resultFullName');
+        const resultBirthDate = document.getElementById('resultBirthDate');
+
+        if (resultFullName) resultFullName.textContent = data.fullName || this.user?.fullName || '—';
+        if (resultBirthDate) resultBirthDate.textContent = data.birthDate || '—';
+
+        // Для прогноза показываем специальный блок
+        if (isForecast && data.forecast) {
+            // Скрываем ненужные для прогноза элементы
+            const numerologyGrid = document.querySelector('.numerology-grid');
+            const specialNumbers = document.querySelector('.special-numbers');
+            const callsSection = document.querySelector('.calls-section');
+
+            if (numerologyGrid) numerologyGrid.style.display = 'none';
+            if (specialNumbers) specialNumbers.style.display = 'none';
+            if (callsSection) callsSection.style.display = 'none';
+
+            // Показываем блок с прогнозом
+            this.displayForecast(data.forecast, data.interpretation, data.deepPortrait);
+        } else {
+            // Для других типов показываем стандартные элементы
+            const numerologyGrid = document.querySelector('.numerology-grid');
+            const specialNumbers = document.querySelector('.special-numbers');
+            const callsSection = document.querySelector('.calls-section');
+
+            if (numerologyGrid) numerologyGrid.style.display = 'grid';
+            if (specialNumbers) specialNumbers.style.display = 'flex';
+            if (callsSection) callsSection.style.display = 'block';
+
+            // Нумерология (есть всегда)
+            if (data.numerology) {
+                this.displayNumerology(data.numerology);
             }
-            form.style.display = 'block';
-            form.style.opacity = '1';
-            form.style.pointerEvents = 'auto';
-            form.reset();
+        }
 
-            if (dateMask) {
-                dateMask.value = '';
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            showNotification('✨ Готов к новым открытиям!', 'info');
-        });
-    }
-
-    // ==================== ТАБЫ (основные) ====================
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    if (tabBtns.length > 0) {
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tabId = this.dataset.tab;
-
-                // ВАЖНО: проверяем, что tabId существует
-                if (!tabId) {
-                    console.warn('⚠️ tabId не определен');
-                    return;
-                }
-
-                // Деактивируем все кнопки
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-                // Деактивируем все контенты
-                document.querySelectorAll('.tab-content').forEach(c => {
-                    c.classList.remove('active');
-                    c.classList.remove('fade-in');
-                });
-
-                // Активируем текущую кнопку
-                this.classList.add('active');
-
-                // Формируем ID элемента с проверкой
-                const formattedTabId = tabId.charAt(0).toUpperCase() + tabId.slice(1).toLowerCase();
-                const tabElement = document.getElementById('tab' + formattedTabId);
-
-                if (tabElement) {
-                    tabElement.classList.add('active', 'fade-in');
-                    if (window.liveCalculator) {
-                        window.liveCalculator.createSparks();
-                    }
-                } else {
-                    console.warn(`⚠️ Элемент с id "tab${formattedTabId}" не найден`);
-
-                    // Пробуем альтернативные варианты (на случай несоответствия регистра)
-                    const possibleIds = [
-                        'tab' + tabId,
-                        'tab' + tabId.toLowerCase(),
-                        'tab' + tabId.toUpperCase(),
-                        'tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)
-                    ];
-
-                    for (let id of possibleIds) {
-                        const altElement = document.getElementById(id);
-                        if (altElement) {
-                            altElement.classList.add('active', 'fade-in');
-                            break;
-                        }
-                    }
-                }
-            });
-        });
-    }
-    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener('click', async function() {
-            await downloadPDFReport();
-        });
-    }
-    // Добавляем эффекты
-    addFormFieldEffects();
-    addResultCardEffects();
-});
-
-
-async function checkAuthAndUpdateUI() {
-    const token = localStorage.getItem('token');
-    const authLinks = document.getElementById('authLinks');
-    const mainNav = document.getElementById('mainNav');
-
-    if (!authLinks) return;
-
-    if (token) {
-        try {
-            const response = await fetch('/api/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const user = data.data.user;
-
-                // Обновляем кнопки авторизации
-                authLinks.innerHTML = `
-                    <a href="/cabinet" class="btn btn-outline btn-sm">
-                        <i class="fas fa-user"></i> ${user.fullName.split(' ')[0]}
-                    </a>
-                    <button class="btn btn-primary btn-sm" onclick="logout()">
-                        Выйти
-                    </button>
-                `;
+        // Свиток судьбы
+        const interpretationText = document.getElementById('interpretationText');
+        if (interpretationText) {
+            if (data.interpretation) {
+                interpretationText.innerHTML = `<p>${data.interpretation.replace(/\n/g, '<br>')}</p>`;
             } else {
-                localStorage.removeItem('token');
-                updateGuestUI();
+                interpretationText.innerHTML = '<p>Интерпретация формируется...</p>';
             }
-        } catch (error) {
-            console.error('Auth check error:', error);
-            updateGuestUI();
-        }
-    } else {
-        updateGuestUI();
-    }
-
-    // Загружаем меню
-    if (mainNav) {
-        mainNav.innerHTML = `
-            <a href="/">Главная</a>
-            <a href="/numerology" class="active">Нумерология</a>
-            <a href="/tarot">Таро</a>
-            <a href="/natal-chart">Натальная карта</a>
-        `;
-    }
-}
-const formatDateForServer = (dateStr) => {
-    const [day, month, year] = dateStr.split('.');
-    return `${year}-${month}-${day}`;
-};
-function updateGuestUI() {
-    const authLinks = document.getElementById('authLinks');
-    if (authLinks) {
-        authLinks.innerHTML = `
-            <a href="/login" class="btn btn-outline btn-sm">Войти</a>
-            <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
-        `;
-    }
-}
-
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/';
-}
-async function downloadPDFReport() {
-    try {
-        // Проверяем, есть ли данные
-        if (!window.currentNumerologyData) {
-            showNotification('❌ Сначала выполните расчет', 'error');
-            return;
         }
 
-        // Получаем данные из формы
-        const fullName = document.getElementById('resultFullName').textContent;
-        const birthDate = document.getElementById('resultBirthDate').textContent;
-
-        if (!fullName || !birthDate) {
-            showNotification('❌ Данные не найдены', 'error');
-            return;
+        // Глубинный портрет
+        const deepPortrait = document.getElementById('deepPortrait');
+        if (deepPortrait) {
+            if (data.deepPortrait) {
+                deepPortrait.innerHTML = `<p>${data.deepPortrait.replace(/\n/g, '<br>')}</p>`;
+            } else {
+                deepPortrait.innerHTML = '<p>Портрет формируется...</p>';
+            }
         }
 
-        console.log('📄 Отправка запроса на PDF для:', fullName);
-        showNotification('📄 Генерируем PDF отчет...', 'info');
+        // Разблокируем расширенные разделы, если это полный расчет
+        if (isFull) {
+            this.unlockFullSections(data);
+        } else {
+            this.lockSections();
+        }
 
-        // Показываем индикатор загрузки
-        const downloadBtn = document.getElementById('downloadPdfBtn');
-        const originalText = downloadBtn.innerHTML;
-        downloadBtn.innerHTML = '<span class="button-text">⏳ Генерация...</span>';
-        downloadBtn.disabled = true;
+        // Показываем PDF кнопку для авторизованных
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        if (downloadPdfBtn && localStorage.getItem('token')) {
+            downloadPdfBtn.style.display = 'block';
+        }
 
-        // Отправляем запрос на сервер
-        const response = await fetch('/api/numerology/pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                fullName: fullName,
-                birthDate: birthDate,
-                data: window.currentNumerologyData
-            })
+        // Показываем кнопку апгрейда для базового расчета
+        const upgradeBtn = document.getElementById('upgradeCalculationBtn');
+        if (upgradeBtn) {
+            if (!isFull && this.selectedTariff?.code !== 'forecast_full' && !isForecast) {
+                upgradeBtn.style.display = 'block';
+            } else {
+                upgradeBtn.style.display = 'none';
+            }
+        }
+
+        // Скрываем секции ввода и показываем результат
+        if (this.tariffSection) this.tariffSection.style.display = 'none';
+        if (this.inputSection) this.inputSection.style.display = 'none';
+        if (this.resultSection) {
+            this.resultSection.style.display = 'block';
+            this.resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+
+    displayNumerology(numerology) {
+        if (numerology.base) {
+            document.getElementById('fateNumber').textContent = numerology.base.fate || '--';
+            document.getElementById('nameNumber').textContent = numerology.base.name || '--';
+            document.getElementById('surnameNumber').textContent = numerology.base.surname || '--';
+            document.getElementById('patronymicNumber').textContent = numerology.base.patronymic || '--';
+        }
+
+        if (numerology.achilles) {
+            document.getElementById('achillesNumber').textContent = numerology.achilles.number || '--';
+        }
+
+        if (numerology.control) {
+            document.getElementById('controlNumber').textContent = numerology.control.number || '--';
+        }
+
+        if (numerology.calls) {
+            document.getElementById('callClose').textContent = numerology.calls.close || '--';
+            document.getElementById('callSocial').textContent = numerology.calls.social || '--';
+            document.getElementById('callWorld').textContent = numerology.calls.world || '--';
+
+            if (numerology.calls.descriptions) {
+                document.getElementById('callCloseDesc').textContent = numerology.calls.descriptions.close || '';
+                document.getElementById('callSocialDesc').textContent = numerology.calls.descriptions.social || '';
+                document.getElementById('callWorldDesc').textContent = numerology.calls.descriptions.world || '';
+            }
+        }
+    }
+
+
+    unlockFullSections(data) {
+        // Разблокируем все табы
+        document.querySelectorAll('.tab-btn.locked').forEach(btn => {
+            btn.classList.remove('locked');
+            const lockIcon = btn.querySelector('.lock-icon');
+            if (lockIcon) lockIcon.remove();
         });
 
-        console.log('📄 Статус ответа:', response.status);
+        document.querySelectorAll('.interpretation-tabs .tab-btn.locked').forEach(btn => {
+            btn.classList.remove('locked');
+            const lockIcon = btn.querySelector('.lock-icon');
+            if (lockIcon) lockIcon.remove();
+        });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
-        }
+        // Убираем оверлеи
+        document.querySelectorAll('.lock-overlay').forEach(overlay => overlay.remove());
 
-        // Получаем PDF как blob
-        const blob = await response.blob();
-        console.log('📄 Получен blob, размер:', blob.size, 'байт');
+        // Заполняем контент
+        if (data.zodiac) this.displayZodiac(data.zodiac);
+        if (data.fengShui) this.displayFengShui(data.fengShui);
+        if (data.tarot) this.displayTarot(data.tarot);
+        if (data.psychology) this.displayPsychology(data.psychology);
+        if (data.patterns) this.displayPatterns(data.patterns);
 
-        if (blob.size === 0) {
-            throw new Error('Получен пустой файл');
-        }
-
-        // Получаем имя файла из заголовка Content-Disposition
-        const contentDisposition = response.headers.get('content-disposition');
-        let filename = 'numerology-report.pdf';
-
-        if (contentDisposition) {
-            const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            if (match && match[1]) {
-                filename = match[1].replace(/['"]/g, '');
-                // Убеждаемся, что имя файла не заканчивается на подчеркивание
-                filename = filename.replace(/_+\.pdf$/i, '.pdf');
-                // Убираем возможные лишние символы
-                filename = filename.trim();
-            }
-        }
-        console.log('📄 Имя файла для скачивания:', filename);
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename; // Используем очищенное имя
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        showNotification('✅ PDF отчет готов!', 'success');
-
-    } catch (error) {
-        console.error('❌ Ошибка скачивания PDF:', error);
-        showNotification('❌ Ошибка при создании PDF: ' + error.message, 'error');
-    } finally {
-        // Восстанавливаем кнопку
-        const downloadBtn = document.getElementById('downloadPdfBtn');
-        if (downloadBtn) {
-            downloadBtn.innerHTML = '<span class="button-text">📄 Скачать PDF отчет</span>';
-            downloadBtn.disabled = false;
-        }
-    }
-}
-// ==================== ВАЛИДАЦИЯ ====================
-function validateForm(fullName, birthDate) {
-    if (!fullName || !birthDate) {
-        showNotification('❌ Пожалуйста, заполните все поля', 'error');
-        return false;
-    }
-
-    if (!isValidDate(birthDate)) {
-        showNotification('❌ Пожалуйста, введите дату в формате ДД.ММ.ГГГГ', 'error');
-        return false;
-    }
-
-    if (fullName.split(/\s+/).length < 3) {
-        showNotification('❌ Пожалуйста, введите полное ФИО (фамилия, имя, отчество)', 'error');
-        return false;
-    }
-
-    return true;
-}
-
-function isValidDate(dateStr) {
-    if (!dateStr) return false;
-    const pattern = /^\d{2}\.\d{2}\.\d{4}$/;
-    if (!pattern.test(dateStr)) return false;
-
-    const [day, month, year] = dateStr.split('.').map(Number);
-
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-    return day <= daysInMonth;
-}
-
-// ==================== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ====================
-function displayResults(data) {
-    console.log('📊 Отображение результатов:', data);
-
-    try {
-        // Основная информация
-        setElementText('resultFullName', data.fullName);
-        setElementText('resultBirthDate', data.birthDate);
-
-        // ===== НУМЕРОЛОГИЯ =====
-        if (data.numerology?.base) {
-            setElementText('fateNumber', data.numerology.base.fate);
-            setElementText('nameNumber', data.numerology.base.name);
-            setElementText('surnameNumber', data.numerology.base.surname);
-            setElementText('patronymicNumber', data.numerology.base.patronymic);
-        }
-
-        if (data.numerology) {
-            setElementText('achillesNumber', data.numerology.achilles?.number);
-            setElementText('controlNumber', data.numerology.control?.number);
-        }
-
-        if (data.numerology?.calls) {
-            setElementText('callClose', data.numerology.calls.close);
-            setElementText('callSocial', data.numerology.calls.social);
-            setElementText('callWorld', data.numerology.calls.world);
-
-            // Полные описания окликов (генерируются на сервере)
-            if (data.numerology.calls.descriptions) {
-                setElementText('callCloseDesc', data.numerology.calls.descriptions.close);
-                setElementText('callSocialDesc', data.numerology.calls.descriptions.social);
-                setElementText('callWorldDesc', data.numerology.calls.descriptions.world);
-            }
-        }
-
-        // ===== ЗОДИАК =====
-        if (data.zodiac) {
-            displayZodiac(data.zodiac);
-        }
-
-        // ===== ФЕН-ШУЙ =====
-        if (data.fengShui) {
-            displayFengShui(data.fengShui);
-        }
-
-        // ===== ТАРО =====
-        if (data.tarot) {
-            displayTarot(data.tarot);
-        }
-
-        // ===== ПСИХОЛОГИЯ =====
-        if (data.psychology) {
-            displayPsychology(data.psychology);
-        }
-
-        // ===== ПАТТЕРНЫ =====
-        if (data.patterns) {
-            displayPatterns(data.patterns);
-        }
-
-        // ===== ИНТЕРПРЕТАЦИИ =====
+        // ВАЖНО: отображаем интерпретации
         if (data.numerology?.interpretations) {
-            displayInterpretations(data.numerology.interpretations);
+            this.displayInterpretations(data.numerology.interpretations);
+        }
 
-            // Активируем первую вкладку интерпретаций после загрузки
-            setTimeout(() => {
-                const firstTab = document.querySelector('.interpretation-tabs .tab-btn');
-                if (firstTab) {
-                    // Имитируем клик по первой вкладке
-                    const event = new Event('click');
-                    firstTab.dispatchEvent(event);
+        // Активируем первую вкладку
+        const firstTab = document.querySelector('.tab-btn:not(.locked)');
+        if (firstTab) firstTab.click();
+    }
+
+    lockSections() {
+        // Блокируем все табы, кроме уже разблокированных
+        document.querySelectorAll('.tab-btn:not(.locked)').forEach(btn => {
+            if (!btn.closest('.result-actions')) {
+                btn.classList.add('locked');
+                if (!btn.querySelector('.lock-icon')) {
+                    const span = document.createElement('span');
+                    span.className = 'lock-icon';
+                    span.textContent = '🔒';
+                    span.style.marginLeft = '5px';
+                    btn.appendChild(span);
                 }
+            }
+        });
+
+        document.querySelectorAll('.interpretation-tabs .tab-btn:not(.locked)').forEach(btn => {
+            btn.classList.add('locked');
+            if (!btn.querySelector('.lock-icon')) {
+                const span = document.createElement('span');
+                span.className = 'lock-icon';
+                span.textContent = '🔒';
+                span.style.marginLeft = '5px';
+                btn.appendChild(span);
+            }
+        });
+
+        // Добавляем оверлеи, если их нет
+        document.querySelectorAll('.tab-content:not(.locked-content)').forEach(content => {
+            if (!content.querySelector('.lock-overlay') && content.id !== 'tabZodiac' && content.id !== 'tabFengshui' && content.id !== 'tabTarot' && content.id !== 'tabPsychology' && content.id !== 'tabPatterns') {
+                // Пропускаем, так как они уже есть в HTML
+            }
+        });
+    }
+
+    displayZodiac(zodiac) {
+        const tabContent = document.getElementById('tabZodiac');
+        if (!tabContent) return;
+
+        // Убираем оверлей
+        tabContent.innerHTML = `
+            <div class="zodiac-card">
+                <div class="zodiac-header" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 3rem;">${this.getZodiacSymbol(zodiac.name)}</div>
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: var(--accent-gold);">${zodiac.name || 'Знак зодиака'}</h3>
+                        <p style="margin: 0; color: var(--text-secondary);">${zodiac.element || ''}</p>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div><strong style="color: var(--accent-gold);">Качество:</strong> <span style="color: var(--text-secondary);">${zodiac.quality || '—'}</span></div>
+                    <div><strong style="color: var(--accent-gold);">Планета:</strong> <span style="color: var(--text-secondary);">${zodiac.planet || '—'}</span></div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); line-height: 1.8;">${zodiac.description || ''}</p>
+                </div>
+                
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <h4 style="color: var(--accent-gold); margin: 0 0 10px 0;">🌟 Сильные стороны</h4>
+                    <p style="color: var(--text-secondary); margin: 0;">${zodiac.strengths || ''}</p>
+                </div>
+                
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <h4 style="color: var(--accent-gold); margin: 0 0 10px 0;">🌙 Зоны роста</h4>
+                    <p style="color: var(--text-secondary); margin: 0;">${zodiac.weaknesses || ''}</p>
+                </div>
+                
+                <div style="background: rgba(201, 165, 75, 0.1); padding: 20px; border-radius: 12px; border-left: 3px solid var(--accent-gold);">
+                    <h4 style="color: var(--accent-gold); margin: 0 0 10px 0;">🎯 Жизненная миссия</h4>
+                    <p style="color: var(--text-primary); font-style: italic; margin: 0;">${zodiac.lifeMission || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    displayFengShui(fengShui) {
+        const tabContent = document.getElementById('tabFengshui');
+        if (!tabContent) return;
+
+        tabContent.innerHTML = `
+            <div class="fengshui-card">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <div style="font-size: 3rem;">${this.getElementSymbol(fengShui.element)}</div>
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: var(--accent-gold);">${fengShui.element || 'Элемент'}</h3>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px;">
+                    <div><strong style="color: var(--accent-gold);">Цвет силы:</strong> <span style="color: var(--text-secondary);">${fengShui.color || '—'}</span></div>
+                    <div><strong style="color: var(--accent-gold);">Направление:</strong> <span style="color: var(--text-secondary);">${fengShui.direction || '—'}</span></div>
+                    <div><strong style="color: var(--accent-gold);">Время активации:</strong> <span style="color: var(--text-secondary);">${fengShui.season || '—'}</span></div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); line-height: 1.8;">${fengShui.description || ''}</p>
+                </div>
+                
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                    <h4 style="color: var(--accent-gold); margin: 0 0 10px 0;">✨ Активация энергии</h4>
+                    <p style="color: var(--text-secondary); margin: 0;">${fengShui.activation || ''}</p>
+                </div>
+                
+                <div style="background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(18, 18, 26, 0.5)); padding: 20px; border-radius: 12px;">
+                    <h4 style="color: var(--accent-gold); margin: 0 0 10px 0;">🕯️ Аффирмация</h4>
+                    <p style="color: var(--text-primary); font-style: italic; font-size: 1.1rem; margin: 0;">"${fengShui.affirmation || 'Я в гармонии с потоками вселенной'}"</p>
+                </div>
+            </div>
+        `;
+    }
+
+    displayTarot(tarot) {
+        const tabContent = document.getElementById('tabTarot');
+        if (!tabContent) return;
+
+        const cards = [
+            { type: 'fate', title: 'Карта Судьбы', data: tarot.fate },
+            { type: 'personality', title: 'Карта Личности', data: tarot.personality },
+            { type: 'control', title: 'Карта Пути', data: tarot.control }
+        ];
+
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">';
+
+        cards.forEach(card => {
+            html += `
+                <div style="background: rgba(18, 18, 26, 0.5); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden;">
+                    <div style="position: relative; padding-top: 150%; background: linear-gradient(135deg, var(--bg-card), var(--bg-dark));">
+                        <img src="${card.data?.image || '/images/tarot/back.jpg'}" 
+                             alt="${card.data?.name || 'Карта Таро'}"
+                             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"
+                             onerror="this.src='/images/tarot/back.jpg'">
+                        <div style="position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; background: var(--gradient-gold); color: var(--bg-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">
+                            ${card.data?.number === 0 ? 22 : card.data?.number || '?'}
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <h4 style="color: var(--accent-gold); margin: 0 0 5px 0;">${card.title}</h4>
+                        <h5 style="color: var(--text-primary); margin: 0 0 10px 0;">${card.data?.name || '—'}</h5>
+                        <p style="color: var(--text-muted); font-style: italic; margin-bottom: 10px;">${card.data?.keywords || ''}</p>
+                        <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 15px;">${card.data?.description || ''}</p>
+                        <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 12px; border-left: 3px solid var(--accent-gold);">
+                            <p style="color: var(--accent-gold); margin: 0; font-style: italic;">${card.data?.advice || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        tabContent.innerHTML = html;
+    }
+
+    displayPsychology(psychology) {
+        const tabContent = document.getElementById('tabPsychology');
+        if (!tabContent) return;
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 25px;">';
+
+        if (psychology.modality) {
+            html += `
+                <div style="background: rgba(18, 18, 26, 0.5); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px;">
+                    <h3 style="color: var(--accent-gold); margin: 0 0 15px 0;">🧠 НЛП-ПРОФИЛЬ</h3>
+                    <h4 style="color: var(--text-primary); margin: 0 0 10px 0;">${psychology.modality.title || ''}</h4>
+                    <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px;">${psychology.modality.description || ''}</p>
+                    <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 12px;">
+                        <p><strong style="color: var(--accent-gold);">🎯 Предикаты:</strong> <span style="color: var(--text-secondary);">${psychology.modality.predicates?.join(', ') || ''}</span></p>
+                        <p><strong style="color: var(--accent-gold);">🔑 Ключи доступа:</strong> <span style="color: var(--text-secondary);">${psychology.modality.accessKeys || ''}</span></p>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (psychology.archetype) {
+            html += `
+                <div style="background: rgba(18, 18, 26, 0.5); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px;">
+                    <h3 style="color: var(--accent-gold); margin: 0 0 15px 0;">🏛️ АРХЕТИП ЛИЧНОСТИ</h3>
+                    <h4 style="color: var(--text-primary); margin: 0 0 10px 0;">${psychology.archetype.name || ''}</h4>
+                    <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px;">${psychology.archetype.description || ''}</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 12px;">
+                            <strong style="color: #4caf50; display: block; margin-bottom: 5px;">🎁 Дар</strong>
+                            <span style="color: var(--text-secondary);">${psychology.archetype.gift || ''}</span>
+                        </div>
+                        <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 12px;">
+                            <strong style="color: #f44336; display: block; margin-bottom: 5px;">⚔️ Вызов</strong>
+                            <span style="color: var(--text-secondary);">${psychology.archetype.challenge || ''}</span>
+                        </div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(18, 18, 26, 0.5)); padding: 20px; border-radius: 12px;">
+                        <p style="color: var(--accent-gold); font-size: 1.1rem; font-style: italic; margin: 0;">"${psychology.archetype.mantra || ''}"</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (psychology.attachment) {
+            html += `
+                <div style="background: rgba(18, 18, 26, 0.5); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px;">
+                    <h3 style="color: var(--accent-gold); margin: 0 0 15px 0;">🤝 ТИП ПРИВЯЗАННОСТИ</h3>
+                    <h4 style="color: var(--text-primary); margin: 0 0 10px 0;">${psychology.attachment.name || ''}</h4>
+                    <p style="color: var(--text-secondary); line-height: 1.8;">${psychology.attachment.description || ''}</p>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        tabContent.innerHTML = html;
+    }
+
+    displayPatterns(patterns) {
+        const tabContent = document.getElementById('tabPatterns');
+        if (!tabContent) return;
+
+        let html = '<div style="padding: 20px;">';
+
+        if (patterns && patterns.length > 0) {
+            html += '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            patterns.forEach(pattern => {
+                html += `<div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 12px; border-left: 3px solid var(--accent-gold);">
+                    <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">✦ ${pattern}</p>
+                </div>`;
+            });
+            html += '</div>';
+        } else {
+            html += '<p style="color: var(--text-secondary); text-align: center;">Паттерны формируются...</p>';
+        }
+
+        html += '</div>';
+        tabContent.innerHTML = html;
+    }
+
+    displayInterpretations(interpretations) {
+        if (!interpretations) return;
+
+        console.log('📊 Отображение интерпретаций:', interpretations);
+
+        // Разблокируем кнопки табов
+        document.querySelectorAll('.interpretation-tabs .tab-btn.locked').forEach(btn => {
+            btn.classList.remove('locked');
+            const lockIcon = btn.querySelector('.lock-icon');
+            if (lockIcon) lockIcon.remove();
+        });
+
+        // Убираем оверлеи с панелей
+        document.querySelectorAll('.interpretation-pane.locked-pane').forEach(pane => {
+            pane.classList.remove('locked-pane');
+            const overlay = pane.querySelector('.lock-overlay');
+            if (overlay) overlay.remove();
+        });
+
+        // Карьера
+        if (interpretations.career) {
+            this.displayCareerInterpretation(interpretations.career);
+        }
+
+        // Семья
+        if (interpretations.family) {
+            this.displayFamilyInterpretation(interpretations.family);
+        }
+
+        // Любовь
+        if (interpretations.love) {
+            this.displayLoveInterpretation(interpretations.love);
+        }
+
+        // Финансы
+        if (interpretations.money) {
+            this.displayMoneyInterpretation(interpretations.money);
+        }
+
+        // Здоровье
+        if (interpretations.health) {
+            this.displayHealthInterpretation(interpretations.health);
+        }
+
+        // Таланты
+        if (interpretations.talent) {
+            this.displayTalentInterpretation(interpretations.talent);
+        }
+
+        // Активируем первый таб
+        const firstTab = document.querySelector('.interpretation-tabs .tab-btn:not(.locked)');
+        if (firstTab) {
+            setTimeout(() => {
+                firstTab.click();
             }, 100);
         }
+    }
 
-        // ===== ГЛУБИННЫЙ ПОРТРЕТ =====
-        if (data.psychology?.portrait) {
-            setElementHTML('deepPortrait', formatPortrait(data.psychology.portrait));
+
+    displayCareerInterpretation(career) {
+        if (!career) return;
+
+        console.log('📊 Отображение карьеры:', career);
+
+        const pane = document.getElementById('interpretation-career');
+        if (!pane) return;
+
+        // Убираем оверлей и класс locked
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Заполняем данные
+        this.setElementText('careerNumber', career.careerNumber || '--');
+        this.setElementText('careerTitle', career.title || 'Карьерный потенциал');
+        this.setElementText('careerDescription', career.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('careerDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = career.detailedDescription || career.description || '';
         }
 
-    } catch (error) {
-        console.error('❌ Ошибка при отображении результатов:', error);
-        showNotification('❌ Ошибка при отображении результатов', 'error');
-    }
-}
-// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ОТОБРАЖЕНИЯ =====
+        // Сильные стороны
+        const strengthsList = document.getElementById('careerStrengths');
+        if (strengthsList) {
+            strengthsList.innerHTML = '';
+            if (career.strengths && career.strengths.length) {
+                career.strengths.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li>—</li>';
+            }
+        }
 
-function setElementText(id, value) {
-    const element = document.getElementById(id);
-    if (element) element.textContent = value !== undefined && value !== null ? value : '—';
-}
+        // Зоны роста
+        const weaknessesList = document.getElementById('careerWeaknesses');
+        if (weaknessesList) {
+            weaknessesList.innerHTML = '';
+            if (career.weaknesses && career.weaknesses.length) {
+                career.weaknesses.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerHTML = w;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li>—</li>';
+            }
+        }
 
-function setElementHTML(id, html) {
-    const element = document.getElementById(id);
-    if (element) element.innerHTML = html || '<p>—</p>';
-}
+        // Подходящие профессии
+        const suitableList = document.getElementById('careerSuitable');
+        if (suitableList) {
+            suitableList.innerHTML = '';
+            if (career.suitable && career.suitable.length) {
+                career.suitable.forEach(p => {
+                    const li = document.createElement('li');
+                    li.innerHTML = p;
+                    suitableList.appendChild(li);
+                });
+            } else {
+                suitableList.innerHTML = '<li>—</li>';
+            }
+        }
 
-function setElementAttribute(id, attr, value) {
-    const element = document.getElementById(id);
-    if (element) element.setAttribute(attr, value);
-}
+        // Стиль работы
+        const workStyleEl = document.getElementById('careerWorkStyle');
+        if (workStyleEl) workStyleEl.textContent = career.workStyle || '';
 
-function displayZodiac(zodiac) {
-    if (!zodiac) return;
-    setElementText('zodiacSymbol', getZodiacSymbol(zodiac.name));
-    setElementText('zodiacName', zodiac.name);
-    setElementText('zodiacElement', zodiac.element);
-    setElementText('zodiacQuality', zodiac.quality || 'Кардинальный');
-    setElementText('zodiacPlanet', zodiac.planet || 'Марс');
-    setElementText('zodiacDescription', zodiac.description);
-    setElementText('zodiacStrengths', zodiac.strengths);
-    setElementText('zodiacWeaknesses', zodiac.weaknesses);
-    setElementText('zodiacMission', zodiac.lifeMission);
-    setElementText('zodiacDeepInsight', zodiac.deepInsight);
-}
+        // Подход к деньгам
+        const moneyApproachEl = document.getElementById('careerMoneyApproach');
+        if (moneyApproachEl) moneyApproachEl.textContent = career.moneyApproach || '';
 
-function displayFengShui(fengShui) {
-    if (!fengShui) return;
-    setElementText('fengshuiElementSymbol', getElementSymbol(fengShui.elementKey || fengShui.element));
-    setElementText('fengshuiElementName', fengShui.element);
-    setElementText('fengshuiColor', fengShui.color);
-    setElementText('fengshuiDirection', fengShui.direction);
-    setElementText('fengshuiSeason', fengShui.season);
-    setElementText('fengshuiShape', fengShui.shape || 'Разнообразные');
-    setElementText('fengshuiMeaning', fengShui.meaning || 'Гармония с природой');
-    setElementText('fengshuiDescription', fengShui.description);
-    setElementText('fengshuiActivation', fengShui.activation);
-    setElementText('fengshuiPersonalAdvice', fengShui.personalAdvice);
-    setElementText('fengshuiAffirmation', fengShui.affirmation || 'Я в гармонии с потоками вселенной');
-}
+        // Стиль управления
+        const managementStyleEl = document.getElementById('careerManagementStyle');
+        if (managementStyleEl) managementStyleEl.textContent = career.managementStyle || '';
 
-function displayTarot(tarot) {
-    if (!tarot) {
-        console.warn('Нет данных Таро');
-        return;
-    }
+        // Идеальная среда
+        const idealEnvironmentEl = document.getElementById('careerIdealEnvironment');
+        if (idealEnvironmentEl) idealEnvironmentEl.textContent = career.idealEnvironment || '';
 
-    console.log('Отображение Таро (данные с сервера):', tarot);
+        // Факторы успеха
+        const successFactorsList = document.getElementById('careerSuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (career.successFactors && career.successFactors.length) {
+                career.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
 
-    try {
-        // Карта Судьбы
-        setElementAttribute('tarotFateImage', 'src', tarot.fate?.image || '/images/tarot/back.jpg');
-        setElementText('tarotFateNumber', tarot.fate?.number !== undefined ?
-            (tarot.fate.number === 0 ? 22 : tarot.fate.number) : '--');
-        setElementText('tarotFateName', tarot.fate?.name || '--');
-        setElementText('tarotFateKeywords', tarot.fate?.keywords || '--');
-        setElementText('tarotFateDescription', tarot.fate?.description || '--');
-        setElementText('tarotFateAdvice', tarot.fate?.advice || '--');
+        // Факторы риска
+        const failureFactorsList = document.getElementById('careerFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (career.failureFactors && career.failureFactors.length) {
+                career.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
 
-        // Карта Личности
-        setElementAttribute('tarotPersonalityImage', 'src', tarot.personality?.image || '/images/tarot/back.jpg');
-        setElementText('tarotPersonalityNumber', tarot.personality?.number !== undefined ?
-            (tarot.personality.number === 0 ? 22 : tarot.personality.number) : '--');
-        setElementText('tarotPersonalityName', tarot.personality?.name || '--');
-        setElementText('tarotPersonalityKeywords', tarot.personality?.keywords || '--');
-        setElementText('tarotPersonalityDescription', tarot.personality?.description || '--');
-        setElementText('tarotPersonalityAdvice', tarot.personality?.advice || '--');
+        // Путь развития
+        const developmentPathEl = document.getElementById('careerDevelopmentPath');
+        if (developmentPathEl) developmentPathEl.textContent = career.developmentPath || career.advice || '';
 
-        // Карта Пути
-        setElementAttribute('tarotControlImage', 'src', tarot.control?.image || '/images/tarot/back.jpg');
-        setElementText('tarotControlNumber', tarot.control?.number !== undefined ?
-            (tarot.control.number === 0 ? 22 : tarot.control.number) : '--');
-        setElementText('tarotControlName', tarot.control?.name || '--');
-        setElementText('tarotControlKeywords', tarot.control?.keywords || '--');
-        setElementText('tarotControlDescription', tarot.control?.description || '--');
-        setElementText('tarotControlAdvice', tarot.control?.advice || '--');
+        // Числа успеха и реализации
+        this.setElementText('careerSuccessNum', career.successNumber || '--');
+        this.setElementText('careerSuccessDesc', career.successDescription || '');
+        this.setElementText('careerRealizationNum', career.realizationNumber || '--');
+        this.setElementText('careerRealizationDesc', career.realizationDescription || '');
 
-    } catch (error) {
-        console.error('Ошибка при отображении Таро:', error);
-    }
-}
-
-function displayPsychology(psychology) {
-    if (!psychology) return;
-
-    if (psychology.modality) {
-        setElementText('modalityTitle', psychology.modality.title);
-        setElementText('modalityDescription', psychology.modality.description);
-        setElementText('modalityPredicates', psychology.modality.predicates?.join(', '));
-        setElementText('modalityAccessKeys', psychology.modality.accessKeys);
-    }
-
-    if (psychology.archetype) {
-        setElementText('archetypeName', psychology.archetype.name);
-        setElementText('archetypeDescription', psychology.archetype.description);
-        setElementText('archetypeGift', psychology.archetype.gift);
-        setElementText('archetypeChallenge', psychology.archetype.challenge);
-        setElementText('archetypeMantra', psychology.archetype.mantra);
+        // Совет
+        this.setElementText('careerAdvice', career.advice || '');
     }
 
-    if (psychology.attachment) {
-        setElementText('attachmentName', psychology.attachment.name);
-        setElementText('attachmentDescription', psychology.attachment.description);
+    displayFamilyInterpretation(family) {
+        if (!family) return;
+
+        console.log('📊 Отображение семьи:', family);
+
+        const pane = document.getElementById('interpretation-family');
+        if (!pane) return;
+
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Основная информация
+        this.setElementText('familyNumber', family.familyNumber || '--');
+        this.setElementText('familyTitle', family.title || 'Семейная гармония');
+        this.setElementText('familyDescription', family.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('familyDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = family.detailedDescription || family.description || '';
+        }
+
+        // Роль в семье
+        this.setElementText('familyRole', family.role || '');
+
+        // Сильные стороны
+        const strengthsList = document.getElementById('familyStrengths');
+        if (strengthsList) {
+            strengthsList.innerHTML = '';
+            if (family.strengths && family.strengths.length) {
+                family.strengths.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Зоны роста
+        const weaknessesList = document.getElementById('familyWeaknesses');
+        if (weaknessesList) {
+            weaknessesList.innerHTML = '';
+            if (family.weaknesses && family.weaknesses.length) {
+                family.weaknesses.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerHTML = w;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Стиль семейной жизни
+        this.setElementText('familyStyle', family.familyStyle || '');
+
+        // Подход к детям
+        this.setElementText('familyChildrenApproach', family.childrenApproach || '');
+
+        // Тип идеального партнера
+        this.setElementText('familyPartnerType', family.partnerType || '');
+
+        // Факторы успеха
+        const successFactorsList = document.getElementById('familySuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (family.successFactors && family.successFactors.length) {
+                family.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы риска
+        const failureFactorsList = document.getElementById('familyFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (family.failureFactors && family.failureFactors.length) {
+                family.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Путь развития
+        this.setElementText('familyDevelopmentPath', family.developmentPath || family.advice || '');
+
+        // Числа партнера и детей
+        this.setElementText('familyPartnerNum', family.partnerNumber || '--');
+        this.setElementText('familyPartnerDesc', family.partnerDescription || '');
+        this.setElementText('familyChildrenNum', family.childrenNumber || '--');
+        this.setElementText('familyChildrenDesc', family.childrenDescription || '');
+
+        // Совет
+        this.setElementText('familyAdvice', family.advice || '');
     }
-}
 
-function displayPatterns(patterns) {
-    const patternsList = document.getElementById('patternsList');
-    if (!patternsList) return;
 
-    patternsList.innerHTML = '';
 
-    if (patterns && patterns.length > 0) {
-        patterns.forEach(pattern => {
-            const p = document.createElement('p');
-            p.innerHTML = '✦ ' + pattern;
-            patternsList.appendChild(p);
-        });
-    } else {
-        patternsList.innerHTML = '<p>✨ Индивидуальные паттерны формируются в момент вашего запроса</p>';
-    }
-}
+    displayForecast(forecast, interpretation, deepPortrait) {
+        if (!forecast) return;
 
-function formatPortrait(portrait) {
-    if (!portrait) return '<p>Портрет формируется...</p>';
+        // Создаем или находим контейнер для прогноза
+        let forecastContainer = document.getElementById('forecastResult');
+        if (!forecastContainer) {
+            forecastContainer = document.createElement('div');
+            forecastContainer.id = 'forecastResult';
+            forecastContainer.className = 'forecast-result';
 
-    let formatted = portrait.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/\n/g, '<br>');
+            // Вставляем перед свитком судьбы
+            const interpretationDiv = document.querySelector('.full-interpretation');
+            if (interpretationDiv) {
+                interpretationDiv.before(forecastContainer);
+            } else {
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.appendChild(forecastContainer);
+                }
+            }
+        }
 
-    const paragraphs = formatted.split('<br><br>');
-    return paragraphs.map(p => `<p>${p}</p>`).join('');
-}
+        const numbers = forecast.numbers || {};
+        const desc = forecast.description || {};
+        const universal = desc.universal || {};
+        const personal = desc.personal || {};
+        const expression = desc.expression || {};
+        const dateInfo = desc.dateInfo || {};
 
-function getZodiacSymbol(signName) {
-    const symbols = {
-        'Овен': '♈', 'Телец': '♉', 'Близнецы': '♊', 'Рак': '♋',
-        'Лев': '♌', 'Дева': '♍', 'Весы': '♎', 'Скорпион': '♏',
-        'Стрелец': '♐', 'Козерог': '♑', 'Водолей': '♒', 'Рыбы': '♓'
-    };
-    return symbols[signName] || '⛤';
-}
+        // Форматирование даты
+        let formattedDate = forecast.targetDate || '';
+        if (formattedDate && formattedDate.includes('-')) {
+            const [year, month, day] = formattedDate.split('-');
+            formattedDate = `${day}.${month}.${year}`;
+        }
 
-function getElementSymbol(element) {
-    const elementLower = String(element || '').toLowerCase();
-    const symbols = {
-        'металл': '⚜️', 'metal': '⚜️',
-        'вода': '🌊', 'water': '🌊',
-        'дерево': '🌳', 'wood': '🌳',
-        'огонь': '🔥', 'fire': '🔥',
-        'земля': '⛰️', 'earth': '⛰️'
-    };
-    return symbols[elementLower] || '✨';
-}
-
-// ==================== ЭФФЕКТЫ ====================
-
-function addFormFieldEffects() {
-    const inputs = document.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.style.borderColor = 'var(--accent-violet)';
-            this.style.boxShadow = '0 0 15px var(--glow-color)';
-        });
-        input.addEventListener('blur', function() {
-            this.style.borderColor = 'var(--medium-purple)';
-            this.style.boxShadow = 'none';
-        });
-    });
-}
-
-function addResultCardEffects() {
-    const cards = document.querySelectorAll('.grid-item, .special-item, .call-item');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-            this.style.transition = 'transform 0.3s ease';
-        });
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-}
-
-// ===== УВЕДОМЛЕНИЯ =====
-function showNotification(message, type = 'info') {
-    console.log(`[${type}] ${message}`);
-
-    const notification = document.createElement('div');
-    notification.className = `notification-${type}`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        background: ${type === 'error' ? 'rgba(244, 67, 54, 0.95)' :
-        type === 'success' ? 'rgba(76, 175, 80, 0.95)' :
-            'rgba(33, 33, 33, 0.95)'};
-        color: white;
-        border-radius: 8px;
-        z-index: 9999;
-        animation: slideIn 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255,255,255,0.1);
+        let html = `
+        <div class="forecast-card">
+            <div class="forecast-header">
+                <div class="forecast-number-large">${numbers.universal || '?'}</div>
+                <div class="forecast-title">
+                    <h3>${universal.name || 'Прогноз на день'}</h3>
+                    <p>${dateInfo.dayOfWeek || ''}, ${formattedDate || ''}</p>
+                </div>
+            </div>
+            
+            <div class="forecast-cosmic-code">
+                <h4><i class="fas fa-star"></i> КОСМИЧЕСКИЙ КОД ДНЯ</h4>
+                <div class="code-grid">
+                    <div class="code-item">
+                        <span class="label">Универсальное число</span>
+                        <span class="value">${numbers.universal || '?'}</span>
+                        <span class="desc">${universal.keywords ? universal.keywords.join(', ') : ''}</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="label">Личное число</span>
+                        <span class="value">${numbers.personal || '?'}</span>
+                        <span class="desc">${personal.influence || ''}</span>
+                    </div>
+                    <div class="code-item">
+                        <span class="label">Число выражения</span>
+                        <span class="value">${numbers.expression || '?'}</span>
+                        <span class="desc">${expression.meaning || ''}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="forecast-energy">
+                <div class="energy-badge">
+                    <span><i class="fas fa-fire"></i> Стихия: ${universal.element || ''}</span>
+                    <span><i class="fas fa-globe"></i> Планета: ${universal.planet || ''}</span>
+                    <span><i class="fas fa-moon"></i> Лунный день: ${dateInfo.lunarDay || ''}</span>
+                </div>
+            </div>
+            
+            <div class="forecast-main">
+                <p class="forecast-positive">${universal.positive || ''}</p>
+                ${universal.negative ? `<p class="forecast-negative">⚠️ ${universal.negative}</p>` : ''}
+            </div>
+            
+            <div class="forecast-sections">
+                <div class="forecast-section">
+                    <h4><i class="fas fa-briefcase"></i> Карьера</h4>
+                    <p>${universal.career || ''}</p>
+                </div>
+                
+                <div class="forecast-section">
+                    <h4><i class="fas fa-heart"></i> Любовь</h4>
+                    <p>${universal.love || ''}</p>
+                </div>
+                
+                <div class="forecast-section">
+                    <h4><i class="fas fa-leaf"></i> Здоровье</h4>
+                    <p>${universal.health || ''}</p>
+                </div>
+                
+                <div class="forecast-section">
+                    <h4><i class="fas fa-coins"></i> Финансы</h4>
+                    <p>${universal.finance || ''}</p>
+                </div>
+            </div>
     `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
 
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-// ===== ОТОБРАЖЕНИЕ ИНТЕРПРЕТАЦИЙ =====
-// ===== ОТОБРАЖЕНИЕ ИНТЕРПРЕТАЦИЙ =====
-function displayInterpretations(interpretations) {
-    if (!interpretations) return;
-
-    console.log('📊 Отображение интерпретаций:', interpretations);
-
-    // Карьера
-    if (interpretations.career) {
-        displayCareerInterpretation(interpretations.career);
-    }
-
-    // Семья
-    if (interpretations.family) {
-        displayFamilyInterpretation(interpretations.family);
-    }
-
-    // Любовь
-    if (interpretations.love) {
-        displayLoveInterpretation(interpretations.love);
-    }
-
-    // Финансы
-    if (interpretations.money) {
-        displayMoneyInterpretation(interpretations.money);
-    }
-
-    // Здоровье
-    if (interpretations.health) {
-        displayHealthInterpretation(interpretations.health);
-    }
-
-    // Таланты
-    if (interpretations.talent) {
-        displayTalentInterpretation(interpretations.talent);
-    }
-
-    // Добавляем обработчики для табов интерпретаций
-    setupInterpretationTabs();
-}
-
-function displayCareerInterpretation(career) {
-    if (!career) return;
-
-    console.log('📊 Отображение карьеры:', career);
-
-    // Основная информация
-    setElementText('careerNumber', career.careerNumber);
-    setElementText('careerTitle', career.title || 'Карьерный потенциал');
-    setElementText('careerDescription', career.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('careerDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = career.detailedDescription || career.description || '';
-    }
-
-    // Сильные стороны
-    const strengthsList = document.getElementById('careerStrengths');
-    if (strengthsList && career.strengths) {
-        strengthsList.innerHTML = '';
-        career.strengths.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            strengthsList.appendChild(li);
-        });
-    } else if (strengthsList) {
-        strengthsList.innerHTML = '<li>—</li>';
-    }
-
-    // Зоны роста
-    const weaknessesList = document.getElementById('careerWeaknesses');
-    if (weaknessesList && career.weaknesses) {
-        weaknessesList.innerHTML = '';
-        career.weaknesses.forEach(w => {
-            const li = document.createElement('li');
-            li.innerHTML = w;
-            weaknessesList.appendChild(li);
-        });
-    } else if (weaknessesList) {
-        weaknessesList.innerHTML = '<li>—</li>';
-    }
-
-    // Подходящие профессии
-    const suitableList = document.getElementById('careerSuitable');
-    if (suitableList && career.suitable) {
-        suitableList.innerHTML = '';
-        career.suitable.forEach(p => {
-            const li = document.createElement('li');
-            li.innerHTML = p;
-            suitableList.appendChild(li);
-        });
-    } else if (suitableList) {
-        suitableList.innerHTML = '<li>—</li>';
-    }
-
-    // Стиль работы
-    setElementText('careerWorkStyle', career.workStyle || '');
-
-    // Подход к деньгам
-    setElementText('careerMoneyApproach', career.moneyApproach || '');
-
-    // Стиль управления
-    setElementText('careerManagementStyle', career.managementStyle || '');
-
-    // Идеальная среда
-    setElementText('careerIdealEnvironment', career.idealEnvironment || '');
-
-    // Факторы успеха
-    const successFactorsList = document.getElementById('careerSuccessFactors');
-    if (successFactorsList && career.successFactors) {
-        successFactorsList.innerHTML = '';
-        career.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска
-    const failureFactorsList = document.getElementById('careerFailureFactors');
-    if (failureFactorsList && career.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        career.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития
-    setElementText('careerDevelopmentPath', career.developmentPath || career.advice || '');
-
-    // Числа успеха и реализации
-    setElementText('careerSuccessNum', career.successNumber);
-    setElementText('careerSuccessDesc', career.successDescription || '');
-    setElementText('careerRealizationNum', career.realizationNumber);
-    setElementText('careerRealizationDesc', career.realizationDescription || '');
-
-    // Совет
-    setElementText('careerAdvice', career.advice || '');
-}
-
-function displayFamilyInterpretation(family) {
-    if (!family) return;
-
-    console.log('📊 Отображение семьи:', family);
-
-    // Основная информация
-    setElementText('familyNumber', family.familyNumber);
-    setElementText('familyTitle', family.title || 'Семейная гармония');
-    setElementText('familyDescription', family.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('familyDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = family.detailedDescription || family.description || '';
-    }
-
-    // Роль в семье
-    setElementText('familyRole', family.role || '');
-
-    // Сильные стороны
-    const strengthsList = document.getElementById('familyStrengths');
-    if (strengthsList && family.strengths) {
-        strengthsList.innerHTML = '';
-        family.strengths.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            strengthsList.appendChild(li);
-        });
-    } else if (strengthsList) {
-        strengthsList.innerHTML = '<li>—</li>';
-    }
-
-    // Зоны роста
-    const weaknessesList = document.getElementById('familyWeaknesses');
-    if (weaknessesList && family.weaknesses) {
-        weaknessesList.innerHTML = '';
-        family.weaknesses.forEach(w => {
-            const li = document.createElement('li');
-            li.innerHTML = w;
-            weaknessesList.appendChild(li);
-        });
-    } else if (weaknessesList) {
-        weaknessesList.innerHTML = '<li>—</li>';
-    }
-
-    // Стиль семейной жизни (новое)
-    setElementText('familyStyle', family.familyStyle || '');
-
-    // Подход к детям (новое)
-    setElementText('familyChildrenApproach', family.childrenApproach || '');
-
-    // Тип идеального партнера (новое)
-    setElementText('familyPartnerType', family.partnerType || '');
-
-    // Факторы успеха (новое)
-    const successFactorsList = document.getElementById('familySuccessFactors');
-    if (successFactorsList && family.successFactors) {
-        successFactorsList.innerHTML = '';
-        family.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска (новое)
-    const failureFactorsList = document.getElementById('familyFailureFactors');
-    if (failureFactorsList && family.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        family.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития (новое)
-    setElementText('familyDevelopmentPath', family.developmentPath || family.advice || '');
-
-    // Числа партнера и детей
-    setElementText('familyPartnerNum', family.partnerNumber);
-    setElementText('familyPartnerDesc', family.partnerDescription || '');
-    setElementText('familyChildrenNum', family.childrenNumber);
-    setElementText('familyChildrenDesc', family.childrenDescription || '');
-
-    // Совет
-    setElementText('familyAdvice', family.advice || '');
-}
-
-function displayLoveInterpretation(love) {
-    if (!love) return;
-
-    console.log('📊 Отображение любви:', love);
-
-    // Основная информация
-    setElementText('loveNumber', love.loveNumber);
-    setElementText('loveTitle', love.title || 'Любовная совместимость');
-    setElementText('loveDescription', love.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('loveDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = love.detailedDescription || love.description || '';
-    }
-
-    // Стиль любви
-    setElementText('loveStyle', love.loveStyle || '');
-
-    // Сильные стороны
-    const strengthsList = document.getElementById('loveStrengths');
-    if (strengthsList && love.strengths) {
-        strengthsList.innerHTML = '';
-        love.strengths.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            strengthsList.appendChild(li);
-        });
-    } else if (strengthsList) {
-        strengthsList.innerHTML = '<li>—</li>';
-    }
-
-    // Зоны роста
-    const weaknessesList = document.getElementById('loveWeaknesses');
-    if (weaknessesList && love.weaknesses) {
-        weaknessesList.innerHTML = '';
-        love.weaknesses.forEach(w => {
-            const li = document.createElement('li');
-            li.innerHTML = w;
-            weaknessesList.appendChild(li);
-        });
-    } else if (weaknessesList) {
-        weaknessesList.innerHTML = '<li>—</li>';
-    }
-
-    // Идеальный партнер (кратко)
-    setElementText('idealPartner', love.idealPartner || '');
-
-    // Тип идеального партнера (подробно)
-    setElementText('lovePartnerType', love.partnerType || '');
-
-    // Модель отношений
-    setElementText('loveRelationshipPattern', love.relationshipPattern || '');
-
-    // Факторы успеха
-    const successFactorsList = document.getElementById('loveSuccessFactors');
-    if (successFactorsList && love.successFactors) {
-        successFactorsList.innerHTML = '';
-        love.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска
-    const failureFactorsList = document.getElementById('loveFailureFactors');
-    if (failureFactorsList && love.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        love.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития
-    setElementText('loveDevelopmentPath', love.developmentPath || love.advice || '');
-
-    // Совместимость
-    if (love.compatibility !== undefined) {
-        setElementText('loveCompatibilityPercent', love.compatibility + '%');
-
-        const progressBar = document.getElementById('loveCompatibilityProgress');
-        if (progressBar) {
-            progressBar.style.width = love.compatibility + '%';
+        // Таро
+        if (forecast.tarot) {
+            html += `
+            <div class="forecast-tarot">
+                <h4><i class="fas fa-crown"></i> КАРТА ТАРО ДНЯ: ${forecast.tarot.name || ''}</h4>
+                <div class="tarot-mini">
+                    <div class="tarot-image-mini">
+                        <img src="${forecast.tarot.image || '/images/tarot/back.jpg'}" alt="${forecast.tarot.name || 'Таро'}" onerror="this.src='/images/tarot/back.jpg'">
+                    </div>
+                    <div class="tarot-desc-mini">
+                        <p>${forecast.tarot.description || ''}</p>
+                        <p class="tarot-advice"><strong>Совет:</strong> ${forecast.tarot.advice || ''}</p>
+                    </div>
+                </div>
+            </div>
+        `;
         }
 
-        setElementText('loveCompatibilityLevel', love.compatibilityLevel || `Совместимость: ${love.compatibility}%`);
-    }
+        // Детали
+        html += `<div class="forecast-details-grid">`;
 
-    // Совет
-    setElementText('loveAdvice', love.advice || '');
-}
-
-function displayMoneyInterpretation(money) {
-    if (!money) return;
-
-    console.log('📊 Отображение финансов:', money);
-
-    // Основная информация
-    setElementText('moneyNumber', money.moneyNumber);
-    setElementText('moneyTitle', money.title || 'Финансовый поток');
-    setElementText('moneyDescription', money.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('moneyDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = money.detailedDescription || money.description || '';
-    }
-
-    // Финансовый стиль
-    setElementText('moneyStyle', money.moneyStyle || '');
-
-    // Сильные стороны
-    const strengthsList = document.getElementById('moneyStrengths');
-    if (strengthsList && money.strengths) {
-        strengthsList.innerHTML = '';
-        money.strengths.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            strengthsList.appendChild(li);
-        });
-    } else if (strengthsList) {
-        strengthsList.innerHTML = '<li>—</li>';
-    }
-
-    // Зоны роста
-    const weaknessesList = document.getElementById('moneyWeaknesses');
-    if (weaknessesList && money.weaknesses) {
-        weaknessesList.innerHTML = '';
-        money.weaknesses.forEach(w => {
-            const li = document.createElement('li');
-            li.innerHTML = w;
-            weaknessesList.appendChild(li);
-        });
-    } else if (weaknessesList) {
-        weaknessesList.innerHTML = '<li>—</li>';
-    }
-
-    // Источники дохода
-    const sourcesList = document.getElementById('moneySources');
-    if (sourcesList && money.sources) {
-        sourcesList.innerHTML = '';
-        money.sources.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            sourcesList.appendChild(li);
-        });
-    } else if (sourcesList) {
-        sourcesList.innerHTML = '<li>—</li>';
-    }
-
-    // Финансовая стратегия (новое)
-    setElementText('moneyStrategy', money.moneyStrategy || '');
-
-    // Отношение к риску (новое)
-    setElementText('moneyRiskAttitude', money.riskAttitude || '');
-
-    // Лучшие инвестиции (новое)
-    const investmentsList = document.getElementById('moneyInvestments');
-    if (investmentsList && money.bestInvestments) {
-        investmentsList.innerHTML = '';
-        money.bestInvestments.forEach(i => {
-            const li = document.createElement('li');
-            li.innerHTML = i;
-            investmentsList.appendChild(li);
-        });
-    } else if (investmentsList) {
-        investmentsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы успеха (новое)
-    const successFactorsList = document.getElementById('moneySuccessFactors');
-    if (successFactorsList && money.successFactors) {
-        successFactorsList.innerHTML = '';
-        money.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска (новое)
-    const failureFactorsList = document.getElementById('moneyFailureFactors');
-    if (failureFactorsList && money.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        money.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития (новое)
-    setElementText('moneyDevelopmentPath', money.developmentPath || money.advice || '');
-
-    // Число изобилия
-    setElementText('moneyAbundanceNum', money.abundanceNumber);
-    setElementText('moneyAbundanceDesc', money.abundanceDescription || '');
-
-    // Совет
-    setElementText('moneyAdvice', money.advice || '');
-}
-
-function displayHealthInterpretation(health) {
-    if (!health) return;
-
-    console.log('📊 Отображение здоровья:', health);
-
-    // Основная информация
-    setElementText('healthNumber', health.healthNumber);
-    setElementText('healthTitle', health.title || 'Энергия здоровья');
-    setElementText('healthDescription', health.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('healthDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = health.detailedDescription || health.description || '';
-    }
-
-    // Энергия
-    if (health.energyLevel !== undefined) {
-        const energyProgress = document.getElementById('healthEnergyProgress');
-        if (energyProgress) {
-            const percent = (health.energyLevel / 10) * 100;
-            energyProgress.style.width = percent + '%';
-        }
-        setElementText('healthEnergyLevel', `Уровень энергии: ${health.energyLevel}/10`);
-    }
-
-    // Тип энергетики
-    setElementText('healthEnergyType', health.energyType || '');
-
-    // Сильные стороны
-    const strengthsList = document.getElementById('healthStrengths');
-    if (strengthsList && health.strengths) {
-        strengthsList.innerHTML = '';
-        health.strengths.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            strengthsList.appendChild(li);
-        });
-    } else if (strengthsList) {
-        strengthsList.innerHTML = '<li>—</li>';
-    }
-
-    // Зоны роста
-    const weaknessesList = document.getElementById('healthWeaknesses');
-    if (weaknessesList && health.weaknesses) {
-        weaknessesList.innerHTML = '';
-        health.weaknesses.forEach(w => {
-            const li = document.createElement('li');
-            li.innerHTML = w;
-            weaknessesList.appendChild(li);
-        });
-    } else if (weaknessesList) {
-        weaknessesList.innerHTML = '<li>—</li>';
-    }
-
-    // Уязвимые органы
-    const vulnerableList = document.getElementById('healthVulnerable');
-    if (vulnerableList && health.vulnerable) {
-        vulnerableList.innerHTML = '';
-        health.vulnerable.forEach(v => {
-            const li = document.createElement('li');
-            li.innerHTML = v;
-            vulnerableList.appendChild(li);
-        });
-    } else if (vulnerableList) {
-        vulnerableList.innerHTML = '<li>—</li>';
-    }
-
-    // Рекомендации
-    const recommendationsList = document.getElementById('healthRecommendations');
-    if (recommendationsList && health.recommendations) {
-        recommendationsList.innerHTML = '';
-        health.recommendations.forEach(r => {
-            const li = document.createElement('li');
-            li.innerHTML = r;
-            recommendationsList.appendChild(li);
-        });
-    } else if (recommendationsList) {
-        recommendationsList.innerHTML = '<li>—</li>';
-    }
-
-    // Сезонные риски
-    setElementText('healthSeasonalRisks', health.seasonalRisks || '');
-
-    // Профилактика
-    const preventionList = document.getElementById('healthPrevention');
-    if (preventionList && health.prevention) {
-        preventionList.innerHTML = '';
-        health.prevention.forEach(p => {
-            const li = document.createElement('li');
-            li.innerHTML = p;
-            preventionList.appendChild(li);
-        });
-    } else if (preventionList) {
-        preventionList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы успеха
-    const successFactorsList = document.getElementById('healthSuccessFactors');
-    if (successFactorsList && health.successFactors) {
-        successFactorsList.innerHTML = '';
-        health.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска
-    const failureFactorsList = document.getElementById('healthFailureFactors');
-    if (failureFactorsList && health.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        health.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития
-    setElementText('healthDevelopmentPath', health.developmentPath || health.advice || '');
-
-    // Совет
-    setElementText('healthAdvice', health.advice || '');
-}
-
-function displayTalentInterpretation(talent) {
-    if (!talent) return;
-
-    console.log('📊 Отображение талантов:', talent);
-
-    // Основная информация
-    setElementText('talentNumber', talent.talentNumber);
-    setElementText('talentTitle', talent.title || 'Скрытые таланты');
-    setElementText('talentDescription', talent.description || '');
-
-    // Детальное описание
-    const detailedDescElement = document.getElementById('talentDetailedDescription');
-    if (detailedDescElement) {
-        detailedDescElement.innerHTML = talent.detailedDescription || talent.description || '';
-    }
-
-    // Список талантов
-    const talentList = document.getElementById('talentList');
-    if (talentList && talent.talents) {
-        talentList.innerHTML = '';
-        talent.talents.forEach(t => {
-            const li = document.createElement('li');
-            li.innerHTML = t;
-            talentList.appendChild(li);
-        });
-    } else if (talentList) {
-        talentList.innerHTML = '<li>—</li>';
-    }
-
-    // Как развивать
-    const howToDevelopList = document.getElementById('talentHowToDevelop');
-    if (howToDevelopList && talent.howToDevelop) {
-        howToDevelopList.innerHTML = '';
-        talent.howToDevelop.forEach(h => {
-            const li = document.createElement('li');
-            li.innerHTML = h;
-            howToDevelopList.appendChild(li);
-        });
-    } else if (howToDevelopList) {
-        howToDevelopList.innerHTML = '<li>—</li>';
-    }
-
-    // Сферы реализации
-    const suitableList = document.getElementById('talentSuitable');
-    if (suitableList && talent.suitable) {
-        suitableList.innerHTML = '';
-        talent.suitable.forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = s;
-            suitableList.appendChild(li);
-        });
-    } else if (suitableList) {
-        suitableList.innerHTML = '<li>—</li>';
-    }
-
-    // С чем сочетается
-    setElementText('talentCombinations', talent.combinations || '');
-
-    // Идеальная среда
-    setElementText('talentEnvironment', talent.environment || '');
-
-    // Факторы успеха
-    const successFactorsList = document.getElementById('talentSuccessFactors');
-    if (successFactorsList && talent.successFactors) {
-        successFactorsList.innerHTML = '';
-        talent.successFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            successFactorsList.appendChild(li);
-        });
-    } else if (successFactorsList) {
-        successFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Факторы риска
-    const failureFactorsList = document.getElementById('talentFailureFactors');
-    if (failureFactorsList && talent.failureFactors) {
-        failureFactorsList.innerHTML = '';
-        talent.failureFactors.forEach(f => {
-            const li = document.createElement('li');
-            li.innerHTML = f;
-            failureFactorsList.appendChild(li);
-        });
-    } else if (failureFactorsList) {
-        failureFactorsList.innerHTML = '<li>—</li>';
-    }
-
-    // Путь развития
-    setElementText('talentDevelopmentPath', talent.developmentPath || talent.advice || '');
-
-    // Потенциал
-    if (talent.potential !== undefined) {
-        setElementText('talentPotentialPercent', talent.potential + '%');
-
-        const progressBar = document.getElementById('talentPotentialProgress');
-        if (progressBar) {
-            progressBar.style.width = talent.potential + '%';
+        if (forecast.fengShui?.colors || forecast.colors) {
+            const colors = forecast.fengShui?.colors || forecast.colors || [];
+            html += `
+            <div class="detail-block">
+                <h5><i class="fas fa-paint-brush"></i> Цвета дня</h5>
+                <p>${Array.isArray(colors) ? colors.join(', ') : colors}</p>
+            </div>
+        `;
         }
 
-        setElementText('talentPotentialDescription', talent.potentialDescription || `Потенциал: ${talent.potential}%`);
+        if (forecast.crystals) {
+            html += `
+            <div class="detail-block">
+                <h5><i class="fas fa-gem"></i> Камни-талисманы</h5>
+                <p>${Array.isArray(forecast.crystals) ? forecast.crystals.join(', ') : forecast.crystals}</p>
+            </div>
+        `;
+        }
+
+        if (forecast.scents) {
+            html += `
+            <div class="detail-block">
+                <h5><i class="fas fa-leaf"></i> Ароматы</h5>
+                <p>${Array.isArray(forecast.scents) ? forecast.scents.join(', ') : forecast.scents}</p>
+            </div>
+        `;
+        }
+
+        const directions = this.getDirections(numbers.universal);
+        if (directions) {
+            html += `
+            <div class="detail-block">
+                <h5><i class="fas fa-compass"></i> Направления</h5>
+                <p>${directions.join(', ')}</p>
+            </div>
+        `;
+        }
+
+        if (forecast.favorableHours) {
+            html += `
+            <div class="detail-block">
+                <h5><i class="fas fa-clock"></i> Благоприятные часы</h5>
+                <p>${Array.isArray(forecast.favorableHours) ? forecast.favorableHours.join(', ') : forecast.favorableHours}</p>
+            </div>
+        `;
+        }
+
+        html += `</div>`;
+
+        if (forecast.fengShui?.advice) {
+            html += `
+            <div class="forecast-fengshui">
+                <h4><i class="fas fa-wind"></i> Фен-шуй совет</h4>
+                <p>${forecast.fengShui.advice}</p>
+            </div>
+        `;
+        }
+
+        if (forecast.affirmation) {
+            html += `
+            <div class="forecast-affirmation">
+                <i class="fas fa-quote-left"></i>
+                <p>${forecast.affirmation}</p>
+            </div>
+        `;
+        }
+
+        html += `</div>`;
+
+        forecastContainer.innerHTML = html;
     }
 
-    // Совет
-    setElementText('talentAdvice', talent.advice || '');
-}
+    getDirections(number) {
+        const directions = {
+            1: ['Север', 'Восток'],
+            2: ['Юго-Запад', 'Запад'],
+            3: ['Восток', 'Юго-Восток'],
+            4: ['Север', 'Северо-Восток'],
+            5: ['Запад', 'Северо-Запад'],
+            6: ['Юг', 'Юго-Запад'],
+            7: ['Северо-Восток', 'Восток'],
+            8: ['Юго-Запад', 'Запад'],
+            9: ['Юг', 'Юго-Восток'],
+            11: ['Север', 'Восток'],
+            22: ['Центр', 'Все направления']
+        };
+        return directions[number] || ['Восток', 'Север'];
+    }
 
-function setupInterpretationTabs() {
-    const tabBtns = document.querySelectorAll('.interpretation-tabs .tab-btn');
 
-    if (!tabBtns.length) return;
+    displayLoveInterpretation(love) {
+        if (!love) return;
 
-    tabBtns.forEach(btn => {
-        btn.removeEventListener('click', handleInterpretationTabClick);
-        btn.addEventListener('click', handleInterpretationTabClick);
-    });
+        console.log('📊 Отображение любви:', love);
 
-    const hasActive = Array.from(tabBtns).some(btn => btn.classList.contains('active'));
-    if (!hasActive && tabBtns.length > 0) {
-        tabBtns[0].classList.add('active');
-        const firstPane = document.getElementById('interpretation-' + tabBtns[0].dataset.interpretation);
-        if (firstPane) {
-            firstPane.classList.add('active');
+        const pane = document.getElementById('interpretation-love');
+        if (!pane) return;
+
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Основная информация
+        this.setElementText('loveNumber', love.loveNumber || '--');
+        this.setElementText('loveTitle', love.title || 'Любовная совместимость');
+        this.setElementText('loveDescription', love.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('loveDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = love.detailedDescription || love.description || '';
+        }
+
+        // Стиль любви
+        this.setElementText('loveStyle', love.loveStyle || '');
+
+        // Сильные стороны
+        const strengthsList = document.getElementById('loveStrengths');
+        if (strengthsList) {
+            strengthsList.innerHTML = '';
+            if (love.strengths && love.strengths.length) {
+                love.strengths.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Зоны роста
+        const weaknessesList = document.getElementById('loveWeaknesses');
+        if (weaknessesList) {
+            weaknessesList.innerHTML = '';
+            if (love.weaknesses && love.weaknesses.length) {
+                love.weaknesses.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerHTML = w;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Идеальный партнер (кратко)
+        this.setElementText('idealPartner', love.idealPartner || '');
+
+        // Тип идеального партнера (подробно)
+        this.setElementText('lovePartnerType', love.partnerType || '');
+
+        // Модель отношений
+        this.setElementText('loveRelationshipPattern', love.relationshipPattern || '');
+
+        // Факторы успеха
+        const successFactorsList = document.getElementById('loveSuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (love.successFactors && love.successFactors.length) {
+                love.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы риска
+        const failureFactorsList = document.getElementById('loveFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (love.failureFactors && love.failureFactors.length) {
+                love.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Путь развития
+        this.setElementText('loveDevelopmentPath', love.developmentPath || love.advice || '');
+
+        // Совместимость
+        if (love.compatibility !== undefined) {
+            this.setElementText('loveCompatibilityPercent', (love.compatibility || 0) + '%');
+
+            const progressBar = document.getElementById('loveCompatibilityProgress');
+            if (progressBar) {
+                progressBar.style.width = (love.compatibility || 0) + '%';
+            }
+
+            this.setElementText('loveCompatibilityLevel', love.compatibilityLevel || `Совместимость: ${love.compatibility || 0}%`);
+        }
+
+        // Совет
+        this.setElementText('loveAdvice', love.advice || '');
+    }
+
+
+    displayMoneyInterpretation(money) {
+        if (!money) return;
+
+        console.log('📊 Отображение финансов:', money);
+
+        const pane = document.getElementById('interpretation-money');
+        if (!pane) return;
+
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Основная информация
+        this.setElementText('moneyNumber', money.moneyNumber || '--');
+        this.setElementText('moneyTitle', money.title || 'Финансовый поток');
+        this.setElementText('moneyDescription', money.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('moneyDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = money.detailedDescription || money.description || '';
+        }
+
+        // Финансовый стиль
+        this.setElementText('moneyStyle', money.moneyStyle || '');
+
+        // Сильные стороны
+        const strengthsList = document.getElementById('moneyStrengths');
+        if (strengthsList) {
+            strengthsList.innerHTML = '';
+            if (money.strengths && money.strengths.length) {
+                money.strengths.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Зоны роста
+        const weaknessesList = document.getElementById('moneyWeaknesses');
+        if (weaknessesList) {
+            weaknessesList.innerHTML = '';
+            if (money.weaknesses && money.weaknesses.length) {
+                money.weaknesses.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerHTML = w;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Источники дохода
+        const sourcesList = document.getElementById('moneySources');
+        if (sourcesList) {
+            sourcesList.innerHTML = '';
+            if (money.sources && money.sources.length) {
+                money.sources.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    sourcesList.appendChild(li);
+                });
+            } else {
+                sourcesList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Финансовая стратегия
+        this.setElementText('moneyStrategy', money.moneyStrategy || '');
+
+        // Отношение к риску
+        this.setElementText('moneyRiskAttitude', money.riskAttitude || '');
+
+        // Лучшие инвестиции
+        const investmentsList = document.getElementById('moneyInvestments');
+        if (investmentsList) {
+            investmentsList.innerHTML = '';
+            if (money.bestInvestments && money.bestInvestments.length) {
+                money.bestInvestments.forEach(i => {
+                    const li = document.createElement('li');
+                    li.innerHTML = i;
+                    investmentsList.appendChild(li);
+                });
+            } else {
+                investmentsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы успеха
+        const successFactorsList = document.getElementById('moneySuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (money.successFactors && money.successFactors.length) {
+                money.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы риска
+        const failureFactorsList = document.getElementById('moneyFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (money.failureFactors && money.failureFactors.length) {
+                money.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Путь развития
+        this.setElementText('moneyDevelopmentPath', money.developmentPath || money.advice || '');
+
+        // Число изобилия
+        this.setElementText('moneyAbundanceNum', money.abundanceNumber || '--');
+        this.setElementText('moneyAbundanceDesc', money.abundanceDescription || '');
+
+        // Совет
+        this.setElementText('moneyAdvice', money.advice || '');
+    }
+
+
+    displayHealthInterpretation(health) {
+        if (!health) return;
+
+        console.log('📊 Отображение здоровья:', health);
+
+        const pane = document.getElementById('interpretation-health');
+        if (!pane) return;
+
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Основная информация
+        this.setElementText('healthNumber', health.healthNumber || '--');
+        this.setElementText('healthTitle', health.title || 'Энергия здоровья');
+        this.setElementText('healthDescription', health.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('healthDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = health.detailedDescription || health.description || '';
+        }
+
+        // Энергия
+        if (health.energyLevel !== undefined) {
+            const energyProgress = document.getElementById('healthEnergyProgress');
+            if (energyProgress) {
+                const percent = ((health.energyLevel || 0) / 10) * 100;
+                energyProgress.style.width = percent + '%';
+            }
+            this.setElementText('healthEnergyLevel', `Уровень энергии: ${health.energyLevel || 0}/10`);
+        }
+
+        // Тип энергетики
+        this.setElementText('healthEnergyType', health.energyType || '');
+
+        // Сильные стороны
+        const strengthsList = document.getElementById('healthStrengths');
+        if (strengthsList) {
+            strengthsList.innerHTML = '';
+            if (health.strengths && health.strengths.length) {
+                health.strengths.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Зоны роста
+        const weaknessesList = document.getElementById('healthWeaknesses');
+        if (weaknessesList) {
+            weaknessesList.innerHTML = '';
+            if (health.weaknesses && health.weaknesses.length) {
+                health.weaknesses.forEach(w => {
+                    const li = document.createElement('li');
+                    li.innerHTML = w;
+                    weaknessesList.appendChild(li);
+                });
+            } else {
+                weaknessesList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Уязвимые органы
+        const vulnerableList = document.getElementById('healthVulnerable');
+        if (vulnerableList) {
+            vulnerableList.innerHTML = '';
+            if (health.vulnerable && health.vulnerable.length) {
+                health.vulnerable.forEach(v => {
+                    const li = document.createElement('li');
+                    li.innerHTML = v;
+                    vulnerableList.appendChild(li);
+                });
+            } else {
+                vulnerableList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Рекомендации
+        const recommendationsList = document.getElementById('healthRecommendations');
+        if (recommendationsList) {
+            recommendationsList.innerHTML = '';
+            if (health.recommendations && health.recommendations.length) {
+                health.recommendations.forEach(r => {
+                    const li = document.createElement('li');
+                    li.innerHTML = r;
+                    recommendationsList.appendChild(li);
+                });
+            } else {
+                recommendationsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Сезонные риски
+        this.setElementText('healthSeasonalRisks', health.seasonalRisks || '');
+
+        // Профилактика
+        const preventionList = document.getElementById('healthPrevention');
+        if (preventionList) {
+            preventionList.innerHTML = '';
+            if (health.prevention && health.prevention.length) {
+                health.prevention.forEach(p => {
+                    const li = document.createElement('li');
+                    li.innerHTML = p;
+                    preventionList.appendChild(li);
+                });
+            } else {
+                preventionList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы успеха
+        const successFactorsList = document.getElementById('healthSuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (health.successFactors && health.successFactors.length) {
+                health.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы риска
+        const failureFactorsList = document.getElementById('healthFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (health.failureFactors && health.failureFactors.length) {
+                health.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Путь развития
+        this.setElementText('healthDevelopmentPath', health.developmentPath || health.advice || '');
+
+        // Совет
+        this.setElementText('healthAdvice', health.advice || '');
+    }
+
+
+
+    displayTalentInterpretation(talent) {
+        if (!talent) return;
+
+        console.log('📊 Отображение талантов:', talent);
+
+        const pane = document.getElementById('interpretation-talent');
+        if (!pane) return;
+
+        pane.classList.remove('locked-pane');
+        const overlay = pane.querySelector('.lock-overlay');
+        if (overlay) overlay.remove();
+
+        // Основная информация
+        this.setElementText('talentNumber', talent.talentNumber || '--');
+        this.setElementText('talentTitle', talent.title || 'Скрытые таланты');
+        this.setElementText('talentDescription', talent.description || '');
+
+        // Детальное описание
+        const detailedDescElement = document.getElementById('talentDetailedDescription');
+        if (detailedDescElement) {
+            detailedDescElement.innerHTML = talent.detailedDescription || talent.description || '';
+        }
+
+        // Список талантов
+        const talentList = document.getElementById('talentList');
+        if (talentList) {
+            talentList.innerHTML = '';
+            if (talent.talents && talent.talents.length) {
+                talent.talents.forEach(t => {
+                    const li = document.createElement('li');
+                    li.innerHTML = t;
+                    talentList.appendChild(li);
+                });
+            } else {
+                talentList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Как развивать
+        const howToDevelopList = document.getElementById('talentHowToDevelop');
+        if (howToDevelopList) {
+            howToDevelopList.innerHTML = '';
+            if (talent.howToDevelop && talent.howToDevelop.length) {
+                talent.howToDevelop.forEach(h => {
+                    const li = document.createElement('li');
+                    li.innerHTML = h;
+                    howToDevelopList.appendChild(li);
+                });
+            } else {
+                howToDevelopList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Сферы реализации
+        const suitableList = document.getElementById('talentSuitable');
+        if (suitableList) {
+            suitableList.innerHTML = '';
+            if (talent.suitable && talent.suitable.length) {
+                talent.suitable.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = s;
+                    suitableList.appendChild(li);
+                });
+            } else {
+                suitableList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // С чем сочетается
+        this.setElementText('talentCombinations', talent.combinations || '');
+
+        // Идеальная среда
+        this.setElementText('talentEnvironment', talent.environment || '');
+
+        // Факторы успеха
+        const successFactorsList = document.getElementById('talentSuccessFactors');
+        if (successFactorsList) {
+            successFactorsList.innerHTML = '';
+            if (talent.successFactors && talent.successFactors.length) {
+                talent.successFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    successFactorsList.appendChild(li);
+                });
+            } else {
+                successFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Факторы риска
+        const failureFactorsList = document.getElementById('talentFailureFactors');
+        if (failureFactorsList) {
+            failureFactorsList.innerHTML = '';
+            if (talent.failureFactors && talent.failureFactors.length) {
+                talent.failureFactors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.innerHTML = f;
+                    failureFactorsList.appendChild(li);
+                });
+            } else {
+                failureFactorsList.innerHTML = '<li>—</li>';
+            }
+        }
+
+        // Путь развития
+        this.setElementText('talentDevelopmentPath', talent.developmentPath || talent.advice || '');
+
+        // Потенциал
+        if (talent.potential !== undefined) {
+            this.setElementText('talentPotentialPercent', (talent.potential || 0) + '%');
+
+            const progressBar = document.getElementById('talentPotentialProgress');
+            if (progressBar) {
+                progressBar.style.width = (talent.potential || 0) + '%';
+            }
+
+            this.setElementText('talentPotentialDescription', talent.potentialDescription || `Потенциал: ${talent.potential || 0}%`);
+        }
+
+        // Совет
+        this.setElementText('talentAdvice', talent.advice || '');
+    }
+
+// Вспомогательная функция для установки текста
+    setElementText(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value !== undefined && value !== null ? value : '—';
+        }
+    }
+
+
+    generateInterpretationHTML(type, data) {
+        let html = `
+            <div class="interpretation-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <span style="font-size: 2.5rem; font-weight: 700; color: var(--accent-gold); min-width: 60px; text-align: center;">${data.careerNumber || data.familyNumber || data.loveNumber || data.moneyNumber || data.healthNumber || data.talentNumber || '--'}</span>
+                <h4 style="margin: 0; color: var(--text-primary); font-size: 1.3rem;">${data.title || ''}</h4>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="color: var(--text-secondary); line-height: 1.8;">${data.detailedDescription || data.description || ''}</p>
+            </div>
+        `;
+
+        if (data.strengths && data.strengths.length) {
+            html += `
+                <div style="background: rgba(76, 175, 80, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <h5 style="color: #4caf50; margin: 0 0 10px 0;">🌟 Сильные стороны</h5>
+                    <ul style="color: var(--text-secondary); padding-left: 20px;">
+                        ${data.strengths.map(s => `<li style="margin-bottom: 5px;">${s}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        if (data.weaknesses && data.weaknesses.length) {
+            html += `
+                <div style="background: rgba(244, 67, 54, 0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                    <h5 style="color: #f44336; margin: 0 0 10px 0;">🌙 Зоны роста</h5>
+                    <ul style="color: var(--text-secondary); padding-left: 20px;">
+                        ${data.weaknesses.map(w => `<li style="margin-bottom: 5px;">${w}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        if (data.advice) {
+            html += `
+                <div style="background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(18, 18, 26, 0.5)); padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent-gold); margin-top: 20px;">
+                    <p style="color: var(--accent-gold); font-style: italic; margin: 0;">${data.advice}</p>
+                </div>
+            `;
+        }
+
+        return html;
+    }
+
+    validateForm(fullName, birthDate) {
+        if (!fullName || !birthDate) {
+            this.showNotification('❌ Пожалуйста, заполните все поля', 'error');
+            return false;
+        }
+
+        const nameParts = fullName.trim().split(/\s+/);
+        if (nameParts.length < 3) {
+            this.showNotification('❌ Пожалуйста, введите полное ФИО (фамилия, имя, отчество)', 'error');
+            return false;
+        }
+
+        if (!this.isValidDate(birthDate)) {
+            this.showNotification('❌ Пожалуйста, введите дату в формате ДД.ММ.ГГГГ', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    isValidDate(dateStr) {
+        if (!dateStr) return false;
+        const pattern = /^\d{2}\.\d{2}\.\d{4}$/;
+        if (!pattern.test(dateStr)) return false;
+
+        const [day, month, year] = dateStr.split('.').map(Number);
+
+        if (month < 1 || month > 12) return false;
+        if (day < 1 || day > 31) return false;
+
+        const daysInMonth = new Date(year, month, 0).getDate();
+        return day <= daysInMonth;
+    }
+
+    formatDateForServer(dateStr) {
+        if (!dateStr) return '';
+        const [day, month, year] = dateStr.split('.');
+        return `${year}-${month}-${day}`;
+    }
+
+    getZodiacSymbol(signName) {
+        const symbols = {
+            'Овен': '♈', 'Телец': '♉', 'Близнецы': '♊', 'Рак': '♋',
+            'Лев': '♌', 'Дева': '♍', 'Весы': '♎', 'Скорпион': '♏',
+            'Стрелец': '♐', 'Козерог': '♑', 'Водолей': '♒', 'Рыбы': '♓'
+        };
+        return symbols[signName] || '⛤';
+    }
+
+    getElementSymbol(element) {
+        const elementLower = String(element || '').toLowerCase();
+        const symbols = {
+            'металл': '⚜️', 'metal': '⚜️',
+            'вода': '🌊', 'water': '🌊',
+            'дерево': '🌳', 'wood': '🌳',
+            'огонь': '🔥', 'fire': '🔥',
+            'земля': '⛰️', 'earth': '⛰️'
+        };
+        return symbols[elementLower] || '✨';
+    }
+
+    showLoading(show) {
+        if (this.loadingSpinner) {
+            this.loadingSpinner.style.display = show ? 'flex' : 'none';
+        }
+        if (this.form) {
+            this.form.style.opacity = show ? '0.5' : '1';
+            this.form.style.pointerEvents = show ? 'none' : 'auto';
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        console.log(`[${type}] ${message}`);
+
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: ${type === 'error' ? 'rgba(244, 67, 54, 0.95)' :
+            type === 'success' ? 'rgba(76, 175, 80, 0.95)' :
+                'rgba(33, 33, 33, 0.95)'};
+            color: white;
+            border-radius: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid ${type === 'error' ? '#f44336' : type === 'success' ? '#4caf50' : 'var(--accent-gold)'};
+            font-weight: 500;
+            max-width: 350px;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    showPaymentModal(errorData) {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: var(--bg-card);
+                border: 1px solid var(--accent-gold);
+                border-radius: 24px;
+                padding: 40px;
+                max-width: 400px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            ">
+                <span style="font-size: 3rem; display: block; margin-bottom: 20px;">💰</span>
+                <h3 style="color: var(--accent-gold); margin-bottom: 15px; font-size: 1.5rem;">Недостаточно средств</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 10px; font-size: 1.1rem;">
+                    Баланс: <span style="color: var(--accent-gold); font-weight: 600;">${errorData.balance || 0} ₽</span>
+                </p>
+                <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 1.1rem;">
+                    Требуется: <span style="color: #f44336; font-weight: 600;">${errorData.required || errorData.price || 0} ₽</span>
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="mystic-button" style="padding: 12px 24px;" onclick="window.location.href='/cabinet/balance'">
+                        Пополнить баланс
+                    </button>
+                    <button class="btn btn-outline" style="padding: 12px 24px;" onclick="this.closest('.payment-modal').remove()">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        `;
+
+        modal.className = 'payment-modal';
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    resetForm() {
+        this.resultSection.style.display = 'none';
+        this.tariffSection.style.display = 'block';
+        this.inputSection.style.display = 'none';
+        this.selectedTariff = null;
+
+        // Сбрасываем форму
+        if (this.form) this.form.reset();
+
+        // Скрываем дополнительные поля
+        this.compatibilityFields.style.display = 'none';
+        this.targetDateField.style.display = 'none';
+    }
+
+    upgradeToFull() {
+        this.selectTariff('forecast_full');
+        this.tariffSection.style.display = 'none';
+        this.inputSection.style.display = 'block';
+        document.getElementById('upgradeCalculationBtn').style.display = 'none';
+    }
+
+    async downloadPDFReport() {
+        try {
+            // Проверяем, есть ли данные
+            if (!window.currentNumerologyData) {
+                this.showNotification('❌ Сначала выполните расчет', 'error');
+                return;
+            }
+
+            // Проверяем, есть ли ID расчета
+            if (!window.currentCalculationId) {
+                this.showNotification('❌ ID расчета не найден', 'error');
+                return;
+            }
+
+            console.log('📄 Отправка запроса на PDF для расчета:', window.currentCalculationId);
+            this.showNotification('📄 Генерируем PDF отчет...', 'info');
+
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<span class="button-text">⏳ Генерация...</span>';
+            downloadBtn.disabled = true;
+
+            // GET запрос с ID в URL
+            const response = await fetch(`/api/numerology/pdf/${window.currentCalculationId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            console.log('📄 Статус ответа:', response.status);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+            }
+
+            // Получаем PDF как blob
+            const blob = await response.blob();
+            console.log('📄 Получен blob, размер:', blob.size, 'байт');
+
+            if (blob.size === 0) {
+                throw new Error('Получен пустой файл');
+            }
+
+            // Получаем имя файла из заголовка Content-Disposition
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = 'numerology-report.pdf';
+
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (match && match[1]) {
+                    filename = match[1].replace(/['"]/g, '');
+                    filename = filename.replace(/_+\.pdf$/i, '.pdf');
+                    filename = filename.trim();
+                }
+            }
+
+            console.log('📄 Имя файла для скачивания:', filename);
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            this.showNotification('✅ PDF отчет готов!', 'success');
+
+        } catch (error) {
+            console.error('❌ Ошибка скачивания PDF:', error);
+            this.showNotification('❌ Ошибка при создании PDF: ' + error.message, 'error');
+        } finally {
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            if (downloadBtn) {
+                downloadBtn.innerHTML = '<span class="button-text">📄 Скачать PDF отчет</span>';
+                downloadBtn.disabled = false;
+            }
         }
     }
 }
-function handleInterpretationTabClick(e) {
-    const btn = e.currentTarget;
-    const interpretation = btn.dataset.interpretation;
 
-    if (!interpretation) return;
-
-    // Деактивируем все кнопки и панели
-    document.querySelectorAll('.interpretation-tabs .tab-btn').forEach(b => {
-        b.classList.remove('active');
-    });
-    document.querySelectorAll('.interpretation-pane').forEach(p => {
-        p.classList.remove('active');
-    });
-
-    // Активируем выбранные
-    btn.classList.add('active');
-    const pane = document.getElementById('interpretation-' + interpretation);
-    if (pane) {
-        pane.classList.add('active');
-
-        // Эффект появления
-        pane.style.animation = 'none';
-        pane.offsetHeight; // reflow
-        pane.style.animation = 'fadeIn 0.5s ease';
-    }
-}
-
-// Добавляем стили для уведомлений
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+// Инициализация
+const numerologyApp = new NumerologyApp();
+window.numerologyApp = numerologyApp;

@@ -37,12 +37,12 @@ function loadAllModels(sequelize) {
                         const model = modelDef(sequelize, DataTypes);
                         if (model && model.name) {
                             models[model.name] = model;
-                            console.log('[ModelsLoader]', `✅ Модель ${model.name} загружена из ${moduleDir}/${file}`);
+                           // console.log('[ModelsLoader]', `✅ Модель ${model.name} загружена из ${moduleDir}/${file}`);
                         }
                     } else if (modelDef && typeof modelDef === 'object' && modelDef.name) {
                         // Если модель уже определена как объект
                         models[modelDef.name] = modelDef;
-                        console.log('[ModelsLoader]', `✅ Модель ${modelDef.name} загружена из ${moduleDir}/${file}`);
+                        //console.log('[ModelsLoader]', `✅ Модель ${modelDef.name} загружена из ${moduleDir}/${file}`);
                     }
                 } catch (error) {
                     console.error(`[ModelsLoader] ❌ Ошибка загрузки ${file}:`, error.message);

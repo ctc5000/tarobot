@@ -9,12 +9,12 @@ module.exports = {
      * Вызывается после загрузки всех моделей
      */
     init: async () => {
-        console.log('[Logs Init]', '🔄 Инициализация модуля логирования...');
+      //  console.log('[Logs Init]', '🔄 Инициализация модуля логирования...');
 
         try {
             // Проверяем наличие таблицы логов
             const logsCount = await models.Log.count();
-            console.log('[Logs Init]', `📊 Всего записей в логах: ${logsCount}`);
+        //    console.log('[Logs Init]', `📊 Всего записей в логах: ${logsCount}`);
 
             // Очистка старых логов при запуске (опционально)
             const logger = new LoggerService();
@@ -32,11 +32,8 @@ module.exports = {
                 }
             });
 
-            if (unreadErrors > 0) {
-                console.log('[Logs Init]', `⚠️ Внимание: ${unreadErrors} непрочитанных ошибок в логах`);
-            }
 
-            console.log('[Logs Init]', '✅ Модуль логирования успешно инициализирован');
+          //  console.log('[Logs Init]', '✅ Модуль логирования успешно инициализирован');
 
             // Возвращаем публичный API модуля для использования в других модулях
             return {

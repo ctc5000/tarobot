@@ -33,7 +33,7 @@ function setupAssociations(models) {
         if (models[modelName].associate) {
             try {
                 models[modelName].associate(models);
-                console.log('[Sequelize]', `🔗 Ассоциации для ${modelName} установлены`);
+              //  console.log('[Sequelize]', `🔗 Ассоциации для ${modelName} установлены`);
             } catch (error) {
                 console.error(`[Sequelize] ❌ Ошибка ассоциаций для ${modelName}:`, error.message);
             }

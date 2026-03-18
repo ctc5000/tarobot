@@ -34,14 +34,35 @@ class SubscriptionsApp {
 
             if (response.ok) {
                 const data = await response.json();
-                window.cabinetApp.user = data.data.user;
-                window.cabinetApp.updateUI();
+                this.user = data.data.user; // Сохраняем в своем свойстве
+                this.updateUI(); // Обновляем UI своими методами
             } else if (response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
             }
         } catch (error) {
             console.error('Error loading user data:', error);
+        }
+    }
+
+    // Добавляем метод updateUI для обновления баланса
+    updateUI() {
+        // Обновляем баланс на странице
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        if (balanceDisplay && this.user) {
+            balanceDisplay.innerHTML = `
+                <span class="balance-label">Баланс:</span>
+                <span class="balance-amount">${this.user.balance} ₽</span>
+                <button class="btn btn-primary btn-sm" onclick="window.location.href='/cabinet/balance'">
+                    <i class="fas fa-plus"></i> Пополнить
+                </button>
+            `;
+        }
+
+        // Обновляем баланс в других местах, если нужно
+        const currentBalance = document.getElementById('currentBalance');
+        if (currentBalance && this.user) {
+            currentBalance.textContent = `${this.user.balance} ₽`;
         }
     }
 

@@ -13,6 +13,9 @@
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="/core/css/core.css">
+
+    <!-- History CSS -->
+    <link rel="stylesheet" href="/core/css/history.css">
 </head>
 <body>
 <!-- Гамбургер-меню -->
@@ -38,32 +41,13 @@
     </div>
 
     <nav class="mobile-nav" id="mobileNav">
-        <a href="/" class="mobile-nav-link">
-            <span class="nav-icon">🏠</span>
-            <span class="nav-text">Главная</span>
-        </a>
-        <a href="/numerology" class="mobile-nav-link">
-            <span class="nav-icon">🔢</span>
-            <span class="nav-text">Нумерология</span>
-        </a>
-        <a href="/tarot" class="mobile-nav-link">
-            <span class="nav-icon">🎴</span>
-            <span class="nav-text">Таро</span>
-        </a>
-        <a href="/cabinet" class="mobile-nav-link">
-            <span class="nav-icon">👤</span>
-            <span class="nav-text">Личный кабинет</span>
-        </a>
-        <a href="/cabinet/history" class="mobile-nav-link active">
-            <span class="nav-icon">📜</span>
-            <span class="nav-text">История</span>
-        </a>
+        <!-- Загружается через core.js из JSON -->
     </nav>
 
     <div class="mobile-menu-footer">
-        <button class="btn btn-primary btn-sm" onclick="cabinetApp.logout()">
-            <i class="fas fa-sign-out-alt"></i> Выйти
-        </button>
+        <div class="auth-buttons">
+            <!-- Загружается через core.js -->
+        </div>
         <p class="copyright">© 2026 АЛГОРИТМ СУДЬБЫ</p>
     </div>
 </div>
@@ -79,15 +63,13 @@
                 </a>
             </div>
 
-            <nav class="main-nav">
-                <a href="/">Главная</a>
-                <a href="/numerology">Нумерология</a>
-                <a href="/tarot">Таро</a>
-                <a href="/cabinet">Кабинет</a>
+            <!-- Десктопная навигация -->
+            <nav class="main-nav" id="mainNav">
+                <!-- Загружается через core.js из JSON -->
             </nav>
 
             <div class="auth-links" id="authLinks">
-                <!-- Загружается через JS -->
+                <!-- Загружается через core.js -->
             </div>
         </div>
     </div>
@@ -102,15 +84,10 @@
 <!-- Основной контент -->
 <main class="main-content">
     <div class="container">
-        <div class="cabinet-header">
-            <h1 class="page-title">История расчетов</h1>
-            <div class="cabinet-balance" id="balanceDisplay">
-                <span class="balance-label">Баланс:</span>
-                <span class="balance-amount">0 ₽</span>
-                <button class="btn btn-primary btn-sm" onclick="window.location.href='/cabinet/balance'">
-                    <i class="fas fa-plus"></i> Пополнить
-                </button>
-            </div>
+        <!-- Заголовок страницы -->
+        <div class="history-header-section">
+            <h1 class="history-title">История расчетов</h1>
+            <p class="history-subtitle">Все ваши нумерологические расчеты в одном месте</p>
         </div>
 
         <div class="cabinet-grid">
@@ -143,12 +120,14 @@
             <!-- Основной контент -->
             <div class="cabinet-content">
                 <!-- Фильтры -->
-                <div class="history-filters glass-card">
+                <div class="history-filters">
                     <div class="filters-grid">
                         <div class="filter-group">
-                            <label for="filterType">Тип расчета</label>
+                            <label for="filterType"><i class="fas fa-filter"></i> Тип расчета</label>
                             <select id="filterType" class="filter-select">
                                 <option value="all">Все типы</option>
+                                <option value="basic">Базовый расчет</option>
+                                <option value="full">Полный расчет</option>
                                 <option value="day">Прогноз на день</option>
                                 <option value="week">Прогноз на неделю</option>
                                 <option value="month">Прогноз на месяц</option>
@@ -158,38 +137,40 @@
                         </div>
 
                         <div class="filter-group">
-                            <label for="filterDateFrom">Дата с</label>
+                            <label for="filterDateFrom"><i class="fas fa-calendar-alt"></i> Дата с</label>
                             <input type="date" id="filterDateFrom" class="filter-input">
                         </div>
 
                         <div class="filter-group">
-                            <label for="filterDateTo">Дата по</label>
+                            <label for="filterDateTo"><i class="fas fa-calendar-alt"></i> Дата по</label>
                             <input type="date" id="filterDateTo" class="filter-input">
                         </div>
                     </div>
 
                     <div class="filters-actions">
-                        <button class="btn btn-primary" onclick="historyApp.applyFilters()">
+                        <button class="btn-filter" onclick="historyApp.applyFilters()">
                             <i class="fas fa-search"></i> Применить
                         </button>
-                        <button class="btn btn-secondary" onclick="historyApp.resetFilters()">
+                        <button class="btn-filter reset" onclick="historyApp.resetFilters()">
                             <i class="fas fa-undo"></i> Сбросить
                         </button>
                     </div>
                 </div>
 
                 <!-- Список расчетов -->
-                <div class="history-list glass-card">
+                <div class="history-list">
                     <div class="history-header">
-                        <h2>Все расчеты</h2>
-                        <div class="history-stats" id="historyStats">
-                            <span>Всего: <span id="totalCount">0</span></span>
+                        <h2><i class="fas fa-calculator"></i> Все расчеты</h2>
+                        <div class="history-stats">
+                            <i class="fas fa-chart-bar"></i> Всего: <span id="totalCount">0</span>
                         </div>
                     </div>
 
                     <div class="calculations-list" id="calculationsList">
                         <!-- Загружается через JS -->
-                        <div class="loading">Загрузка истории...</div>
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Загрузка истории...
+                        </div>
                     </div>
 
                     <!-- Пагинация -->
@@ -213,7 +194,9 @@
             <!-- Загружается через JS -->
         </div>
         <div class="modal-footer">
-            <button class="btn btn-primary" onclick="historyApp.closeModal()">Закрыть</button>
+            <button class="btn btn-primary" onclick="historyApp.closeModal()">
+                <i class="fas fa-check"></i> Закрыть
+            </button>
         </div>
     </div>
 </div>
@@ -230,9 +213,7 @@
                 <p>Система автоматических расчетов на основе древних практик и современной науки</p>
             </div>
             <div class="footer-links">
-                <a href="/about">О проекте</a>
-                <a href="/privacy">Конфиденциальность</a>
-                <a href="/contacts">Контакты</a>
+                <!-- Загружается через core.js из JSON -->
             </div>
         </div>
         <div class="footer-bottom">
@@ -243,6 +224,8 @@
 
 <!-- Скрипты -->
 <script src="/core/js/core.js"></script>
+<script src="/core/js/auth.js"></script>
+<script src="/core/js/cabinet.js"></script>
 <script src="/core/js/history.js"></script>
 </body>
 </html>

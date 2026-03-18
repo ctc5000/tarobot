@@ -9,7 +9,7 @@ let moduleAvailable = true;
 // Пытаемся загрузить модуль логов
 try {
     LoggerService = require('./modules/Logs/Services/LoggerService');
-    console.log(`[logger.js] `, '📝 Модуль логирования доступен');
+    //console.log(`[logger.js] `, '📝 Модуль логирования доступен');
 } catch (error) {
     console.warn('⚠️ Модуль логирования не найден, логгер будет использовать console');
     moduleAvailable = false;

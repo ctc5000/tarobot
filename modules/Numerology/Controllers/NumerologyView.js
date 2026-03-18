@@ -1,9 +1,11 @@
 // modules/Numerology/Controllers/NumerologyView.js
 const NumerologyCalculationService = require('../Services/NumerologyCalculationService');
 const NumerologyPdfService = require('../Services/NumerologyPdfService');
+const BalanceService = require('../../Core/Services/BalanceService');
 
 const calculationService = new NumerologyCalculationService();
 const pdfService = new NumerologyPdfService();
+const balanceService = new BalanceService();
 
 // ========== БЕСПЛАТНЫЙ БАЗОВЫЙ РАСЧЕТ ==========
 
@@ -43,7 +45,7 @@ async function calculateBasic(req, res) {
             const check = await calculationService.checkFreeCalculation(userId, fullName, birthDate);
 
             if (!check.allowed) {
-                return res.status(402).json({  // 402 Payment Required
+                return res.status(402).json({
                     success: false,
                     error: 'Бесплатный расчет уже использован. Для полного расчета войдите в аккаунт и оплатите услугу.',
                     requiresPayment: true
@@ -83,7 +85,7 @@ async function calculateBasic(req, res) {
     }
 }
 
-// ========== ПЛАТНЫЕ РАСЧЕТЫ ==========
+// ========== ПОЛНЫЙ РАСЧЕТ ==========
 
 async function calculateFull(req, res) {
     try {
@@ -105,13 +107,14 @@ async function calculateFull(req, res) {
             });
         }
 
-        // Проверяем баланс (через BalanceService)
-        const BalanceService = require('../../Core/Services/BalanceService');
-        const balanceService = new BalanceService();
+        // Проверяем наличие активной подписки
+        const hasSubscription = await balanceService.hasActiveSubscription(userId);
 
+        // Проверяем баланс с учетом подписки
         const check = await balanceService.hasEnoughBalance(userId, 'forecast_full');
 
-        if (!check.success) {
+        // Если нет подписки и недостаточно средств
+        if (!check.success && !hasSubscription) {
             return res.status(402).json({
                 success: false,
                 error: 'Недостаточно средств на балансе',
@@ -121,20 +124,44 @@ async function calculateFull(req, res) {
             });
         }
 
-        // Списываем средства
-        const charge = await balanceService.chargeForService(userId, 'forecast_full', {
-            fullName,
-            birthDate
-        });
+        // Списываем средства (с учетом подписки)
+        let chargeResult = null;
+        let finalPrice = 500;
 
-        if (!charge.success) {
-            return res.status(500).json({
-                success: false,
-                error: 'Ошибка при списании средств'
-            });
+        if (hasSubscription) {
+            finalPrice = 250; // скидка 50%
         }
 
-        // Выполняем полный расчет
+        if (!hasSubscription) {
+            chargeResult = await balanceService.chargeForService(userId, 'forecast_full', {
+                fullName,
+                birthDate
+            });
+
+            if (!chargeResult.success) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Ошибка при списании средств'
+                });
+            }
+        } else if (hasSubscription) {
+            // С подпиской списываем со скидкой
+            chargeResult = await balanceService.chargeForService(userId, 'forecast_full', {
+                fullName,
+                birthDate,
+                discount: 50,
+                hasSubscription
+            });
+
+            if (!chargeResult.success) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Ошибка при списании средств'
+                });
+            }
+        }
+
+        // Выполняем ПОЛНЫЙ расчет
         const result = await calculationService.calculateFull(fullName, birthDate, userId);
 
         // Сохраняем расчет в историю
@@ -142,14 +169,19 @@ async function calculateFull(req, res) {
             userId,
             'full',
             result.data,
-            charge.service.price,
+            finalPrice,
             null,
             null
         );
 
         // Добавляем ID расчета в ответ (для PDF)
         result.calculationId = calculation.id;
-        result.newBalance = charge.newBalance;
+        if (chargeResult) {
+            result.newBalance = chargeResult.newBalance;
+        }
+        result.discount = hasSubscription ? 50 : 0;
+        result.hasSubscription = hasSubscription;
+        result.finalPrice = finalPrice;
 
         res.json(result);
 
@@ -162,24 +194,67 @@ async function calculateFull(req, res) {
     }
 }
 
+// ========== ПРОГНОЗЫ ==========
+
 async function calculateForecast(req, res) {
     try {
-        const { targetDate } = req.body;
+        const { targetDate,fullName,birthDate} = req.body;
         const userId = req.user.id;
         const forecastType = req.params.type; // day, week, month, year
+        //console.log('📊 Получен запрос на прогноз:', { forecastType, targetDate, userId });
+
+        // Получаем профиль пользователя для ФИО и даты рождения
+        const { models } = require('../../../sequelize');
+        const profile = await models.NumerologyProfile.findOne({
+            where: { userId }
+        });
+
+        if (!profile) {
+            return res.status(400).json({
+                success: false,
+                error: 'Сначала выполните базовый расчет'
+            });
+        }
 
         // Валидация
-        if (!targetDate && forecastType !== 'day') {
+        if (!targetDate) {
             return res.status(400).json({
                 success: false,
                 error: 'Необходимо указать целевую дату'
             });
         }
 
-        // Проверяем баланс
-        const BalanceService = require('../../Core/Services/BalanceService');
-        const balanceService = new BalanceService();
+        // Проверяем наличие активной подписки
+        const hasSubscription = await balanceService.hasActiveSubscription(userId);
 
+        // Если есть подписка, прогноз бесплатный
+        if (hasSubscription) {
+            // Выполняем расчет прогноза через сервис
+            const result = await calculationService.calculateForecast(
+                fullName,
+                birthDate,
+                forecastType,
+                targetDate,
+                userId
+            );
+
+            // Сохраняем расчет
+            await calculationService.saveCalculation(
+                userId,
+                forecastType,
+                result.data,
+                0,
+                targetDate,
+                null
+            );
+
+            result.free = true;
+            result.message = 'Прогноз предоставлен бесплатно по подписке';
+
+            return res.json(result);
+        }
+
+        // Если нет подписки, проверяем баланс
         const check = await balanceService.hasEnoughBalance(userId, `forecast_${forecastType}`);
 
         if (!check.success) {
@@ -194,7 +269,8 @@ async function calculateForecast(req, res) {
 
         // Списываем средства
         const charge = await balanceService.chargeForService(userId, `forecast_${forecastType}`, {
-            targetDate
+            targetDate,
+            forecastType
         });
 
         if (!charge.success) {
@@ -203,6 +279,45 @@ async function calculateForecast(req, res) {
                 error: 'Ошибка при списании средств'
             });
         }
+
+        // Выполняем расчет прогноза через сервис
+        const result = await calculationService.calculateForecast(
+            profile.fullName,
+            profile.birthDate,
+            forecastType,
+            targetDate,
+            userId
+        );
+
+        // Сохраняем расчет
+        await calculationService.saveCalculation(
+            userId,
+            forecastType,
+            result.data,
+            charge.service.price,
+            targetDate,
+            null
+        );
+
+        result.newBalance = charge.newBalance;
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('Error in calculateForecast:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+// ========== СОВМЕСТИМОСТЬ ==========
+
+async function calculateCompatibility(req, res) {
+    try {
+        const { partnerName, partnerBirthDate } = req.body;
+        const userId = req.user.id;
 
         // Получаем профиль пользователя
         const { models } = require('../../../sequelize');
@@ -217,33 +332,64 @@ async function calculateForecast(req, res) {
             });
         }
 
-        // TODO: Реализовать логику прогноза
-        // Здесь должен быть вызов сервиса прогнозов
+        if (!partnerName || !partnerBirthDate) {
+            return res.status(400).json({
+                success: false,
+                error: 'Необходимо указать имя и дату рождения партнера'
+            });
+        }
 
-        const result = {
-            success: true,
-            data: {
-                type: forecastType,
-                targetDate,
-                // ... данные прогноза
-            },
-            newBalance: charge.newBalance
-        };
+        // Проверяем баланс
+        const check = await balanceService.hasEnoughBalance(userId, 'compatibility');
+
+        if (!check.success) {
+            return res.status(402).json({
+                success: false,
+                error: 'Недостаточно средств на балансе',
+                required: check.required,
+                balance: check.balance,
+                price: check.price
+            });
+        }
+
+        // Списываем средства
+        const charge = await balanceService.chargeForService(userId, 'compatibility', {
+            partnerName,
+            partnerBirthDate
+        });
+
+        if (!charge.success) {
+            return res.status(500).json({
+                success: false,
+                error: 'Ошибка при списании средств'
+            });
+        }
+
+        // Выполняем расчет совместимости
+        const result = await calculationService.calculateCompatibility(
+            profile.fullName,
+            profile.birthDate,
+            partnerName,
+            partnerBirthDate,
+            userId
+        );
 
         // Сохраняем расчет
         await calculationService.saveCalculation(
             userId,
-            forecastType,
+            'compatibility',
             result.data,
             charge.service.price,
-            targetDate,
+            null,
             null
         );
+
+        result.newBalance = charge.newBalance;
 
         res.json(result);
 
     } catch (error) {
-        console.error('Error in calculateForecast:', error);
+        console.error('Error in calculateCompatibility:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -322,8 +468,20 @@ async function downloadPdf(req, res) {
             });
         }
 
-        // Генерируем PDF
-        const pdfBuffer = await pdfService.generatePdf(calculation);
+        // Извлекаем данные для PDF
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            numerology: calculation.result?.numerology || {},
+            zodiac: calculation.result?.zodiac || {},
+            fengShui: calculation.result?.fengShui || {},
+            tarot: calculation.result?.tarot || {},
+            psychology: calculation.result?.psychology || {},
+            patterns: calculation.result?.patterns || []
+        };
+
+        // Генерируем PDF - используем правильное название метода
+        const pdfBuffer = await pdfService.generateNumerologyPDF(pdfData);
 
         // Формируем имя файла
         const filename = `numerology-${calculation.calculationType}-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
@@ -340,12 +498,57 @@ async function downloadPdf(req, res) {
         });
     }
 }
+async function generatePdf(req, res) {
+    try {
+        const userId = req.user.id;
+        const { fullName, birthDate, data } = req.body;
+
+        if (!fullName || !birthDate || !data) {
+            return res.status(400).json({
+                success: false,
+                error: 'Недостаточно данных для генерации PDF'
+            });
+        }
+
+        // Создаем временный объект расчета
+        const calculation = {
+            id: 'temp-' + Date.now(),
+            userId,
+            calculationType: 'full',
+            result: data,
+            price: 0,
+            targetDate: null,
+            createdAt: new Date(),
+            fullName,
+            birthDate
+        };
+
+        // Генерируем PDF
+        const pdfBuffer = await pdfService.generatePdf(calculation);
+
+        // Формируем имя файла
+        const filename = `numerology-report-${new Date().toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in generatePdf:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
 
 module.exports = {
     calculateBasic,
     calculateFull,
     calculateForecast,
+    calculateCompatibility,
     getHistory,
     getCalculation,
-    downloadPdf
+    downloadPdf,
+    generatePdf
 };

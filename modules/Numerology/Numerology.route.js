@@ -47,6 +47,18 @@ const NumerologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyn
         );
     }
 
+    // Совместимость
+    if (routeController.calculateCompatibility) {
+        app.post(
+            '/api/numerology/compatibility',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.calculateCompatibility)
+        );
+    }
+
     // История расчетов
     if (routeController.getHistory) {
         app.get(

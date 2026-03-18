@@ -1,35 +1,48 @@
 // modules/Core/Services/BalanceService.js
-const { models } = require('../../../sequelize');
-const { Op, fn, literal, col} = require('sequelize');
+const { models, sequelize } = require('../../../sequelize');
+const { Op, fn, literal, col } = require('sequelize');
 
 class BalanceService {
     /**
      * Проверка достаточности средств
      */
     async hasEnoughBalance(userId, serviceCode) {
-        const user = await models.User.findByPk(userId);
-        const service = await models.Service.findOne({
-            where: { code: serviceCode, isActive: true }
-        });
+        try {
+            const user = await models.User.findByPk(userId);
+            const service = await models.Service.findOne({
+                where: { code: serviceCode, isActive: true }
+            });
 
-        if (!user || !service) {
-            return { success: false, error: 'User or service not found' };
+            if (!user || !service) {
+                return {
+                    success: false,
+                    error: 'Пользователь или услуга не найдены'
+                };
+            }
+
+            const hasEnough = parseFloat(user.balance) >= parseFloat(service.price);
+
+            return {
+                success: hasEnough,
+                balance: parseFloat(user.balance),
+                price: parseFloat(service.price),
+                required: hasEnough ? 0 : parseFloat(service.price) - parseFloat(user.balance),
+                user,
+                service
+            };
+        } catch (error) {
+            console.error('Error in hasEnoughBalance:', error);
+            return {
+                success: false,
+                error: error.message
+            };
         }
-
-        const hasEnough = parseFloat(user.balance) >= parseFloat(service.price);
-        return {
-            success: hasEnough,
-            balance: user.balance,
-            price: service.price,
-            required: parseFloat(service.price) - parseFloat(user.balance)
-        };
     }
 
     /**
      * Списание средств за услугу
      */
     async chargeForService(userId, serviceCode, metadata = {}) {
-        const sequelize = require('../../../sequelize');
         const transaction = await sequelize.transaction();
 
         try {
@@ -45,14 +58,25 @@ class BalanceService {
             });
 
             if (!user || !service) {
-                throw new Error('User or service not found');
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Пользователь или услуга не найдены'
+                };
             }
 
             const balance = parseFloat(user.balance);
             const price = parseFloat(service.price);
 
             if (balance < price) {
-                throw new Error('Insufficient balance');
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Недостаточно средств',
+                    required: price - balance,
+                    balance,
+                    price
+                };
             }
 
             // Обновляем баланс пользователя
@@ -86,6 +110,122 @@ class BalanceService {
 
         } catch (error) {
             await transaction.rollback();
+            console.error('Error in chargeForService:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Списание средств за услугу с учетом подписки
+     */
+    async chargeForServiceWithSubscription(userId, serviceCode, metadata = {}) {
+        const transaction = await sequelize.transaction();
+
+        try {
+            // Проверяем наличие активной подписки
+            const hasSubscription = await this.hasActiveSubscription(userId);
+
+            if (hasSubscription && ['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(serviceCode)) {
+                // Для подписчиков прогнозы бесплатны
+                await transaction.commit();
+                return {
+                    success: true,
+                    free: true,
+                    message: 'Услуга предоставлена бесплатно по подписке',
+                    newBalance: null,
+                    service: null
+                };
+            }
+
+            // Проверяем, есть ли скидка по подписке для полного расчета
+            let price = null;
+            let service = await models.Service.findOne({
+                where: { code: serviceCode, isActive: true },
+                transaction
+            });
+
+            if (!service) {
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Услуга не найдена'
+                };
+            }
+
+            price = parseFloat(service.price);
+
+            // Если есть подписка и это полный расчет - скидка 50%
+            if (hasSubscription && serviceCode === 'forecast_full') {
+                price = price * 0.5;
+            }
+
+            // Блокируем запись пользователя
+            const user = await models.User.findByPk(userId, {
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
+
+            if (!user) {
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Пользователь не найден'
+                };
+            }
+
+            const balance = parseFloat(user.balance);
+
+            if (balance < price) {
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Недостаточно средств',
+                    required: price - balance,
+                    balance,
+                    price
+                };
+            }
+
+            // Обновляем баланс пользователя
+            const newBalance = balance - price;
+            await user.update({ balance: newBalance }, { transaction });
+
+            // Создаем запись транзакции
+            const paymentTransaction = await models.Transaction.create({
+                userId,
+                type: 'payment',
+                amount: -price,
+                balanceBefore: balance,
+                balanceAfter: newBalance,
+                description: `Оплата услуги: ${service.name}${hasSubscription && serviceCode === 'forecast_full' ? ' (скидка 50%)' : ''}`,
+                status: 'completed',
+                meta: {
+                    serviceCode,
+                    serviceName: service.name,
+                    originalPrice: parseFloat(service.price),
+                    discount: hasSubscription && serviceCode === 'forecast_full' ? 50 : 0,
+                    hasSubscription,
+                    ...metadata
+                }
+            }, { transaction });
+
+            await transaction.commit();
+
+            return {
+                success: true,
+                transaction: paymentTransaction,
+                newBalance,
+                service,
+                discount: hasSubscription && serviceCode === 'forecast_full' ? 50 : 0,
+                originalPrice: parseFloat(service.price)
+            };
+
+        } catch (error) {
+            await transaction.rollback();
+            console.error('Error in chargeForServiceWithSubscription:', error);
             return {
                 success: false,
                 error: error.message
@@ -97,7 +237,6 @@ class BalanceService {
      * Пополнение баланса
      */
     async deposit(userId, amount, paymentMethod, paymentId, paymentDetails = {}) {
-        const sequelize = require('../../../sequelize');
         const transaction = await sequelize.transaction();
 
         try {
@@ -107,7 +246,11 @@ class BalanceService {
             });
 
             if (!user) {
-                throw new Error('User not found');
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Пользователь не найден'
+                };
             }
 
             const balanceBefore = parseFloat(user.balance);
@@ -139,6 +282,7 @@ class BalanceService {
 
         } catch (error) {
             await transaction.rollback();
+            console.error('Error in deposit:', error);
             return {
                 success: false,
                 error: error.message
@@ -150,121 +294,160 @@ class BalanceService {
      * Получение истории транзакций пользователя
      */
     async getUserTransactions(userId, limit = 50, offset = 0) {
-        const transactions = await models.Transaction.findAndCountAll({
-            where: { userId },
-            order: [['createdAt', 'DESC']],
-            limit,
-            offset,
-            include: [
-                {
-                    model: models.Calculation,
-                    as: 'calculation',
-                    required: false,
-                    include: [
-                        {
-                            model: models.Service,
-                            as: 'service',
-                            attributes: ['id', 'name', 'code']
-                        }
-                    ]
-                }
-            ]
-        });
+        try {
+            const transactions = await models.Transaction.findAndCountAll({
+                where: { userId },
+                order: [['createdAt', 'DESC']],
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                include: [
+                    {
+                        model: models.Calculation,
+                        as: 'calculation',
+                        required: false,
+                        include: [
+                            {
+                                model: models.Service,
+                                as: 'service',
+                                attributes: ['id', 'name', 'code']
+                            }
+                        ]
+                    }
+                ]
+            });
 
-        return {
-            total: transactions.count,
-            transactions: transactions.rows,
-            limit,
-            offset
-        };
+            return {
+                total: transactions.count,
+                transactions: transactions.rows,
+                limit: parseInt(limit),
+                offset: parseInt(offset)
+            };
+        } catch (error) {
+            console.error('Error in getUserTransactions:', error);
+            throw error;
+        }
     }
 
     /**
      * Получение статистики по транзакциям
      */
     async getUserTransactionStats(userId) {
-        const stats = await models.Transaction.findOne({
-            where: { userId },
-            attributes: [
-                [fn('SUM', literal("CASE WHEN type = 'deposit' THEN amount ELSE 0 END")), 'totalDeposits'],
-                [fn('SUM', literal("CASE WHEN type = 'payment' THEN ABS(amount) ELSE 0 END")), 'totalSpent'],
-                [fn('COUNT', literal("CASE WHEN type = 'payment' THEN 1 END")), 'totalPurchases'],
-                [fn('MAX', col('createdAt')), 'lastTransaction']
-            ],
-            raw: true
-        });
+        try {
+            const stats = await models.Transaction.findOne({
+                where: { userId },
+                attributes: [
+                    [fn('SUM', literal("CASE WHEN type = 'deposit' THEN amount ELSE 0 END")), 'totalDeposits'],
+                    [fn('SUM', literal("CASE WHEN type = 'payment' THEN ABS(amount) ELSE 0 END")), 'totalSpent'],
+                    [fn('COUNT', literal("CASE WHEN type = 'payment' THEN 1 END")), 'totalPurchases'],
+                    [fn('MAX', col('createdAt')), 'lastTransaction']
+                ],
+                raw: true
+            });
 
-        const user = await models.User.findByPk(userId, {
-            attributes: ['balance']
-        });
+            const user = await models.User.findByPk(userId, {
+                attributes: ['balance']
+            });
 
-        return {
-            currentBalance: user ? user.balance : 0,
-            totalDeposits: parseFloat(stats.totalDeposits) || 0,
-            totalSpent: parseFloat(stats.totalSpent) || 0,
-            totalPurchases: parseInt(stats.totalPurchases) || 0,
-            lastTransaction: stats.lastTransaction
-        };
+            return {
+                currentBalance: user ? parseFloat(user.balance) : 0,
+                totalDeposits: parseFloat(stats?.totalDeposits) || 0,
+                totalSpent: parseFloat(stats?.totalSpent) || 0,
+                totalPurchases: parseInt(stats?.totalPurchases) || 0,
+                lastTransaction: stats?.lastTransaction || null
+            };
+        } catch (error) {
+            console.error('Error in getUserTransactionStats:', error);
+            throw error;
+        }
     }
 
     /**
      * Проверка активной подписки
      */
     async hasActiveSubscription(userId, serviceCode = null) {
-        const where = {
-            userId,
-            status: 'active',
-            endDate: { [Op.gte]: new Date() }
-        };
+        try {
+            const where = {
+                userId,
+                status: 'active',
+                endDate: { [Op.gte]: new Date() }
+            };
 
-        if (serviceCode) {
-            where['$service.code$'] = serviceCode;
-        }
-
-        const subscription = await models.Subscription.findOne({
-            where,
-            include: [
+            const include = [
                 {
                     model: models.Service,
                     as: 'service',
                     required: true
                 }
-            ]
-        });
+            ];
 
-        return !!subscription;
+            if (serviceCode) {
+                include[0].where = { code: serviceCode };
+            }
+
+            const subscription = await models.Subscription.findOne({
+                where,
+                include
+            });
+
+            return !!subscription;
+        } catch (error) {
+            console.error('Error in hasActiveSubscription:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Получение активной подписки пользователя
+     */
+    async getActiveSubscription(userId) {
+        try {
+            const subscription = await models.Subscription.findOne({
+                where: {
+                    userId,
+                    status: 'active',
+                    endDate: { [Op.gte]: new Date() }
+                },
+                include: [
+                    {
+                        model: models.Service,
+                        as: 'service',
+                        required: true
+                    }
+                ]
+            });
+
+            return subscription;
+        } catch (error) {
+            console.error('Error in getActiveSubscription:', error);
+            return null;
+        }
     }
 
     /**
      * Активация подписки
      */
     async activateSubscription(userId, serviceId, paymentId = null) {
-        const sequelize = require('../../../sequelize');
         const transaction = await sequelize.transaction();
 
         try {
             const service = await models.Service.findByPk(serviceId, { transaction });
 
             if (!service || service.type !== 'subscription' || !service.isActive) {
-                throw new Error('Invalid subscription service');
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Неверная услуга подписки'
+                };
             }
 
-            // Деактивируем предыдущие активные подписки того же типа
+            // Деактивируем предыдущие активные подписки
             await models.Subscription.update(
                 { status: 'cancelled' },
                 {
                     where: {
                         userId,
-                        status: 'active',
-                        '$service.category$': service.category
+                        status: 'active'
                     },
-                    include: [
-                        {
-                            model: models.Service,
-                            as: 'service',
-                            required: true
-                        }
-                    ],
                     transaction
                 }
             );
@@ -295,6 +478,7 @@ class BalanceService {
 
         } catch (error) {
             await transaction.rollback();
+            console.error('Error in activateSubscription:', error);
             return {
                 success: false,
                 error: error.message
@@ -306,47 +490,69 @@ class BalanceService {
      * Отмена подписки
      */
     async cancelSubscription(subscriptionId, userId) {
-        const subscription = await models.Subscription.findOne({
-            where: {
-                id: subscriptionId,
-                userId,
-                status: 'active'
+        try {
+            const subscription = await models.Subscription.findOne({
+                where: {
+                    id: subscriptionId,
+                    userId,
+                    status: 'active'
+                }
+            });
+
+            if (!subscription) {
+                return {
+                    success: false,
+                    error: 'Активная подписка не найдена'
+                };
             }
-        });
 
-        if (!subscription) {
-            throw new Error('Active subscription not found');
+            await subscription.update({
+                status: 'cancelled',
+                cancelledAt: new Date()
+            });
+
+            return {
+                success: true,
+                subscription
+            };
+        } catch (error) {
+            console.error('Error in cancelSubscription:', error);
+            return {
+                success: false,
+                error: error.message
+            };
         }
-
-        await subscription.update({
-            status: 'cancelled',
-            cancelledAt: new Date()
-        });
-
-        return {
-            success: true,
-            subscription
-        };
     }
 
     /**
      * Обработка возврата средств
      */
     async refund(userId, originalTransactionId, amount, reason) {
-        const sequelize = require('../../../sequelize');
         const transaction = await sequelize.transaction();
 
         try {
             const originalTransaction = await models.Transaction.findByPk(originalTransactionId, { transaction });
 
             if (!originalTransaction || originalTransaction.userId !== userId) {
-                throw new Error('Original transaction not found');
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Исходная транзакция не найдена'
+                };
             }
 
             const user = await models.User.findByPk(userId, {
                 transaction,
                 lock: transaction.LOCK.UPDATE
             });
+
+            if (!user) {
+                await transaction.rollback();
+                return {
+                    success: false,
+                    error: 'Пользователь не найден'
+                };
+            }
 
             const balanceBefore = parseFloat(user.balance);
             const refundAmount = parseFloat(amount);
@@ -378,6 +584,7 @@ class BalanceService {
 
         } catch (error) {
             await transaction.rollback();
+            console.error('Error in refund:', error);
             return {
                 success: false,
                 error: error.message

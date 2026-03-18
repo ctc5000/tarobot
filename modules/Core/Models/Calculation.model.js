@@ -25,7 +25,7 @@ module.exports = (sequelize) => {
             }
         },
         calculationType: {
-            type: DataTypes.ENUM('day', 'week', 'month', 'year', 'compatibility', 'basic'),
+            type: DataTypes.ENUM('day', 'week', 'month', 'year', 'compatibility', 'basic', 'full_report'),
             allowNull: false
         },
         targetDate: {

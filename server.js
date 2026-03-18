@@ -76,8 +76,8 @@ app.use(cors());
 
 // ==================== СТАТИЧЕСКИЕ ФАЙЛЫ ====================
 // Это должно быть ПЕРЕД маршрутами, но ПОСЛЕ middleware
-//app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.static(path.join(__dirname, 'public')));
+//app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // ==================== МИДЛВАРЫ ====================
 
 // Мидлвар для определения источника (Telegram/Web)
@@ -685,8 +685,8 @@ async function loadModules() {
                 if (fs.existsSync(routePath)) {
                     const route = require(routePath);
                     route(app, moduleDir.toLowerCase(), controller, makeHandlerAwareOfAsyncErrors);
-                    console.log(`🔥 Маршруты для ${moduleName} зарегистрированы в ${new Date().toISOString()}`);
-                    console.log(`✅ Модуль "${moduleName}" загружен`);
+                  //  console.log(`🔥 Маршруты для ${moduleName} зарегистрированы в ${new Date().toISOString()}`);
+                   // console.log(`✅ Модуль "${moduleName}" загружен`);
 
                     loadedModules.push({
                         name: moduleName,
@@ -703,13 +703,13 @@ async function loadModules() {
     // Сортируем модули по order
     loadedModules.sort((a, b) => a.order - b.order);
 
-    console.log(`✅ Загружено ${loadedModules.length} модулей`);
+    //console.log(`✅ Загружено ${loadedModules.length} модулей`);
     return loadedModules;
 }
 
 // Функция инициализации модулей
 async function initModules(loadedModules) {
-    console.log('\n🔄 Инициализация модулей...');
+    //console.log('\n🔄 Инициализация модулей...');
 
     const results = {
         success: [],
@@ -722,22 +722,22 @@ async function initModules(loadedModules) {
 
         if (fs.existsSync(initPath)) {
             try {
-                console.log(`🔄 Инициализация модуля "${module.name}"...`);
+               // console.log(`🔄 Инициализация модуля "${module.name}"...`);
 
                 const initModule = require(initPath);
 
                 if (typeof initModule === 'function') {
                     await initModule();
                     results.success.push(module.name);
-                    console.log(`✅ Модуль "${module.name}" инициализирован`);
+                   // console.log(`✅ Модуль "${module.name}" инициализирован`);
                 } else if (typeof initModule.init === 'function') {
                     await initModule.init();
                     results.success.push(module.name);
-                    console.log(`✅ Модуль "${module.name}" инициализирован`);
+                   // console.log(`✅ Модуль "${module.name}" инициализирован`);
                 } else if (typeof initModule.initTelegramModule === 'function') {
                     await initModule.initTelegramModule();
                     results.success.push(module.name);
-                    console.log(`✅ Модуль "${module.name}" инициализирован`);
+                    //console.log(`✅ Модуль "${module.name}" инициализирован`);
                 } else {
                     console.log(`⚠️ Модуль "${module.name}" не содержит функцию инициализации`);
                     results.skipped.push(module.name);
