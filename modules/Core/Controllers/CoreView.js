@@ -3,6 +3,7 @@ const AuthService = require('../Services/AuthService');
 const BalanceService = require('../Services/BalanceService');
 const TokenService = require('../Services/TokenService');
 const { models } = require('../../../sequelize');
+const {Op} = require("sequelize");
 
 const authService = new AuthService();
 const balanceService = new BalanceService();
@@ -451,7 +452,6 @@ async function getTransactionStats(req, res) {
         const userId = req.user.id;
 
         const stats = await balanceService.getUserTransactionStats(userId);
-
         res.json({
             success: true,
             data: stats
@@ -749,7 +749,7 @@ async function getActiveSubscription(req, res) {
             where: {
                 userId,
                 status: 'active',
-                endDate: { [models.Sequelize.Op.gt]: new Date() }
+                endDate: { [Op.gt]: new Date() }
             },
             include: [
                 {
@@ -793,6 +793,196 @@ async function cancelSubscription(req, res) {
     }
 }
 
+// ========== ПОКУПКА ПОДПИСКИ ==========
+
+async function buySubscription(req, res) {
+    try {
+        const userId = req.user.id;
+        const { serviceId } = req.body;
+
+        if (!serviceId) {
+            return res.status(400).json({
+                success: false,
+                error: 'serviceId is required'
+            });
+        }
+
+        // Получаем сервис подписки
+        const service = await models.Service.findOne({
+            where: {
+                id: serviceId,
+                type: 'subscription',
+                isActive: true
+            }
+        });
+
+        if (!service) {
+            return res.status(404).json({
+                success: false,
+                error: 'Подписка не найдена'
+            });
+        }
+
+        // Проверяем баланс
+        const user = await models.User.findByPk(userId);
+        if (parseFloat(user.balance) < parseFloat(service.price)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Недостаточно средств на балансе'
+            });
+        }
+
+        // Импортируем sequelize правильно
+        const { sequelize } = require('../../../sequelize');
+
+        // Начинаем транзакцию
+        const t = await sequelize.transaction();
+
+        try {
+            // Списываем средства
+            const balanceBefore = parseFloat(user.balance);
+            const balanceAfter = balanceBefore - parseFloat(service.price);
+
+            await user.update({ balance: balanceAfter }, { transaction: t });
+
+            // Деактивируем предыдущие активные подписки
+            await models.Subscription.update(
+                { status: 'cancelled' },
+                {
+                    where: {
+                        userId,
+                        status: 'active'
+                    },
+                    transaction: t
+                }
+            );
+
+            // Создаем новую подписку
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + service.duration);
+
+            const subscription = await models.Subscription.create({
+                userId,
+                serviceId: service.id,
+                startDate,
+                endDate,
+                status: 'active',
+                price: service.price,
+                autoRenew: false
+            }, { transaction: t });
+
+            // Создаем транзакцию
+            await models.Transaction.create({
+                userId,
+                type: 'payment',
+                amount: -service.price,
+                balanceBefore,
+                balanceAfter,
+                description: `Оплата подписки: ${service.name}`,
+                status: 'completed'
+            }, { transaction: t });
+
+            await t.commit();
+
+            res.json({
+                success: true,
+                data: {
+                    subscription,
+                    newBalance: balanceAfter
+                }
+            });
+
+        } catch (error) {
+            await t.rollback();
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error in buySubscription:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+// ========== РАСЧЕТЫ ==========
+
+async function getUserCalculations(req, res) {
+    try {
+        const userId = req.user.id;
+        const { limit = 10, page = 1 } = req.query;
+        const offset = (page - 1) * limit;
+
+        const calculations = await models.Calculation.findAndCountAll({
+            where: { userId },
+            limit: parseInt(limit),
+            offset,
+            order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: models.Service,
+                    as: 'service',
+                    attributes: ['id', 'name', 'code', 'price']
+                }
+            ]
+        });
+
+        res.json({
+            success: true,
+            data: {
+                calculations: calculations.rows,
+                total: calculations.count,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(calculations.count / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error in getUserCalculations:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+async function getCalculationById(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await models.Calculation.findOne({
+            where: { id, userId },
+            include: [
+                {
+                    model: models.Service,
+                    as: 'service',
+                    attributes: ['id', 'name', 'code', 'price']
+                }
+            ]
+        });
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: calculation
+        });
+    } catch (error) {
+        console.error('Error in getCalculationById:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 // ========== ЭКСПОРТ ==========
 
 module.exports = {
@@ -830,5 +1020,10 @@ module.exports = {
     // Подписки
     getSubscriptions,
     getActiveSubscription,
-    cancelSubscription
+    cancelSubscription,
+    buySubscription,
+
+    //Расчеты
+    getUserCalculations,
+    getCalculationById
 };

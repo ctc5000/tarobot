@@ -1,6 +1,6 @@
 // modules/Core/Services/BalanceService.js
 const { models } = require('../../../sequelize');
-const { Op } = require('sequelize');
+const { Op, fn, literal, col} = require('sequelize');
 
 class BalanceService {
     /**
@@ -186,10 +186,10 @@ class BalanceService {
         const stats = await models.Transaction.findOne({
             where: { userId },
             attributes: [
-                [models.Sequelize.fn('SUM', models.Sequelize.literal("CASE WHEN type = 'deposit' THEN amount ELSE 0 END")), 'totalDeposits'],
-                [models.Sequelize.fn('SUM', models.Sequelize.literal("CASE WHEN type = 'payment' THEN ABS(amount) ELSE 0 END")), 'totalSpent'],
-                [models.Sequelize.fn('COUNT', models.Sequelize.literal("CASE WHEN type = 'payment' THEN 1 END")), 'totalPurchases'],
-                [models.Sequelize.fn('MAX', models.Sequelize.col('createdAt')), 'lastTransaction']
+                [fn('SUM', literal("CASE WHEN type = 'deposit' THEN amount ELSE 0 END")), 'totalDeposits'],
+                [fn('SUM', literal("CASE WHEN type = 'payment' THEN ABS(amount) ELSE 0 END")), 'totalSpent'],
+                [fn('COUNT', literal("CASE WHEN type = 'payment' THEN 1 END")), 'totalPurchases'],
+                [fn('MAX', col('createdAt')), 'lastTransaction']
             ],
             raw: true
         });

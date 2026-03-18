@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История расчетов | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+</head>
+<body>
+<!-- Гамбургер-меню -->
+<button class="menu-toggle" id="menuToggle">
+    <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</button>
+
+<!-- Оверлей -->
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- Мобильное меню -->
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="header-left">
+            <span class="logo-icon">⛤</span>
+            <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose">×</button>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="/" class="mobile-nav-link">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Главная</span>
+        </a>
+        <a href="/numerology" class="mobile-nav-link">
+            <span class="nav-icon">🔢</span>
+            <span class="nav-text">Нумерология</span>
+        </a>
+        <a href="/tarot" class="mobile-nav-link">
+            <span class="nav-icon">🎴</span>
+            <span class="nav-text">Таро</span>
+        </a>
+        <a href="/cabinet" class="mobile-nav-link">
+            <span class="nav-icon">👤</span>
+            <span class="nav-text">Личный кабинет</span>
+        </a>
+        <a href="/cabinet/history" class="mobile-nav-link active">
+            <span class="nav-icon">📜</span>
+            <span class="nav-text">История</span>
+        </a>
+    </nav>
+
+    <div class="mobile-menu-footer">
+        <button class="btn btn-primary btn-sm" onclick="cabinetApp.logout()">
+            <i class="fas fa-sign-out-alt"></i> Выйти
+        </button>
+        <p class="copyright">© 2026 АЛГОРИТМ СУДЬБЫ</p>
+    </div>
+</div>
+
+<!-- Шапка -->
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+                </a>
+            </div>
+
+            <nav class="main-nav">
+                <a href="/">Главная</a>
+                <a href="/numerology">Нумерология</a>
+                <a href="/tarot">Таро</a>
+                <a href="/cabinet">Кабинет</a>
+            </nav>
+
+            <div class="auth-links" id="authLinks">
+                <!-- Загружается через JS -->
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Основной фон -->
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+</div>
+
+<!-- Основной контент -->
+<main class="main-content">
+    <div class="container">
+        <div class="cabinet-header">
+            <h1 class="page-title">История расчетов</h1>
+            <div class="cabinet-balance" id="balanceDisplay">
+                <span class="balance-label">Баланс:</span>
+                <span class="balance-amount">0 ₽</span>
+                <button class="btn btn-primary btn-sm" onclick="window.location.href='/cabinet/balance'">
+                    <i class="fas fa-plus"></i> Пополнить
+                </button>
+            </div>
+        </div>
+
+        <div class="cabinet-grid">
+            <!-- Боковое меню -->
+            <aside class="cabinet-sidebar">
+                <nav class="cabinet-nav">
+                    <a href="/cabinet" class="cabinet-nav-link">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Обзор</span>
+                    </a>
+                    <a href="/cabinet/profile" class="cabinet-nav-link">
+                        <i class="fas fa-user"></i>
+                        <span>Мой профиль</span>
+                    </a>
+                    <a href="/cabinet/balance" class="cabinet-nav-link">
+                        <i class="fas fa-wallet"></i>
+                        <span>Баланс</span>
+                    </a>
+                    <a href="/cabinet/history" class="cabinet-nav-link active">
+                        <i class="fas fa-history"></i>
+                        <span>История расчетов</span>
+                    </a>
+                    <a href="/cabinet/subscriptions" class="cabinet-nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Подписки</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Основной контент -->
+            <div class="cabinet-content">
+                <!-- Фильтры -->
+                <div class="history-filters glass-card">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="filterType">Тип расчета</label>
+                            <select id="filterType" class="filter-select">
+                                <option value="all">Все типы</option>
+                                <option value="day">Прогноз на день</option>
+                                <option value="week">Прогноз на неделю</option>
+                                <option value="month">Прогноз на месяц</option>
+                                <option value="year">Прогноз на год</option>
+                                <option value="compatibility">Совместимость</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterDateFrom">Дата с</label>
+                            <input type="date" id="filterDateFrom" class="filter-input">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterDateTo">Дата по</label>
+                            <input type="date" id="filterDateTo" class="filter-input">
+                        </div>
+                    </div>
+
+                    <div class="filters-actions">
+                        <button class="btn btn-primary" onclick="historyApp.applyFilters()">
+                            <i class="fas fa-search"></i> Применить
+                        </button>
+                        <button class="btn btn-secondary" onclick="historyApp.resetFilters()">
+                            <i class="fas fa-undo"></i> Сбросить
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Список расчетов -->
+                <div class="history-list glass-card">
+                    <div class="history-header">
+                        <h2>Все расчеты</h2>
+                        <div class="history-stats" id="historyStats">
+                            <span>Всего: <span id="totalCount">0</span></span>
+                        </div>
+                    </div>
+
+                    <div class="calculations-list" id="calculationsList">
+                        <!-- Загружается через JS -->
+                        <div class="loading">Загрузка истории...</div>
+                    </div>
+
+                    <!-- Пагинация -->
+                    <div class="pagination" id="pagination">
+                        <!-- Загружается через JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Модальное окно деталей расчета -->
+<div id="calculationModal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h2 id="modalTitle">Детали расчета</h2>
+            <span class="close" onclick="historyApp.closeModal()">×</span>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Загружается через JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="historyApp.closeModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Футер -->
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
+                </div>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Скрипты -->
+<script src="/core/js/core.js"></script>
+<script src="/core/js/history.js"></script>
+</body>
+</html>

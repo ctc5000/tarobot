@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+</head>
+<body>
+<!-- Гамбургер-меню -->
+<button class="menu-toggle" id="menuToggle">
+    <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+</button>
+
+<!-- Оверлей -->
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- Мобильное меню -->
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="header-left">
+            <span class="logo-icon">⛤</span>
+            <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose">×</button>
+    </div>
+
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="/" class="mobile-nav-link">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Главная</span>
+        </a>
+        <a href="/numerology" class="mobile-nav-link">
+            <span class="nav-icon">🔢</span>
+            <span class="nav-text">Нумерология</span>
+        </a>
+        <a href="/tarot" class="mobile-nav-link">
+            <span class="nav-icon">🎴</span>
+            <span class="nav-text">Таро</span>
+        </a>
+    </nav>
+
+    <div class="mobile-menu-footer">
+        <div class="auth-buttons">
+            <a href="/login" class="btn btn-outline btn-sm">Войти</a>
+            <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
+        </div>
+        <p class="copyright">© 2026 АЛГОРИТМ СУДЬБЫ</p>
+    </div>
+</div>
+
+<!-- Шапка -->
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+                </a>
+            </div>
+
+            <nav class="main-nav">
+                <a href="/">Главная</a>
+                <a href="/numerology">Нумерология</a>
+                <a href="/tarot">Таро</a>
+                <a href="/natal-chart">Натальная карта</a>
+            </nav>
+
+            <div class="auth-links">
+                <a href="/login" class="btn btn-outline btn-sm">Войти</a>
+                <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Основной фон -->
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+</div>
+
+<!-- Основной контент -->
+<main class="main-content">
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card glass-card">
+                <div class="auth-header">
+                    <span class="auth-icon">⛤</span>
+                    <h1>Вход в систему</h1>
+                    <p>Добро пожаловать обратно</p>
+                </div>
+
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Пароль</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember"> Запомнить меня
+                        </label>
+                        <a href="/reset-password" class="forgot-link">Забыли пароль?</a>
+                    </div>
+
+                    <button type="submit" class="mystic-button">Войти</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+                </div>
+
+                <div class="auth-divider">
+                    <span>или</span>
+                </div>
+
+                <div class="social-login">
+                    <button class="btn-social telegram" onclick="authApp.telegramLogin()">
+                        <i class="fab fa-telegram"></i> Telegram
+                    </button>
+                    <button class="btn-social google" onclick="authApp.googleLogin()">
+                        <i class="fab fa-google"></i> Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Футер -->
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
+                </div>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Скрипты -->
+<script src="/core/js/core.js"></script>
+<script src="/core/js/auth.js"></script>
+</body>
+</html>

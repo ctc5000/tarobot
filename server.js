@@ -76,7 +76,7 @@ app.use(cors());
 
 // ==================== СТАТИЧЕСКИЕ ФАЙЛЫ ====================
 // Это должно быть ПЕРЕД маршрутами, но ПОСЛЕ middleware
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
 
 // ==================== МИДЛВАРЫ ====================
 
@@ -839,37 +839,17 @@ try {
 
 async function startServer() {
     try {
-        // Подключаемся к базе данных
         await sequelize.authenticate();
         console.log('✅ Подключение к базе данных установлено');
 
+        // 1. СНАЧАЛА загружаем модули (API маршруты)
         const loadedModules = await loadModules();
         await initModules(loadedModules);
 
+        // 2. ПОТОМ добавляем статические файлы для других модулей
+        app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
-        // Главная страница
-        app.get('/', (req, res) => {
-            res.sendFile(path.join(__dirname, 'public', 'index.html'));
-        });
-
-        // Страницы практик
-        const pages = [
-            'numerology', 'rodology', 'iching', 'daliuren', 'hermetic',
-            'zoar', 'socionics', 'astropsychology', 'runes', 'natal-chart', 'tarot'
-        ];
-
-        pages.forEach(page => {
-            app.get(`/${page}`, (req, res) => {
-                const filePath = path.join(__dirname, 'public', 'pages', `${page}.html`);
-                if (fs.existsSync(filePath)) {
-                    res.sendFile(filePath);
-                } else {
-                    res.status(404).send('Page not found');
-                }
-            });
-        });
-
-        // Логи - веб-интерфейс (С ПРОВЕРКОЙ, ЧТО ЭТО НЕ API)
+        // Логи - веб-интерфейс
         app.use('/logs', (req, res, next) => {
             if (req.originalUrl.startsWith('/api/logs')) {
                 return next('route');
@@ -891,10 +871,7 @@ async function startServer() {
             res.sendFile(path.join(__dirname, 'modules/Logs/web/index.html'));
         });
 
-        // Показываем все маршруты (для отладки)
-        logAllRoutes();
-
-        // 4. ПОСЛЕ ВСЕХ МАРШРУТОВ - обработчик 404
+        // 3. ПОСЛЕ ВСЕХ МАРШРУТОВ - обработчик 404
         app.use('*', (req, res) => {
             if (req.url.startsWith('/api/')) {
                 res.status(404).json({
@@ -902,68 +879,20 @@ async function startServer() {
                     error: 'API маршрут не найден'
                 });
             } else {
-                res.status(404).send(`
-                    <!DOCTYPE html>
-                    <html lang="ru">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>404 - Страница не найдена</title>
-                        <style>
-                            body { font-family: Arial; text-align: center; padding: 50px; background: #0a0a0f; color: #e5e5e5; }
-                            h1 { color: #c9a54b; font-size: 60px; margin-bottom: 20px; }
-                            a { color: #c9a54b; text-decoration: none; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>404</h1>
-                        <p>Страница не найдена</p>
-                        <a href="/">Вернуться на главную</a>
-                    </body>
-                    </html>
-                `);
+                res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
             }
         });
 
         // Запускаем сервер
         const PORT = process.env.PORT || 3000;
         server.listen(PORT, () => {
-            console.log('\n✨ =============================================== ✨');
+            console.log(`\n✨ =============================================== ✨`);
             console.log(`   🚀 Мистический сервер запущен на порту ${PORT}`);
             console.log(`   🔗 http://localhost:${PORT}`);
+            console.log(`   🔗 http://localhost:${PORT}/login`);
+            console.log(`   🔗 http://localhost:${PORT}/register`);
+            console.log(`   🔗 http://localhost:${PORT}/cabinet`);
             console.log('✨ =============================================== ✨\n');
-
-            console.log('📚 Доступные практики:');
-            console.log('   ────────────────────────────────────────────────');
-            console.log(`   🔢 Нумерология:        http://localhost:${PORT}/numerology`);
-            console.log(`   🌠 Натальная карта:    http://localhost:${PORT}/natal-chart`);
-            console.log(`   🎴 Таро:               http://localhost:${PORT}/tarot`);
-            console.log(`   🧠 Соционика:          http://localhost:${PORT}/socionics`);
-            console.log(`   🌞 Астропсихология:    http://localhost:${PORT}/astropsychology`);
-            console.log(`   ᚠ Руны:                http://localhost:${PORT}/runes`);
-            console.log(`   🌳 Родология:          http://localhost:${PORT}/rodology`);
-            console.log(`   📜 И-Цзин:              http://localhost:${PORT}/iching`);
-            console.log(`   🌀 Да Лю Жэнь:          http://localhost:${PORT}/daliuren`);
-            console.log(`   ⚜️ Герметизм:           http://localhost:${PORT}/hermetic`);
-            console.log(`   📖 Зоар:                http://localhost:${PORT}/zoar`);
-            console.log('   ────────────────────────────────────────────────\n');
-
-            console.log('📡 API маршруты:');
-            console.log('   ────────────────────────────────────────────────');
-            console.log('   POST /api/calculate/numerology     - расчет нумерологии');
-            console.log('   POST /api/calculate/natal-chart    - натальная карта');
-            console.log('   POST /api/tarot/reading            - гадание на Таро');
-            console.log('   POST /api/tarot/quick              - быстрый расклад');
-            console.log('   POST /api/calculate/:practice      - универсальный API');
-            console.log('   GET  /api/version                  - версия приложения');
-            console.log('   ────────────────────────────────────────────────\n');
-
-            console.log('📊 Модули:');
-            console.log('   ────────────────────────────────────────────────');
-            console.log(`   📋 API логов:          http://localhost:${PORT}/api/logs`);
-            console.log(`   📋 Веб-интерфейс логов: http://localhost:${PORT}/logs`);
-            console.log('   ────────────────────────────────────────────────\n');
-
-            console.log('✅ Сервер успешно запущен и готов к работе!\n');
         });
 
     } catch (error) {

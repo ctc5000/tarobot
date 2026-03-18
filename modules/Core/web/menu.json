@@ -1,0 +1,34 @@
+{
+  "mainNav": [
+    { "name": "Главная", "url": "/", "icon": "" },
+    { "name": "Нумерология", "url": "/numerology", "icon": "" },
+    { "name": "Натальная карта", "url": "/natal-chart", "icon": "" },
+    { "name": "Таро", "url": "/tarot", "icon": "" },
+    { "name": "Соционика", "url": "/socionics", "icon": "" }
+  ],
+  "cabinetNav": [
+    { "name": "Обзор", "url": "/cabinet", "icon": "fas fa-chart-pie" },
+    { "name": "Мой профиль", "url": "/cabinet/profile", "icon": "fas fa-user" },
+    { "name": "Баланс", "url": "/cabinet/balance", "icon": "fas fa-wallet" },
+    { "name": "История расчетов", "url": "/cabinet/history", "icon": "fas fa-history" },
+    { "name": "Подписки", "url": "/cabinet/subscriptions", "icon": "fas fa-calendar-alt" }
+  ],
+  "footer": {
+    "logo": {
+      "icon": "⛤",
+      "text": "АЛГОРИТМ СУДЬБЫ"
+    },
+    "description": "Система автоматических расчетов на основе древних практик и современной науки",
+    "links": [
+      { "name": "О проекте", "url": "/about" },
+      { "name": "Конфиденциальность", "url": "/privacy" },
+      { "name": "Контакты", "url": "/contacts" }
+    ],
+    "social": [
+      { "name": "Telegram", "url": "https://t.me/algoritmsudby", "icon": "fab fa-telegram" },
+      { "name": "VK", "url": "https://vk.com/algoritmsudby", "icon": "fab fa-vk" },
+      { "name": "YouTube", "url": "https://youtube.com/@algoritmsudby", "icon": "fab fa-youtube" }
+    ],
+    "copyright": "© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены."
+  }
+}

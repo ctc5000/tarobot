@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Баланс | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+</head>
+<body>
+<!-- Шапка и меню аналогично... -->
+
+<main class="main-content">
+    <div class="container">
+        <div class="cabinet-header">
+            <h1 class="page-title">Управление балансом</h1>
+        </div>
+
+        <div class="cabinet-grid">
+            <!-- Боковое меню -->
+            <aside class="cabinet-sidebar">
+                <nav class="cabinet-nav">
+                    <a href="/cabinet" class="cabinet-nav-link ">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Обзор</span>
+                    </a>
+                    <a href="/cabinet/profile" class="cabinet-nav-link ">
+                        <i class="fas fa-user"></i>
+                        <span>Мой профиль</span>
+                    </a>
+                    <a href="/cabinet/balance" class="cabinet-nav-link active">
+                        <i class="fas fa-wallet"></i>
+                        <span>Баланс</span>
+                    </a>
+                    <a href="/cabinet/history" class="cabinet-nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>История расчетов</span>
+                    </a>
+                    <a href="/cabinet/subscriptions" class="cabinet-nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Подписки</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Контент баланса -->
+            <div class="cabinet-content">
+                <!-- Текущий баланс -->
+                <div class="balance-card glass-card">
+                    <div class="balance-info">
+                        <span class="balance-label">Текущий баланс</span>
+                        <span class="balance-amount-large" id="currentBalance">0 ₽</span>
+                    </div>
+                    <div class="balance-actions">
+                        <button class="btn btn-primary" onclick="showDepositModal()">
+                            <i class="fas fa-plus"></i> Пополнить
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Пакеты пополнения -->
+                <div class="deposit-packages glass-card">
+                    <h2>Выберите сумму пополнения</h2>
+                    <div class="packages-grid">
+                        <div class="package-item" onclick="selectPackage(500)">
+                            <span class="package-amount">500 ₽</span>
+                            <span class="package-bonus">+0 ₽</span>
+                        </div>
+                        <div class="package-item" onclick="selectPackage(1000)">
+                            <span class="package-amount">1000 ₽</span>
+                            <span class="package-bonus">+50 ₽</span>
+                        </div>
+                        <div class="package-item popular" onclick="selectPackage(2000)">
+                            <span class="package-amount">2000 ₽</span>
+                            <span class="package-bonus">+150 ₽</span>
+                            <span class="package-badge">Популярное</span>
+                        </div>
+                        <div class="package-item" onclick="selectPackage(5000)">
+                            <span class="package-amount">5000 ₽</span>
+                            <span class="package-bonus">+500 ₽</span>
+                        </div>
+                    </div>
+
+                    <div class="custom-amount">
+                        <label for="customAmount">Своя сумма</label>
+                        <div class="custom-input">
+                            <input type="number" id="customAmount" min="10" step="10" placeholder="Введите сумму">
+                            <span class="currency">₽</span>
+                        </div>
+                    </div>
+
+                    <div class="payment-methods">
+                        <h3>Способ оплаты</h3>
+                        <div class="methods-grid">
+                            <label class="method-item">
+                                <input type="radio" name="paymentMethod" value="card" checked>
+                                <i class="fas fa-credit-card"></i>
+                                <span>Банковская карта</span>
+                            </label>
+                            <label class="method-item">
+                                <input type="radio" name="paymentMethod" value="sbp">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>СБП</span>
+                            </label>
+                            <label class="method-item">
+                                <input type="radio" name="paymentMethod" value="crypto">
+                                <i class="fab fa-bitcoin"></i>
+                                <span>Криптовалюта</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="mystic-button" onclick="processPayment()">
+                        Пополнить на <span id="selectedAmount">500</span> ₽
+                    </button>
+                </div>
+
+                <!-- История транзакций -->
+                <div class="transactions-history glass-card">
+                    <div class="section-header">
+                        <h2>История транзакций</h2>
+                        <a href="/cabinet/history" class="view-all">Все →</a>
+                    </div>
+
+                    <div class="transactions-list" id="transactionsList">
+                        <!-- Загружается через JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Модальное окно оплаты -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Оплата</h2>
+            <span class="close" onclick="closePaymentModal()">×</span>
+        </div>
+        <div class="modal-body">
+            <div id="paymentFrame"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/core/js/core.js"></script>
+<script src="/core/js/cabinet.js"></script>
+</body>
+</html>

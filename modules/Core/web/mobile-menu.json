@@ -1,0 +1,22 @@
+{
+  "sections": [
+    {
+      "title": "Основное",
+      "items": [
+        { "name": "Главная", "url": "/", "icon": "🏠" },
+        { "name": "Личный кабинет", "url": "/cabinet", "icon": "👤", "auth": true },
+        { "name": "Войти", "url": "/login", "icon": "🔑", "auth": false, "guest": true },
+        { "name": "Регистрация", "url": "/register", "icon": "📝", "auth": false, "guest": true }
+      ]
+    },
+    {
+      "title": "Практики",
+      "items": [
+        { "name": "Нумерология", "url": "/numerology", "icon": "🔢" },
+        { "name": "Натальная карта", "url": "/natal-chart", "icon": "🌠" },
+        { "name": "Таро", "url": "/tarot", "icon": "🎴" },
+        { "name": "Соционика", "url": "/socionics", "icon": "🧠" }
+      ]
+    }
+  ]
+}

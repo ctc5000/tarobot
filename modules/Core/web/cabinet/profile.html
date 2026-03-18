@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+</head>
+<body>
+<!-- Шапка и меню аналогично index.html... -->
+
+<main class="main-content">
+    <div class="container">
+        <div class="cabinet-header">
+            <h1 class="page-title">Мой профиль</h1>
+        </div>
+
+        <div class="cabinet-grid">
+            <!-- Боковое меню (аналогично index.html) -->
+            <aside class="cabinet-sidebar">
+                <nav class="cabinet-nav">
+                    <a href="/cabinet" class="cabinet-nav-link ">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Обзор</span>
+                    </a>
+                    <a href="/cabinet/profile" class="cabinet-nav-link active">
+                        <i class="fas fa-user"></i>
+                        <span>Мой профиль</span>
+                    </a>
+                    <a href="/cabinet/balance" class="cabinet-nav-link">
+                        <i class="fas fa-wallet"></i>
+                        <span>Баланс</span>
+                    </a>
+                    <a href="/cabinet/history" class="cabinet-nav-link">
+                        <i class="fas fa-history"></i>
+                        <span>История расчетов</span>
+                    </a>
+                    <a href="/cabinet/subscriptions" class="cabinet-nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Подписки</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Контент профиля -->
+            <div class="cabinet-content">
+                <div class="profile-form glass-card">
+                    <h2>Личные данные</h2>
+
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label for="fullName">ФИО</label>
+                            <input type="text" id="fullName" name="fullName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" readonly disabled>
+                            <small class="form-hint">Email нельзя изменить</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Телефон</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="birthDate">Дата рождения</label>
+                            <input type="date" id="birthDate" name="birthDate" readonly disabled>
+                            <small class="form-hint">Дата рождения используется в расчетах и не может быть изменена</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="password-form glass-card">
+                    <h2>Изменить пароль</h2>
+
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label for="currentPassword">Текущий пароль</label>
+                            <input type="password" id="currentPassword" name="currentPassword" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">Новый пароль</label>
+                            <input type="password" id="newPassword" name="newPassword" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">Подтверждение пароля</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Изменить пароль</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="danger-zone glass-card">
+                    <h2>Опасная зона</h2>
+                    <p>После удаления аккаунта все ваши данные будут безвозвратно удалены.</p>
+                    <button class="btn btn-danger" onclick="cabinetApp.requestDeleteAccount()">
+                        Удалить аккаунт
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Скрипты -->
+<script src="/core/js/core.js"></script>
+<script src="/core/js/cabinet.js"></script>
+</body>
+</html>

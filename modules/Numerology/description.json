@@ -1,0 +1,136 @@
+{
+  "moduleName": "Numerology",
+  "version": "1.0.0",
+  "order": 5,
+  "description": "Модуль нумерологических расчетов и прогнозов",
+  "dependencies": ["Core", "Logs"],
+
+  "services": {
+    "freeCalculations": 1,
+    "paidCalculations": {
+      "full": 500,
+      "day": 50,
+      "week": 150,
+      "month": 300,
+      "year": 500,
+      "compatibility": 400
+    }
+  },
+
+  "overview": {
+    "summary": "Модуль предоставляет полный спектр нумерологических расчетов: от базового портрета личности до прогнозов на день/неделю/месяц/год и совместимости с партнером.",
+    "features": [
+      "Бесплатный базовый расчет (1 раз)",
+      "Платные расширенные расчеты",
+      "Сохранение истории расчетов",
+      "Генерация PDF отчетов",
+      "Интеграция с балансом пользователя"
+    ]
+  },
+
+  "technicalDetails": {
+    "databaseModels": {
+      "NumerologyProfile": {
+        "userId": "ID пользователя",
+        "fullName": "ФИО",
+        "birthDate": "Дата рождения",
+        "data": "Полные данные расчета",
+        "calculations": "Счетчик расчетов",
+        "lastCalculation": "Дата последнего расчета"
+      }
+    },
+    "services": {
+      "NumerologyCalculationService": "Ядро расчетов (перенесено из services/numerology)",
+      "NumerologyPdfService": "Генерация PDF отчетов"
+    }
+  },
+
+  "endpoints": {
+    "public": [
+      {
+        "method": "POST",
+        "path": "/api/numerology/calculate",
+        "description": "Базовый бесплатный расчет",
+        "auth": false
+      }
+    ],
+    "protected": [
+      {
+        "method": "POST",
+        "path": "/api/numerology/full",
+        "description": "Полный платный расчет",
+        "auth": true,
+        "price": 500
+      },
+      {
+        "method": "POST",
+        "path": "/api/numerology/forecast/day",
+        "description": "Прогноз на день",
+        "auth": true,
+        "price": 50
+      },
+      {
+        "method": "POST",
+        "path": "/api/numerology/forecast/week",
+        "description": "Прогноз на неделю",
+        "auth": true,
+        "price": 150
+      },
+      {
+        "method": "POST",
+        "path": "/api/numerology/forecast/month",
+        "description": "Прогноз на месяц",
+        "auth": true,
+        "price": 300
+      },
+      {
+        "method": "POST",
+        "path": "/api/numerology/forecast/year",
+        "description": "Прогноз на год",
+        "auth": true,
+        "price": 500
+      },
+      {
+        "method": "POST",
+        "path": "/api/numerology/compatibility",
+        "description": "Совместимость с партнером",
+        "auth": true,
+        "price": 400
+      },
+      {
+        "method": "GET",
+        "path": "/api/numerology/history",
+        "description": "История расчетов",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/numerology/pdf/:id",
+        "description": "Скачать PDF отчета",
+        "auth": true
+      }
+    ],
+    "admin": [
+      {
+        "method": "GET",
+        "path": "/api/numerology/admin/stats",
+        "description": "Статистика расчетов",
+        "auth": true,
+        "role": "admin"
+      }
+    ]
+  },
+
+  "webInterface": {
+    "url": "/numerology",
+    "features": [
+      "Форма ввода данных",
+      "Бесплатный базовый расчет",
+      "Предложение платных расчетов",
+      "Личный кабинет с историей"
+    ]
+  },
+
+  "author": "System",
+  "license": "Proprietary"
+}
