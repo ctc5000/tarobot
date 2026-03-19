@@ -1,6 +1,5 @@
 {
   "mainNav": [
-    { "name": "Главная", "url": "/", "icon": "" },
     { "name": "Нумерология", "url": "/numerology", "icon": "" },
     { "name": "Натальная карта", "url": "/natal-chart", "icon": "" },
     { "name": "Таро", "url": "/tarot", "icon": "" },

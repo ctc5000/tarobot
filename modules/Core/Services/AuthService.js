@@ -188,9 +188,228 @@ class AuthService {
             passwordResetExpires: resetExpires
         });
 
-        // Здесь должен быть код отправки email
+        // Отправка email с инструкциями
+        try {
+            await this.sendPasswordResetEmail(user.email, resetToken, user.fullName);
+        } catch (error) {
+            console.error('Ошибка отправки email:', error);
+            // Логируем ошибку, но пользователю не сообщаем (безопасность)
+        }
 
         return { message: 'Если пользователь существует, инструкции отправлены на email' };
+    }
+
+// Метод для отправки email с восстановлением пароля
+    async sendPasswordResetEmail(email, token, userName) {
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+        // Создаем транспорт для отправки писем
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: process.env.SMTP_PORT || 587,
+            secure: false, // true для 465, false для других портов
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false // Для некоторых почтовых сервисов
+            }
+        });
+
+        // HTML шаблон письма
+        const htmlTemplate = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Восстановление пароля</title>
+            <style>
+                body {
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    background-color: #0a0a0f;
+                    margin: 0;
+                    padding: 0;
+                    color: #ffffff;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .header {
+                    text-align: center;
+                    padding: 30px 0;
+                    border-bottom: 1px solid rgba(201, 165, 75, 0.3);
+                }
+                .logo {
+                    font-size: 2rem;
+                    color: #c9a54b;
+                    margin-bottom: 10px;
+                }
+                .logo-text {
+                    font-family: 'Playfair Display', serif;
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    background: linear-gradient(135deg, #ffffff, #c9a54b);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                .content {
+                    background: linear-gradient(135deg, #12121a, #0a0a0f);
+                    border: 1px solid rgba(201, 165, 75, 0.2);
+                    border-radius: 30px;
+                    padding: 40px;
+                    margin: 30px 0;
+                    text-align: center;
+                }
+                .greeting {
+                    font-size: 1.5rem;
+                    color: #c9a54b;
+                    margin-bottom: 20px;
+                    font-family: 'Playfair Display', serif;
+                }
+                .message {
+                    color: #a0a0b0;
+                    line-height: 1.8;
+                    margin-bottom: 30px;
+                    font-size: 1rem;
+                }
+                .button {
+                    display: inline-block;
+                    padding: 16px 32px;
+                    background: linear-gradient(135deg, #c9a54b, #e2b96b);
+                    color: #0a0a0f;
+                    text-decoration: none;
+                    border-radius: 50px;
+                    font-weight: 600;
+                    font-size: 1rem;
+                    letter-spacing: 1px;
+                    margin: 20px 0;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                }
+                .button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 30px rgba(201, 165, 75, 0.3);
+                }
+                .link-fallback {
+                    background: rgba(18, 18, 26, 0.5);
+                    border: 1px solid rgba(201, 165, 75, 0.2);
+                    border-radius: 12px;
+                    padding: 15px;
+                    margin: 20px 0;
+                    word-break: break-all;
+                    color: #c9a54b;
+                    font-size: 0.9rem;
+                }
+                .warning {
+                    background: rgba(255, 152, 0, 0.1);
+                    border: 1px solid rgba(255, 152, 0, 0.3);
+                    border-radius: 12px;
+                    padding: 15px;
+                    margin: 20px 0;
+                    color: #ff9800;
+                    font-size: 0.9rem;
+                }
+                .footer {
+                    text-align: center;
+                    padding: 20px;
+                    color: #6a6a7a;
+                    font-size: 0.85rem;
+                    border-top: 1px solid rgba(201, 165, 75, 0.2);
+                }
+                .social-links {
+                    margin-top: 15px;
+                }
+                .social-links a {
+                    display: inline-block;
+                    margin: 0 10px;
+                    color: #6a6a7a;
+                    text-decoration: none;
+                    transition: color 0.3s ease;
+                }
+                .social-links a:hover {
+                    color: #c9a54b;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="logo">✦</div>
+                    <div class="logo-text">АЛГОРИТМ СУДЬБЫ</div>
+                </div>
+                
+                <div class="content">
+                    <div class="greeting">Здравствуйте, ${userName}!</div>
+                    
+                    <div class="message">
+                        Вы запросили восстановление пароля для вашего аккаунта.<br>
+                        Для создания нового пароля нажмите на кнопку ниже:
+                    </div>
+                    
+                    <a href="${resetLink}" class="button">ВОССТАНОВИТЬ ПАРОЛЬ</a>
+                    
+                    <div class="message">
+                        Если кнопка не работает, скопируйте и вставьте следующую ссылку в адресную строку браузера:
+                    </div>
+                    
+                    <div class="link-fallback">
+                        ${resetLink}
+                    </div>
+                    
+                    <div class="warning">
+                        ⚠️ Ссылка действительна в течение 1 часа.<br>
+                        Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                    <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+                    
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-vk"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+        // Текстовая версия письма (для почтовых клиентов без HTML)
+        const textTemplate = `
+        АЛГОРИТМ СУДЬБЫ - Восстановление пароля
+        
+        Здравствуйте, ${userName}!
+        
+        Вы запросили восстановление пароля для вашего аккаунта.
+        
+        Для создания нового пароля перейдите по ссылке:
+        ${resetLink}
+        
+        Ссылка действительна в течение 1 часа.
+        
+        Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
+        
+        © 2026 АЛГОРИТМ СУДЬБЫ
+    `;
+
+        // Настройки письма
+        const mailOptions = {
+            from: `"АЛГОРИТМ СУДЬБЫ" <${process.env.SMTP_FROM || 'noreply@algoritmsudby.ru'}>`,
+            to: email,
+            subject: 'Восстановление пароля | АЛГОРИТМ СУДЬБЫ',
+            html: htmlTemplate,
+            text: textTemplate
+        };
+
+        // Отправка письма
+        return await transporter.sendMail(mailOptions);
     }
 
     /**

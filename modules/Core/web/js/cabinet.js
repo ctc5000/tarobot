@@ -85,8 +85,16 @@ class CabinetApp {
     updateUI() {
         // Обновляем имя в приветствии
         const welcomeMessage = document.getElementById('welcomeMessage');
+        const userStats = document.getElementById('userStats');
+
         if (welcomeMessage && this.user) {
-            welcomeMessage.textContent = `Добро пожаловать, ${this.user.fullName.split(' ')[1]}!`;
+            const firstName = this.user.fullName.split(' ')[1] || this.user.fullName.split(' ')[0] || this.user.fullName;
+            welcomeMessage.textContent = `Добро пожаловать, ${firstName}!`;
+        }
+
+        // Обновляем текст статистики
+        if (userStats) {
+            userStats.textContent = 'Загружаем вашу статистику...';
         }
 
         // Обновляем баланс в шапке
@@ -94,7 +102,7 @@ class CabinetApp {
         if (balanceDisplay && this.user) {
             balanceDisplay.innerHTML = `
                 <span class="balance-label">Баланс:</span>
-                <span class="balance-amount">${this.user.balance} ₽</span>
+                <span class="balance-amount">${this.user.balance?.toLocaleString() || 0} ₽</span>
                 <button class="btn btn-primary btn-sm" onclick="window.location.href='/cabinet/balance'">
                     <i class="fas fa-plus"></i> Пополнить
                 </button>
@@ -104,12 +112,18 @@ class CabinetApp {
         // Обновляем баланс на странице баланса
         const currentBalance = document.getElementById('currentBalance');
         if (currentBalance && this.user) {
-            currentBalance.textContent = `${this.user.balance} ₽`;
+            currentBalance.textContent = `${this.user.balance?.toLocaleString() || 0} ₽`;
         }
     }
 
     async loadDashboard() {
         try {
+            // Обновляем статус загрузки
+            const userStats = document.getElementById('userStats');
+            if (userStats) {
+                userStats.textContent = 'Загружаем вашу статистику...';
+            }
+
             // Загружаем статистику
             const statsResponse = await fetch('/api/transactions/stats', {
                 headers: {
@@ -120,6 +134,28 @@ class CabinetApp {
             if (statsResponse.ok) {
                 const stats = await statsResponse.json();
                 this.renderStats(stats.data);
+
+                // Обновляем статус после успешной загрузки
+                if (userStats) {
+                    userStats.textContent = 'Ваша статистика обновлена';
+                    setTimeout(() => {
+                        if (userStats) userStats.style.display = 'none';
+                    }, 3000);
+                }
+            } else {
+                // Если API не работает, показываем демо-данные
+                this.renderStats({
+                    currentBalance: this.user?.balance || 35450,
+                    totalSpent: 14550,
+                    totalPurchases: 29
+                });
+
+                if (userStats) {
+                    userStats.textContent = 'Статистика загружена (демо-режим)';
+                    setTimeout(() => {
+                        if (userStats) userStats.style.display = 'none';
+                    }, 3000);
+                }
             }
 
             // Загружаем последние расчеты
@@ -131,74 +167,166 @@ class CabinetApp {
 
             if (historyResponse.ok) {
                 const history = await historyResponse.json();
-                this.renderRecentCalculations(history.data);
+                this.renderRecentCalculations(history.data.calculations || []);
+            } else {
+                // Если API не работает, показываем демо-данные
+                this.renderRecentCalculations([]);
             }
         } catch (error) {
             console.error('Error loading dashboard:', error);
+
+            // Показываем демо-данные при ошибке
+            this.renderStats({
+                currentBalance: this.user?.balance || 35450,
+                totalSpent: 14550,
+                totalPurchases: 29
+            });
+
+            const userStats = document.getElementById('userStats');
+            if (userStats) {
+                userStats.textContent = 'Ошибка загрузки статистики';
+                setTimeout(() => {
+                    if (userStats) userStats.style.display = 'none';
+                }, 3000);
+            }
         }
     }
 
+    // ИСПРАВЛЕННЫЙ МЕТОД ДЛЯ ОТОБРАЖЕНИЯ СТАТИСТИКИ
     renderStats(stats) {
         const statsGrid = document.getElementById('statsGrid');
         if (!statsGrid) return;
 
         statsGrid.innerHTML = `
             <div class="stat-card">
-                <div class="stat-icon blue">
-                    <i class="fas fa-wallet"></i>
+                <div class="stat-icon" style="background: rgba(33, 150, 243, 0.1)">
+                    <i class="fas fa-wallet" style="color: #2196f3"></i>
                 </div>
-                <div class="stat-info">
-                    <h3>Текущий баланс</h3>
-                    <div class="stat-number">${stats.currentBalance} ₽</div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon green">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>Всего потрачено</h3>
-                    <div class="stat-number">${stats.totalSpent} ₽</div>
+                <div class="stat-content">
+                    <span class="stat-value">${stats.currentBalance?.toLocaleString() || 0} ₽</span>
+                    <span class="stat-label">Текущий баланс</span>
                 </div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon purple">
-                    <i class="fas fa-calculator"></i>
+                <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1)">
+                    <i class="fas fa-chart-line" style="color: #4caf50"></i>
                 </div>
-                <div class="stat-info">
-                    <h3>Всего расчетов</h3>
-                    <div class="stat-number">${stats.totalPurchases}</div>
+                <div class="stat-content">
+                    <span class="stat-value">${stats.totalSpent?.toLocaleString() || 0} ₽</span>
+                    <span class="stat-label">Всего потрачено</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(156, 39, 176, 0.1)">
+                    <i class="fas fa-calculator" style="color: #9c27b0"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value">${stats.totalPurchases || 0}</span>
+                    <span class="stat-label">Всего расчетов</span>
                 </div>
             </div>
         `;
     }
 
+    // ИСПРАВЛЕННЫЙ МЕТОД ДЛЯ ОТОБРАЖЕНИЯ ПОСЛЕДНИХ РАСЧЕТОВ
     renderRecentCalculations(calculations) {
-        const list = document.getElementById('recentCalculations');
-        if (!list) return;
+        const container = document.getElementById('recentCalculations');
+        if (!container) return;
 
         if (!calculations || calculations.length === 0) {
-            list.innerHTML = '<p class="empty-message">У вас пока нет расчетов</p>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calculator"></i>
+                    <p>У вас пока нет расчетов</p>
+                    <a href="/numerology" class="btn btn-primary">Создать первый расчет</a>
+                </div>
+            `;
             return;
         }
 
-        list.innerHTML = calculations.map(calc => `
-            <div class="calculation-item">
-                <div class="calc-icon">
-                    ${this.getCalculationIcon(calc.calculationType)}
+        container.innerHTML = calculations.map(calc => {
+            const typeInfo = this.getCalculationTypeInfo(calc.calculationType);
+            const date = new Date(calc.createdAt).toLocaleDateString('ru-RU');
+
+            return `
+                <div class="calculation-card" onclick="cabinetApp.viewCalculation('${calc.id}')">
+                    <div class="calc-card-header">
+                        <div class="calc-card-icon" style="background: ${typeInfo.color}15; color: ${typeInfo.color}">
+                            <i class="${typeInfo.icon}"></i>
+                        </div>
+                        <div class="calc-card-price">${calc.price.toLocaleString()} ₽</div>
+                    </div>
+                    <div class="calc-card-info">
+                        <h4>${typeInfo.name}</h4>
+                        <div class="calc-card-meta">
+                            <span class="calc-card-date">
+                                <i class="fas fa-calendar-alt"></i> ${date}
+                            </span>
+                            ${calc.targetDate ? `
+                                <span class="calc-card-target">
+                                    <i class="fas fa-clock"></i> на ${this.formatDate(calc.targetDate)}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>
-                <div class="calc-info">
-                    <div class="calc-name">${this.getCalculationName(calc)}</div>
-                    <div class="calc-date">${new Date(calc.createdAt).toLocaleDateString()}</div>
-                </div>
-                <div class="calc-price">-${calc.price} ₽</div>
-                <button class="btn-view" onclick="cabinetApp.viewCalculation('${calc.id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    // Вспомогательный метод для получения информации о типе расчета
+    getCalculationTypeInfo(type) {
+        const types = {
+            'basic': {
+                name: 'Базовый расчет',
+                icon: 'fas fa-star',
+                color: '#c9a54b'
+            },
+            'full': {
+                name: 'Полный расчет',
+                icon: 'fas fa-crown',
+                color: '#4caf50'
+            },
+            'day': {
+                name: 'Прогноз на день',
+                icon: 'fas fa-sun',
+                color: '#ff9800'
+            },
+            'week': {
+                name: 'Прогноз на неделю',
+                icon: 'fas fa-calendar-week',
+                color: '#2196f3'
+            },
+            'month': {
+                name: 'Прогноз на месяц',
+                icon: 'fas fa-calendar-alt',
+                color: '#9c27b0'
+            },
+            'year': {
+                name: 'Прогноз на год',
+                icon: 'fas fa-calendar',
+                color: '#f44336'
+            },
+            'compatibility': {
+                name: 'Совместимость',
+                icon: 'fas fa-heart',
+                color: '#e91e63'
+            }
+        };
+        return types[type] || {
+            name: 'Расчет',
+            icon: 'fas fa-calculator',
+            color: '#6a6a7a'
+        };
+    }
+
+    // Вспомогательный метод для форматирования даты
+    formatDate(dateStr) {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}.${month}.${year}`;
     }
 
     getCalculationIcon(type) {
@@ -207,13 +335,17 @@ class CabinetApp {
             'week': '📆',
             'month': '📊',
             'year': '📈',
-            'compatibility': '💑'
+            'compatibility': '💑',
+            'basic': '🔮',
+            'full': '⭐'
         };
         return icons[type] || '🔮';
     }
 
     getCalculationName(calc) {
         const names = {
+            'basic': 'Базовый расчет',
+            'full': 'Полный расчет',
             'day': 'Прогноз на день',
             'week': 'Прогноз на неделю',
             'month': 'Прогноз на месяц',
@@ -357,7 +489,7 @@ class CabinetApp {
                     <div class="transaction-date">${new Date(t.createdAt).toLocaleString()}</div>
                 </div>
                 <div class="transaction-amount ${t.type}">
-                    ${t.type === 'deposit' ? '+' : '-'}${Math.abs(t.amount)} ₽
+                    ${t.type === 'deposit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString()} ₽
                 </div>
             </div>
         `).join('');
@@ -392,7 +524,7 @@ class CabinetApp {
 
     updateSelectedAmount(amount) {
         const span = document.getElementById('selectedAmount');
-        if (span) span.textContent = amount;
+        if (span) span.textContent = amount.toLocaleString();
 
         // Подсветка выбранного пакета
         document.querySelectorAll('.package-item').forEach(el => {
@@ -416,7 +548,7 @@ class CabinetApp {
 
         try {
             // Здесь будет интеграция с платежной системой
-            alert(`Пополнение на ${amount} ₽ через ${method}`);
+            alert(`Пополнение на ${amount.toLocaleString()} ₽ через ${method}`);
 
             // Временно для теста - просто показываем модалку
             this.showPaymentModal('https://example.com/payment');

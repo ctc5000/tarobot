@@ -36,9 +36,29 @@
             </div>
             <nav class="main-nav" id="mainNav"></nav>
             <div class="auth-links" id="authLinks"></div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </div>
 </header>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="logo">
+            <span class="logo-icon">⛤</span>
+            <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose">×</button>
+    </div>
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="mobile-menu-footer">
+        <div class="auth-buttons" id="mobileAuthButtons"></div>
+    </div>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
 
 <div class="site-background">
     <div class="bg-gradient"></div>
@@ -49,22 +69,53 @@
     <div class="container">
         <!-- ХЕРО-СЕКЦИЯ -->
         <section class="numerology-hero">
-            <h1>Нумерология</h1>
-            <p class="subtitle">Раскройте тайны своей судьбы через магию чисел. Персональные расчеты на основе древних знаний и современных алгоритмов.</p>
-            <div class="stats-badge">
-                <span class="stat-item"><i class="fas fa-star"></i> 50 000+ расчетов</span>
-                <span class="stat-item"><i class="fas fa-users"></i> 10 000+ клиентов</span>
-                <span class="stat-item"><i class="fas fa-clock"></i> 5 минут на расчет</span>
+            <div class="hero-badge">НАУКА О ЧИСЛАХ</div>
+            <h1 class="hero-title">Нумерология<br><span>личности</span></h1>
+            <p class="hero-description">
+                Раскройте тайны своей судьбы через магию чисел.
+                Персональные расчеты на основе древних знаний и современных алгоритмов.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-value">50 000+</span>
+                    <span class="stat-label">расчетов</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">10 000+</span>
+                    <span class="stat-label">клиентов</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">5 мин</span>
+                    <span class="stat-label">на расчет</span>
+                </div>
             </div>
         </section>
 
         <!-- ИНФОРМАЦИЯ О ПОДПИСКЕ -->
         <section class="subscription-info" id="subscriptionInfo" style="display: none;"></section>
 
+        <!-- БЛОК ДЛЯ НЕАВТОРИЗОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ -->
+        <section class="guest-block" id="guestBlock">
+            <div class="guest-content">
+                <h2 class="section-title">Попробуйте бесплатно</h2>
+                <p class="section-description">
+                    Зарегистрируйтесь и получите базовый расчет абсолютно бесплатно.
+                    Узнайте свои основные числа судьбы.
+                </p>
+                <div class="guest-actions">
+                    <a href="/register" class="btn btn-primary">Создать аккаунт</a>
+                    <a href="/login" class="btn btn-outline">Уже есть аккаунт</a>
+                </div>
+            </div>
+        </section>
+
         <!-- СЕКЦИЯ ТАРИФОВ -->
         <section class="tariff-section" id="tariffSection">
-            <h2>Выберите свой путь</h2>
-            <p class="section-description">Каждый расчет — это уникальное путешествие вглубь себя. Выберите то, что резонирует с вашей душой.</p>
+            <h2 class="section-title">Выберите <span>расчет</span></h2>
+            <p class="section-description">
+                Каждый расчет — это уникальное путешествие вглубь себя.
+                Выберите то, что резонирует с вашей душой.
+            </p>
             <div class="tariff-grid" id="tariffGrid">
                 <div class="loading">Загрузка тарифов...</div>
             </div>
@@ -72,41 +123,59 @@
 
         <!-- СЕКЦИЯ ВВОДА -->
         <section class="input-section" id="inputSection" style="display: none;">
-            <div class="tariff-header">
-                <h2 id="selectedTariffTitle">Введите данные</h2>
-                <div class="price-display" id="selectedTariffPrice"></div>
+            <div class="input-header">
+                <div>
+                    <h2 class="input-title" id="selectedTariffTitle">Введите данные</h2>
+                    <p class="input-subtitle" id="selectedTariffDescription"></p>
+                </div>
+                <div class="price-tag" id="selectedTariffPrice"></div>
             </div>
-            <div class="tariff-description" id="selectedTariffDescription"></div>
 
             <form class="numerology-form" id="numerologyForm">
-                <div class="form-group">
-                    <label for="fullName"><i class="fas fa-user"></i> Полное ФИО</label>
-                    <input type="text" id="fullName" name="fullName" placeholder="Иванова Мария Сергеевна" required>
-                    <small class="form-hint">Фамилия, имя и отчество полностью</small>
-                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullName">
+                            <i class="fas fa-user"></i>
+                            <span>Полное ФИО</span>
+                        </label>
+                        <input type="text" id="fullName" name="fullName" placeholder="Иванова Мария Сергеевна" required>
+                        <small class="form-hint">Фамилия, имя и отчество полностью</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="birthDate"><i class="fas fa-calendar-alt"></i> Дата рождения</label>
-                    <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" required>
-                    <small class="form-hint">Например: 15.06.1987</small>
+                    <div class="form-group">
+                        <label for="birthDate">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Дата рождения</span>
+                        </label>
+                        <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" required>
+                        <small class="form-hint">Например: 15.06.1987</small>
+                    </div>
                 </div>
 
                 <!-- Поля для совместимости -->
                 <div id="compatibilityFields" class="compatibility-fields" style="display: none;">
-                    <h3><i class="fas fa-heart"></i> Данные партнера</h3>
-                    <div class="form-group">
-                        <label for="partnerName">Имя партнера</label>
-                        <input type="text" id="partnerName" placeholder="Иванов Иван Иванович">
-                    </div>
-                    <div class="form-group">
-                        <label for="partnerBirthDate">Дата рождения партнера</label>
-                        <input type="text" id="partnerBirthDate" placeholder="ДД.ММ.ГГГГ">
+                    <h3 class="fields-title">
+                        <i class="fas fa-heart"></i>
+                        Данные партнера
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="partnerName">Имя партнера</label>
+                            <input type="text" id="partnerName" placeholder="Иванов Иван Иванович">
+                        </div>
+                        <div class="form-group">
+                            <label for="partnerBirthDate">Дата рождения партнера</label>
+                            <input type="text" id="partnerBirthDate" placeholder="ДД.ММ.ГГГГ">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Поле для даты прогноза -->
                 <div id="targetDateField" class="target-date-field" style="display: none;">
-                    <h3><i class="fas fa-clock"></i> Дата прогноза</h3>
+                    <h3 class="fields-title">
+                        <i class="fas fa-clock"></i>
+                        Дата прогноза
+                    </h3>
                     <div class="form-group">
                         <label for="targetDate">Выберите дату</label>
                         <input type="text" id="targetDate" placeholder="ДД.ММ.ГГГГ">
@@ -292,16 +361,16 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="careerNumber">--</span>
                                     <h4 id="careerTitle">Карьерный потенциал</h4>
                                 </div>
-                                <div class="interpretation-description" id="careerDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="careerDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="careerDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="careerStrengths"></ul>
@@ -311,11 +380,11 @@
                                         <ul id="careerWeaknesses"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💼 Подходящие профессии</h5>
                                     <ul id="careerSuitable"></ul>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>📊 Стиль работы</h5>
                                         <p id="careerWorkStyle" class="info-text"></p>
@@ -325,7 +394,7 @@
                                         <p id="careerMoneyApproach" class="info-text"></p>
                                     </div>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>👥 Стиль управления</h5>
                                         <p id="careerManagementStyle" class="info-text"></p>
@@ -335,7 +404,7 @@
                                         <p id="careerIdealEnvironment" class="info-text"></p>
                                     </div>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>✅ Факторы успеха</h5>
                                         <ul id="careerSuccessFactors"></ul>
@@ -345,11 +414,11 @@
                                         <ul id="careerFailureFactors"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="careerDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section numbers-section" style="display: none;">
+                                <div class="interpretation-section numbers-section">
                                     <div class="number-item">
                                         <span class="number-label">📈 Число успеха:</span>
                                         <span class="number-value" id="careerSuccessNum"></span>
@@ -361,7 +430,7 @@
                                         <span class="number-desc" id="careerRealizationDesc"></span>
                                     </div>
                                 </div>
-                                <div class="interpretation-advice" id="careerAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="careerAdvice"></div>
                             </div>
 
                             <!-- СЕМЬЯ -->
@@ -374,20 +443,20 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="familyNumber">--</span>
                                     <h4 id="familyTitle">Семейная гармония</h4>
                                 </div>
-                                <div class="interpretation-description" id="familyDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="familyDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="familyDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>👑 Ваша роль в семье</h5>
                                     <p id="familyRole" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="familyStrengths"></ul>
@@ -397,19 +466,19 @@
                                         <ul id="familyWeaknesses"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🏡 Стиль семейной жизни</h5>
                                     <p id="familyStyle" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>👶 Подход к детям</h5>
                                     <p id="familyChildrenApproach" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💞 Тип идеального партнера</h5>
                                     <p id="familyPartnerType" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>✅ Факторы успеха</h5>
                                         <ul id="familySuccessFactors"></ul>
@@ -419,11 +488,11 @@
                                         <ul id="familyFailureFactors"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="familyDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section numbers-section" style="display: none;">
+                                <div class="interpretation-section numbers-section">
                                     <div class="number-item">
                                         <span class="number-label">💑 Число партнера:</span>
                                         <span class="number-value" id="familyPartnerNum"></span>
@@ -435,7 +504,7 @@
                                         <span class="number-desc" id="familyChildrenDesc"></span>
                                     </div>
                                 </div>
-                                <div class="interpretation-advice" id="familyAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="familyAdvice"></div>
                             </div>
 
                             <!-- ЛЮБОВЬ -->
@@ -448,20 +517,20 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="loveNumber">--</span>
                                     <h4 id="loveTitle">Любовная совместимость</h4>
                                 </div>
-                                <div class="interpretation-description" id="loveDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="loveDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="loveDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💕 Ваш стиль любви</h5>
                                     <p id="loveStyle" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="loveStrengths"></ul>
@@ -471,19 +540,19 @@
                                         <ul id="loveWeaknesses"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💑 Идеальный партнер</h5>
                                     <p id="idealPartner" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🎭 Тип идеального партнера</h5>
                                     <p id="lovePartnerType" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🔄 Модель отношений</h5>
                                     <p id="loveRelationshipPattern" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>✅ Факторы успеха</h5>
                                         <ul id="loveSuccessFactors"></ul>
@@ -493,11 +562,11 @@
                                         <ul id="loveFailureFactors"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="loveDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section numbers-section" style="display: none;">
+                                <div class="interpretation-section numbers-section">
                                     <div class="number-item">
                                         <span class="number-label">📊 Совместимость:</span>
                                         <span class="number-value" id="loveCompatibilityPercent"></span>
@@ -507,7 +576,7 @@
                                     </div>
                                     <p id="loveCompatibilityLevel" class="compatibility-level-text"></p>
                                 </div>
-                                <div class="interpretation-advice" id="loveAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="loveAdvice"></div>
                             </div>
 
                             <!-- ФИНАНСЫ -->
@@ -520,20 +589,20 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="moneyNumber">--</span>
                                     <h4 id="moneyTitle">Финансовый поток</h4>
                                 </div>
-                                <div class="interpretation-description" id="moneyDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="moneyDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="moneyDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💼 Ваш финансовый стиль</h5>
                                     <p id="moneyStyle" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="moneyStrengths"></ul>
@@ -543,23 +612,23 @@
                                         <ul id="moneyWeaknesses"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>📈 Источники дохода</h5>
                                     <ul id="moneySources"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>📊 Финансовая стратегия</h5>
                                     <p id="moneyStrategy" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>⚠️ Отношение к риску</h5>
                                     <p id="moneyRiskAttitude" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💎 Лучшие инвестиции</h5>
                                     <ul id="moneyInvestments"></ul>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>✅ Факторы успеха</h5>
                                         <ul id="moneySuccessFactors"></ul>
@@ -569,18 +638,18 @@
                                         <ul id="moneyFailureFactors"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="moneyDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section numbers-section" style="display: none;">
+                                <div class="interpretation-section numbers-section">
                                     <div class="number-item">
                                         <span class="number-label">✨ Число изобилия:</span>
                                         <span class="number-value" id="moneyAbundanceNum"></span>
                                         <span class="number-desc" id="moneyAbundanceDesc"></span>
                                     </div>
                                 </div>
-                                <div class="interpretation-advice" id="moneyAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="moneyAdvice"></div>
                             </div>
 
                             <!-- ЗДОРОВЬЕ -->
@@ -593,16 +662,16 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="healthNumber">--</span>
                                     <h4 id="healthTitle">Энергия здоровья</h4>
                                 </div>
-                                <div class="interpretation-description" id="healthDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="healthDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="healthDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>⚡ Уровень энергии</h5>
                                     <div class="energy-bar-container">
                                         <div class="energy-bar">
@@ -611,11 +680,11 @@
                                         <p id="healthEnergyLevel" class="energy-level-text"></p>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🔋 Тип энергетики</h5>
                                     <p id="healthEnergyType" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>🌟 Сильные стороны</h5>
                                         <ul id="healthStrengths"></ul>
@@ -625,27 +694,27 @@
                                         <ul id="healthWeaknesses"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🔍 Уязвимые органы</h5>
                                     <ul id="healthVulnerable"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>✅ Рекомендации</h5>
                                     <ul id="healthRecommendations"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>📅 Сезонные риски</h5>
                                     <p id="healthSeasonalRisks" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛡️ Профилактика</h5>
                                     <ul id="healthPrevention"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="healthDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-advice" id="healthAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="healthAdvice"></div>
                             </div>
 
                             <!-- ТАЛАНТЫ -->
@@ -658,36 +727,36 @@
                                         Разблокировать
                                     </button>
                                 </div>
-                                <div class="interpretation-header" style="display: none;">
+                                <div class="interpretation-header">
                                     <span class="interpretation-number" id="talentNumber">--</span>
                                     <h4 id="talentTitle">Скрытые таланты</h4>
                                 </div>
-                                <div class="interpretation-description" id="talentDescription" style="display: none;"></div>
-                                <div class="interpretation-section detailed-section" style="display: none;">
+                                <div class="interpretation-description" id="talentDescription"></div>
+                                <div class="interpretation-section detailed-section">
                                     <h5>📝 Подробное описание</h5>
                                     <div class="detailed-text" id="talentDetailedDescription"></div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🎯 Ваши таланты</h5>
                                     <ul id="talentList"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>📚 Как развивать</h5>
                                     <ul id="talentHowToDevelop"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>💼 Сферы реализации</h5>
                                     <ul id="talentSuitable"></ul>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🔄 С чем сочетается</h5>
                                     <p id="talentCombinations" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🌍 Идеальная среда</h5>
                                     <p id="talentEnvironment" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-grid" style="display: none;">
+                                <div class="interpretation-grid">
                                     <div class="grid-half">
                                         <h5>✅ Факторы успеха</h5>
                                         <ul id="talentSuccessFactors"></ul>
@@ -697,11 +766,11 @@
                                         <ul id="talentFailureFactors"></ul>
                                     </div>
                                 </div>
-                                <div class="interpretation-section" style="display: none;">
+                                <div class="interpretation-section">
                                     <h5>🛤️ Путь развития</h5>
                                     <p id="talentDevelopmentPath" class="info-text"></p>
                                 </div>
-                                <div class="interpretation-section numbers-section" style="display: none;">
+                                <div class="interpretation-section numbers-section">
                                     <div class="number-item">
                                         <span class="number-label">📊 Потенциал реализации:</span>
                                         <span class="number-value" id="talentPotentialPercent"></span>
@@ -711,7 +780,7 @@
                                     </div>
                                     <p id="talentPotentialDescription" class="potential-level-text"></p>
                                 </div>
-                                <div class="interpretation-advice" id="talentAdvice" style="display: none;"></div>
+                                <div class="interpretation-advice" id="talentAdvice"></div>
                             </div>
                         </div>
                     </div>
@@ -751,11 +820,8 @@
                 </div>
                 <p>Система автоматических расчетов на основе древних практик и современной науки</p>
             </div>
-            <div class="footer-links">
-                <a href="/about">О проекте</a>
-                <a href="/privacy">Конфиденциальность</a>
-                <a href="/contacts">Контакты</a>
-            </div>
+            <div class="footer-links" id="footerLinks"></div>
+            <div class="footer-social" id="footerSocial"></div>
         </div>
         <div class="footer-bottom">
             <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>

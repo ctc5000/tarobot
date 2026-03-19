@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>АЛГОРИТМ СУДЬБЫ</title>
+    <title>АЛГОРИТМ СУДЬБЫ — Путь к самопознанию</title>
 
     <!-- Шрифты -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
 <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-menu-header">
         <div class="header-left">
-            <span class="logo-icon">⛤</span>
+            <span class="logo-icon">✦</span>
             <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
         </div>
         <button class="mobile-menu-close" id="mobileMenuClose">×</button>
@@ -42,7 +42,7 @@
     </nav>
 
     <div class="mobile-menu-footer">
-        <div class="auth-buttons">
+        <div class="auth-buttons" id="mobileAuthButtons">
             <!-- Загружается через core.js -->
         </div>
         <p class="copyright">© 2026 АЛГОРИТМ СУДЬБЫ</p>
@@ -55,7 +55,7 @@
         <div class="header-content">
             <div class="logo">
                 <a href="/">
-                    <span class="logo-icon">⛤</span>
+                    <span class="logo-icon">✦</span>
                     <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
                 </a>
             </div>
@@ -65,7 +65,7 @@
                 <!-- Загружается через core.js из JSON -->
             </nav>
 
-            <div class="auth-links">
+            <div class="auth-links" id="authLinks">
                 <!-- Загружается через core.js -->
             </div>
         </div>
@@ -76,27 +76,172 @@
 <div class="site-background">
     <div class="bg-gradient"></div>
     <div class="bg-pattern"></div>
+    <div class="bg-stars"></div>
 </div>
 
 <!-- Основной контент -->
 <main class="main-content">
     <div class="container">
+        <!-- ХЕРО-СЕКЦИЯ -->
         <section class="hero-section">
-            <h1 class="hero-title">АЛГОРИТМ СУДЬБЫ</h1>
-            <p class="hero-subtitle">Раскройте тайны своего предназначения через древние практики и современные расчеты</p>
+            <div class="hero-badge">ПУТЬ К СЕБЕ</div>
+            <h1 class="hero-title">АЛГОРИТМ <span>СУДЬБЫ</span></h1>
+            <p class="hero-description">
+                Раскройте тайны своего предназначения через древние практики
+                и современные алгоритмы. Познайте себя на новом уровне.
+            </p>
             <div class="hero-actions">
-                <a href="/register" class="btn btn-primary">Начать исследование</a>
-                <a href="/numerology" class="btn btn-outline">Попробовать бесплатно</a>
+                <a href="/register" class="btn btn-primary btn-large">
+                    <span>Начать исследование</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="/numerology" class="btn btn-outline btn-large">
+                    <span>Попробовать бесплатно</span>
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-value">50 000+</span>
+                    <span class="stat-label">расчетов</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">10 000+</span>
+                    <span class="stat-label">клиентов</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">5 мин</span>
+                    <span class="stat-label">на расчет</span>
+                </div>
             </div>
         </section>
 
         <!-- Секция с практиками -->
         <section class="practices-section">
-            <h2 class="section-title">Практики самопознания</h2>
-            <p class="section-subtitle">Выберите путь к пониманию себя</p>
+            <h2 class="section-title">Практики <span>самопознания</span></h2>
+            <p class="section-description">
+                Выберите путь к пониманию себя. Каждая практика — это ключ
+                к разгадке тайн вашей личности и судьбы.
+            </p>
 
             <div class="practices-grid" id="practicesGrid">
                 <!-- Загружается через core.js -->
+                <div class="practice-card">
+                    <div class="card-icon">🔢</div>
+                    <h3>Нумерология</h3>
+                    <p>Магия чисел и коды судьбы. Узнайте свое число жизненного пути и предназначение.</p>
+                    <span class="card-link">Познать себя →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">🌠</div>
+                    <h3>Натальная карта</h3>
+                    <p>Астрологический портрет личности. Положение планет в момент вашего рождения.</p>
+                    <span class="card-link">Исследовать →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">🎴</div>
+                    <h3>Таро</h3>
+                    <p>Древняя система предсказаний. Раскройте тайны прошлого, настоящего и будущего.</p>
+                    <span class="card-link">Узнать →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">🧠</div>
+                    <h3>Соционика</h3>
+                    <p>Типы личности и взаимоотношения. Поймите, как вы взаимодействуете с миром.</p>
+                    <span class="card-link">Открыть →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">🌞</div>
+                    <h3>Астропсихология</h3>
+                    <p>Связь небесных тел и психики. Глубинный анализ вашей личности.</p>
+                    <span class="card-link">Изучить →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">ᚠ</div>
+                    <h3>Руны</h3>
+                    <p>Древние символы силы. Древнескандинавская система предсказаний и магии.</p>
+                    <span class="card-link">Познать →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">🌳</div>
+                    <h3>Родология</h3>
+                    <p>Связь с родом и предками. Исследование родовых программ и сценариев.</p>
+                    <span class="card-link">Исследовать →</span>
+                </div>
+                <div class="practice-card">
+                    <div class="card-icon">📜</div>
+                    <h3>И-Цзин</h3>
+                    <p>Китайская книга перемен. Древняя система гадания и философии.</p>
+                    <span class="card-link">Открыть →</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция с особенностями -->
+        <section class="features-section">
+            <h2 class="section-title">Почему мы?</h2>
+            <p class="section-description">Современный подход к древним знаниям</p>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>Автоматические расчеты</h3>
+                    <p>Мгновенные и точные вычисления на основе проверенных алгоритмов</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-scroll"></i>
+                    </div>
+                    <h3>Древние практики</h3>
+                    <p>Знания, проверенные тысячелетиями, адаптированные для современности</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                    <h3>Персональный подход</h3>
+                    <p>Каждый расчет уникален и создан специально для вас</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3>Конфиденциальность</h3>
+                    <p>Ваши данные надежно защищены и не передаются третьим лицам</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Мгновенный результат</h3>
+                    <p>Получайте результаты расчетов за считанные секунды</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-infinity"></i>
+                    </div>
+                    <h3>Без ограничений</h3>
+                    <p>Неограниченное количество расчетов для подписчиков</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция с призывом к действию -->
+        <section class="cta-section">
+            <div class="cta-content">
+                <h2>Готовы узнать свою судьбу?</h2>
+                <p>Начните с бесплатного расчета и откройте дверь к самопознанию</p>
+                <div class="cta-actions">
+                    <a href="/register" class="btn btn-primary btn-large">
+                        <span>Создать аккаунт</span>
+                        <i class="fas fa-user-plus"></i>
+                    </a>
+                    <a href="/numerology" class="btn btn-outline btn-large">
+                        <span>Бесплатный расчет</span>
+                        <i class="fas fa-calculator"></i>
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -116,15 +261,15 @@
         <div class="footer-content">
             <div class="footer-info">
                 <div class="footer-logo">
-                    <span class="logo-icon">⛤</span>
+                    <span class="logo-icon">✦</span>
                     <span>АЛГОРИТМ СУДЬБЫ</span>
                 </div>
                 <p>Система автоматических расчетов на основе древних практик и современной науки</p>
             </div>
-            <div class="footer-links">
+            <div class="footer-links" id="footerLinks">
                 <!-- Загружается через core.js -->
             </div>
-            <div class="footer-social">
+            <div class="footer-social" id="footerSocial">
                 <!-- Загружается через core.js -->
             </div>
         </div>

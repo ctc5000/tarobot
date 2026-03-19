@@ -29,7 +29,7 @@ const CoreRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncError
 
     // ========== ЗАЩИЩЕННЫЕ СТРАНИЦЫ ==========
     app.get('/cabinet', (req, res) => {
-        console.log('🔥 Отдаем страницу кабинета');
+       // console.log('🔥 Отдаем страницу кабинета');
         res.sendFile(path.join(__dirname, 'web', 'cabinet', 'index.html'));
     });
 

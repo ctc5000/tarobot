@@ -31,35 +31,20 @@
 <div class="mobile-menu" id="mobileMenu">
     <div class="mobile-menu-header">
         <div class="header-left">
-            <span class="logo-icon">⛤</span>
+            <span class="logo-icon">✦</span>
             <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
         </div>
         <button class="mobile-menu-close" id="mobileMenuClose">×</button>
     </div>
 
     <nav class="mobile-nav" id="mobileNav">
-        <a href="/" class="mobile-nav-link">
-            <span class="nav-icon">🏠</span>
-            <span class="nav-text">Главная</span>
-        </a>
-        <a href="/numerology" class="mobile-nav-link">
-            <span class="nav-icon">🔢</span>
-            <span class="nav-text">Нумерология</span>
-        </a>
-        <a href="/tarot" class="mobile-nav-link">
-            <span class="nav-icon">🎴</span>
-            <span class="nav-text">Таро</span>
-        </a>
-        <a href="/cabinet" class="mobile-nav-link active">
-            <span class="nav-icon">👤</span>
-            <span class="nav-text">Личный кабинет</span>
-        </a>
+        <!-- Загружается через core.js -->
     </nav>
 
     <div class="mobile-menu-footer">
-        <button class="btn btn-primary btn-sm" onclick="cabinetApp.logout()">
-            <i class="fas fa-sign-out-alt"></i> Выйти
-        </button>
+        <div class="auth-buttons" id="mobileAuthButtons">
+            <!-- Загружается через core.js -->
+        </div>
         <p class="copyright">© 2026 АЛГОРИТМ СУДЬБЫ</p>
     </div>
 </div>
@@ -70,20 +55,18 @@
         <div class="header-content">
             <div class="logo">
                 <a href="/">
-                    <span class="logo-icon">⛤</span>
+                    <span class="logo-icon">✦</span>
                     <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
                 </a>
             </div>
 
-            <nav class="main-nav">
-                <a href="/">Главная</a>
-                <a href="/numerology">Нумерология</a>
-                <a href="/tarot">Таро</a>
-                <a href="/cabinet" class="active">Кабинет</a>
+            <!-- Десктопная навигация -->
+            <nav class="main-nav" id="mainNav">
+                <!-- Загружается через core.js -->
             </nav>
 
             <div class="auth-links" id="authLinks">
-                <!-- Загружается через JS -->
+                <!-- Загружается через core.js -->
             </div>
         </div>
     </div>
@@ -93,6 +76,7 @@
 <div class="site-background">
     <div class="bg-gradient"></div>
     <div class="bg-pattern"></div>
+    <div class="bg-stars"></div>
 </div>
 
 <!-- Основной контент -->
@@ -178,8 +162,9 @@
                         <h3>Последние расчеты</h3>
                         <a href="/cabinet/history" class="view-all">Все →</a>
                     </div>
-                    <div class="calculations-list" id="recentCalculations">
+                    <div class="calculations-grid" id="recentCalculations">
                         <!-- Загружается через JS -->
+                        <div class="loading">Загрузка...</div>
                     </div>
                 </div>
             </div>
@@ -193,15 +178,16 @@
         <div class="footer-content">
             <div class="footer-info">
                 <div class="footer-logo">
-                    <span class="logo-icon">⛤</span>
+                    <span class="logo-icon">✦</span>
                     <span>АЛГОРИТМ СУДЬБЫ</span>
                 </div>
                 <p>Система автоматических расчетов на основе древних практик и современной науки</p>
             </div>
-            <div class="footer-links">
-                <a href="/about">О проекте</a>
-                <a href="/privacy">Конфиденциальность</a>
-                <a href="/contacts">Контакты</a>
+            <div class="footer-links" id="footerLinks">
+                <!-- Загружается через core.js -->
+            </div>
+            <div class="footer-social" id="footerSocial">
+                <!-- Загружается через core.js -->
             </div>
         </div>
         <div class="footer-bottom">

@@ -156,9 +156,14 @@ body {
 
 .main-nav a.active {
     color: #42371a;
+    background-color: #d8b566;
+    font-weight: bold;
+    border-radius: 22px;
+    border: none;
+    text-decoration: none;
 }
 
-.main-nav a.active::after {
+/*.main-nav a.active::after {
     content: '';
     position: absolute;
     bottom: -4px;
@@ -167,7 +172,7 @@ body {
     height: 2px;
     background: var(--gradient-gold);
     border-radius: 2px;
-}
+}*/
 
 /* Mobile Menu Button */
 .mobile-menu-btn {
@@ -5315,12 +5320,6 @@ input:-webkit-autofill:active {
     }
 }
 /* ========== ТАРИФЫ ========== */
-.tariff-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-}
 
 .tariff-card {
     background: rgba(18, 18, 26, 0.5);
@@ -5829,5 +5828,1212 @@ input:-webkit-autofill:active {
 
     .number-label {
         min-width: auto;
+    }
+}
+/* ========== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ ========== */
+
+/* Улучшенная hero-секция */
+.hero-section {
+    text-align: center;
+    padding: 60px 20px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 40px;
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 25px;
+}
+
+.hero-title span {
+    background: linear-gradient(135deg, var(--accent-gold), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-description {
+    max-width: 700px;
+    margin: 0 auto 40px;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.8;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 50px;
+    flex-wrap: wrap;
+}
+
+.hero-actions .btn {
+    min-width: 220px;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.hero-actions .btn i {
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
+}
+
+.hero-actions .btn-primary:hover i {
+    transform: translateX(5px);
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.hero-stats .stat-item {
+    text-align: center;
+}
+
+.hero-stats .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-bottom: 5px;
+}
+
+.hero-stats .stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Секция с практиками */
+.practices-section {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.section-title span {
+    color: var(--accent-gold);
+}
+
+.section-description {
+    max-width: 700px;
+    margin: 0 auto 50px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.7;
+}
+
+.practices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin: 40px 0;
+}
+
+.practice-card {
+    background: rgba(18, 18, 26, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 32px 24px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.practice-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.practice-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 10px 30px rgba(201, 165, 75, 0.15);
+}
+
+.practice-card:hover::before {
+    transform: scaleX(1);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    color: var(--accent-gold);
+    margin-bottom: 10px;
+}
+
+.practice-card h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.practice-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+    flex: 1;
+}
+
+.card-link {
+    color: var(--accent-gold);
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: gap 0.3s ease;
+}
+
+.practice-card:hover .card-link {
+    gap: 12px;
+}
+
+/* Секция преимуществ */
+.features-section {
+    padding: 60px 0;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 40px;
+}
+
+@media (max-width: 992px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.feature-item {
+    text-align: center;
+    padding: 35px 25px;
+    background: rgba(18, 18, 26, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(18, 18, 26, 0.5);
+    border-color: var(--accent-gold);
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: var(--accent-gold);
+}
+
+.feature-icon i {
+    background: rgba(201, 165, 75, 0.1);
+    padding: 15px;
+    border-radius: 50%;
+}
+
+.feature-item h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.feature-item p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+/* CTA секция */
+.cta-section {
+    padding: 80px 0;
+}
+
+.cta-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(18, 18, 26, 0.5));
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.cta-content h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.cta-content p {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.7;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-actions .btn {
+    min-width: 220px;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.cta-actions .btn i {
+    font-size: 1.1rem;
+}
+
+.cta-actions .btn-primary:hover i {
+    transform: scale(1.1);
+}
+
+.cta-actions .btn-outline:hover i {
+    color: var(--accent-gold);
+}
+
+/* Секция с цитатой */
+.quote-section {
+    padding: 60px 0 80px;
+    text-align: center;
+}
+
+.quote-section blockquote {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.quote-section p {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 25px;
+    position: relative;
+    padding: 0 30px;
+}
+
+.quote-section p::before,
+.quote-section p::after {
+    content: '"';
+    color: var(--accent-gold);
+    font-size: 3rem;
+    opacity: 0.3;
+    position: absolute;
+}
+
+.quote-section p::before {
+    left: -10px;
+    top: -15px;
+}
+
+.quote-section p::after {
+    right: -10px;
+    bottom: -15px;
+}
+
+.quote-section cite {
+    color: var(--accent-gold);
+    font-style: normal;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-actions .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .hero-stats {
+        gap: 30px;
+    }
+
+    .hero-stats .stat-item {
+        width: calc(50% - 15px);
+    }
+
+    .cta-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cta-actions .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .cta-content {
+        padding: 40px 20px;
+    }
+
+    .quote-section p::before,
+    .quote-section p::after {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-stats {
+        gap: 20px;
+    }
+
+    .hero-stats .stat-item {
+        width: 100%;
+    }
+
+    .hero-stats .stat-value {
+        font-size: 1.6rem;
+    }
+
+    .practice-card {
+        padding: 25px 20px;
+    }
+
+    .card-icon {
+        font-size: 2rem;
+    }
+
+    .practice-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .feature-item {
+        padding: 25px 20px;
+    }
+
+    .feature-icon {
+        font-size: 2rem;
+    }
+
+    .cta-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .cta-content p {
+        font-size: 1rem;
+    }
+}
+
+/* Улучшенные кнопки */
+.btn-large {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+}
+
+.btn-primary i,
+.btn-outline i {
+    font-size: 1rem;
+}
+
+/* Фоновые звезды */
+.bg-stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+            radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 160px 50px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 200px 180px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 260px 90px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 320px 210px, rgba(255,255,255,0.3), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 380px 140px, rgba(255,255,255,0.3), rgba(0,0,0,0));
+    background-repeat: repeat;
+    opacity: 0.2;
+    animation: twinkle 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.4; }
+}
+
+/* Фикс для мобильного меню */
+.mobile-menu-footer .auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.mobile-menu-footer .copyright {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+}
+.auth-link
+{
+    display: inline-block;
+    padding: 12px 32px;
+    border-radius: 40px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+}
+/* ========== СТИЛИ ДЛЯ СТРАНИЦ АВТОРИЗАЦИИ ========== */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 200px);
+    padding: 40px 20px;
+}
+
+.auth-card {
+    max-width: 500px;
+    width: 100%;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    animation: fadeInScale 0.6s ease;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--accent-gold);
+}
+
+.auth-header h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.auth-header p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-gold);
+}
+
+.forgot-link {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.forgot-link:hover {
+    color: var(--accent-gold-light);
+    text-decoration: underline;
+}
+
+.auth-divider {
+    position: relative;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+    z-index: 1;
+}
+
+.auth-divider span {
+    position: relative;
+    z-index: 2;
+    background: var(--dark-light);
+    padding: 0 15px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.social-login {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn-social {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-social i {
+    font-size: 1.2rem;
+}
+
+.btn-social.telegram:hover {
+    background: #0088cc;
+    border-color: #0088cc;
+    color: white;
+}
+
+.btn-social.google:hover {
+    background: #DB4437;
+    border-color: #DB4437;
+    color: white;
+}
+
+.auth-footer {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.auth-footer p {
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.auth-footer a:hover {
+    color: var(--accent-gold-light);
+    text-decoration: underline;
+}
+
+/* Стили для чекбокса условий */
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.form-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent-gold);
+}
+
+.form-check label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.form-check a {
+    color: var(--accent-gold);
+    text-decoration: none;
+}
+
+.form-check a:hover {
+    text-decoration: underline;
+}
+
+/* Стили для шагов восстановления пароля */
+.reset-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.reset-steps::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border-color);
+    z-index: 1;
+}
+
+.step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--dark-light);
+    padding: 0 10px;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.step.active .step-number {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: var(--dark);
+}
+
+.step-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.step.active .step-text {
+    color: var(--accent-gold);
+}
+
+.reset-confirm {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #4caf50;
+    margin-bottom: 20px;
+}
+
+.reset-confirm h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.reset-confirm p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.email-sent {
+    background: rgba(201, 165, 75, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    color: var(--accent-gold) !important;
+    margin: 15px 0;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 30px 20px;
+    }
+
+    .social-login {
+        grid-template-columns: 1fr;
+    }
+
+    .reset-steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .reset-steps::before {
+        display: none;
+    }
+
+    .step {
+        width: 100%;
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+/* ========== КАРТОЧКИ РАСЧЕТОВ ========== */
+.calculations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.calculation-card {
+    background: rgba(18, 18, 26, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.calculation-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.calculation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.calculation-card:hover::before {
+    transform: scaleX(1);
+}
+
+.calc-card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.calc-card-info h4 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.calc-card-date,
+.calc-card-target {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.calc-card-date i,
+.calc-card-target i {
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+}
+
+.calc-card-price {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 4px 12px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--accent-gold);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(18, 18, 26, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--accent-gold);
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .calculations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .calc-card-price {
+        position: static;
+        display: inline-block;
+        margin-top: 10px;
+    }
+}
+/* ========== СТАТИСТИКА В КАБИНЕТЕ ========== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(18, 18, 26, 0.5), rgba(10, 10, 15, 0.5));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: var(--transition);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ========== КАРТОЧКИ РАСЧЕТОВ ========== */
+.calculations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.calculation-card {
+    background: linear-gradient(135deg, rgba(18, 18, 26, 0.5), rgba(10, 10, 15, 0.5));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 20px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.calculation-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.calculation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.calculation-card:hover::before {
+    transform: scaleX(1);
+}
+
+.calc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calc-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.calc-card-price {
+    padding: 6px 15px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    color: var(--accent-gold);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.calc-card-info h4 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.calc-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.calc-card-date,
+.calc-card-target {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calc-card-date i,
+.calc-card-target i {
+    color: var(--accent-gold);
+    width: 16px;
+    font-size: 0.9rem;
+}
+
+/* ========== ПУСТОЕ СОСТОЯНИЕ ========== */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, rgba(18, 18, 26, 0.3), rgba(10, 10, 15, 0.3));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--accent-gold);
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+}
+
+.empty-state .btn {
+    display: inline-block;
+    padding: 12px 30px;
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 992px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .calculations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .calc-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .calc-card-price {
+        align-self: flex-start;
     }
 }
