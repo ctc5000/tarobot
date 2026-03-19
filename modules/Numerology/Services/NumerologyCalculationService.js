@@ -8,6 +8,7 @@ const TarotService = require('../../../services/tarotService');
 const ForecastService = require('./ForecastService');
 const WeekForecastService = require('./WeekForecastService');
 const MothForecastService = require('./MonthForecastService');
+const YearForecastService = require('../Services/YearForecastService');
 
 const PsychologyService = require('../../../services/psychologyService');
 // Инициализация сервисов
@@ -23,6 +24,7 @@ class NumerologyCalculationService {
         this.forecastService = new ForecastService();
         this.weekForecastService = new WeekForecastService();
         this.maothForecastService = new MothForecastService();
+        this.yearForecastService = new YearForecastService();
     }
 
     /**
@@ -154,9 +156,10 @@ class NumerologyCalculationService {
 
             if (forecastType === 'week') {
                 return await this.weekForecastService.calculateWeekForecast(fullName, birthDate, targetDate, userId);
-            }
-            if (forecastType === 'month') {
+            } else if (forecastType === 'month') {
                 return await this.maothForecastService.calculateMonthForecast(fullName, birthDate, targetDate, userId);
+            } else if (forecastType === 'year') {
+                return await this.yearForecastService.calculateYearForecast(fullName, birthDate, targetDate, userId);
             } else {
                 const result = await this.forecastService.calculateForecast(fullName, birthDate, forecastType, targetDate, userId);
 

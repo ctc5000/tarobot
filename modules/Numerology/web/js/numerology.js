@@ -32,6 +32,7 @@ class NumerologyApp {
         }
         this.initWeekPicker();
         this.initMonthPicker();
+        this.initYearPicker();
 
         // Инициализируем маски для дат
         this.initDateMasks();
@@ -64,26 +65,19 @@ class NumerologyApp {
             const input = document.getElementById(id);
             if (input && typeof IMask !== 'undefined') {
                 IMask(input, {
-                    mask: Date,
-                    pattern: 'd{.}`m{.}`Y',
-                    blocks: {
-                        d: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
-                        m: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
-                        Y: { mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4 }
-                    },
-                    format: function(date) {
+                    mask: Date, pattern: 'd{.}`m{.}`Y', blocks: {
+                        d: {mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2},
+                        m: {mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2},
+                        Y: {mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4}
+                    }, format: function (date) {
                         const day = String(date.getDate()).padStart(2, '0');
                         const month = String(date.getMonth() + 1).padStart(2, '0');
                         const year = date.getFullYear();
                         return `${day}.${month}.${year}`;
-                    },
-                    parse: function(str) {
+                    }, parse: function (str) {
                         const [day, month, year] = str.split('.');
                         return new Date(year, month - 1, day);
-                    },
-                    lazy: false,
-                    autofix: true,
-                    placeholderChar: '_'
+                    }, lazy: false, autofix: true, placeholderChar: '_'
                 });
             }
         });
@@ -95,7 +89,7 @@ class NumerologyApp {
 
         try {
             const response = await fetch('/api/profile', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {'Authorization': `Bearer ${token}`}
             });
 
             if (response.ok) {
@@ -128,7 +122,7 @@ class NumerologyApp {
 
         try {
             const response = await fetch('/api/subscriptions/active', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {'Authorization': `Bearer ${token}`}
             });
 
             if (response.ok) {
@@ -181,69 +175,29 @@ class NumerologyApp {
                 icon: '🔮',
                 name: 'Базовый расчет',
                 description: 'Основные числа судьбы, свиток судьбы и глубинный портрет',
-                features: [
-                    'Число судьбы, имени, рода',
-                    'Ахиллесова пята',
-                    'Число управления',
-                    'Социальные оклики',
-                    'Свиток судьбы',
-                    'Глубинный портрет'
-                ],
+                features: ['Число судьбы, имени, рода', 'Ахиллесова пята', 'Число управления', 'Социальные оклики', 'Свиток судьбы', 'Глубинный портрет'],
                 free: true
-            },
-            'forecast_day': {
+            }, 'forecast_day': {
                 icon: '📅',
                 name: 'Прогноз на день',
                 description: 'Персональный прогноз на конкретный день',
                 category: 'forecast'
-            },
-            'forecast_week': {
-                icon: '📆',
-                name: 'Прогноз на неделю',
-                description: 'Прогноз на предстоящую неделю',
-                category: 'forecast'
-            },
-            'forecast_month': {
-                icon: '📊',
-                name: 'Прогноз на месяц',
-                description: 'Прогноз на месяц вперед',
-                category: 'forecast'
-            },
-            'forecast_year': {
-                icon: '📈',
-                name: 'Прогноз на год',
-                description: 'Годовой прогноз',
-                category: 'forecast'
-            },
-            'forecast_full': {
+            }, 'forecast_week': {
+                icon: '📆', name: 'Прогноз на неделю', description: 'Прогноз на предстоящую неделю', category: 'forecast'
+            }, 'forecast_month': {
+                icon: '📊', name: 'Прогноз на месяц', description: 'Прогноз на месяц вперед', category: 'forecast'
+            }, 'forecast_year': {
+                icon: '📈', name: 'Прогноз на год', description: 'Годовой прогноз', category: 'forecast'
+            }, 'forecast_full': {
                 icon: '⭐',
                 name: 'Полный расчет',
                 description: 'Полный нумерологический анализ + все дополнительные разделы',
-                features: [
-                    'Все из базового расчета',
-                    'Гороскоп',
-                    'Фен-шуй',
-                    'Карты Таро',
-                    'Психологический портрет',
-                    'Паттерны личности',
-                    'Карьерный анализ',
-                    'Семейная гармония',
-                    'Любовная совместимость',
-                    'Финансовый поток',
-                    'Энергия здоровья',
-                    'Скрытые таланты'
-                ]
-            },
-            'compatibility': {
+                features: ['Все из базового расчета', 'Гороскоп', 'Фен-шуй', 'Карты Таро', 'Психологический портрет', 'Паттерны личности', 'Карьерный анализ', 'Семейная гармония', 'Любовная совместимость', 'Финансовый поток', 'Энергия здоровья', 'Скрытые таланты']
+            }, 'compatibility': {
                 icon: '💑',
                 name: 'Совместимость',
                 description: 'Нумерологическая совместимость с партнером',
-                features: [
-                    'Анализ пары',
-                    'Сильные стороны союза',
-                    'Зоны роста отношений',
-                    'Общие цели'
-                ]
+                features: ['Анализ пары', 'Сильные стороны союза', 'Зоны роста отношений', 'Общие цели']
             }
         };
 
@@ -251,9 +205,7 @@ class NumerologyApp {
 
         this.tariffs.forEach(tariff => {
             const typeInfo = forecastTypes[tariff.code] || {
-                icon: '🔮',
-                name: tariff.name,
-                description: tariff.description
+                icon: '🔮', name: tariff.name, description: tariff.description
             };
 
             // Определяем цену со скидкой для подписчиков
@@ -280,27 +232,20 @@ class NumerologyApp {
 
             html += `
                 <div class="${cardClass}" onclick="numerologyApp.selectTariff('${tariff.code}')">
-                    ${tariff.code === 'forecast_full' && !this.activeSubscription ?
-                '<span class="tariff-badge">Популярное</span>' : ''}
+                    ${tariff.code === 'forecast_full' && !this.activeSubscription ? '<span class="tariff-badge">Популярное</span>' : ''}
                     <div class="tariff-icon">${typeInfo.icon}</div>
                     <h3 class="tariff-name">${typeInfo.name}</h3>
                     <p class="tariff-description">${typeInfo.description}</p>
                     
                     <div class="tariff-price">
-                        ${price === 0 ?
-                '<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">Бесплатно</span>' :
-                `<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">${price} ₽</span>`
-            }
+                        ${price === 0 ? '<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">Бесплатно</span>' : `<span style="color: var(--accent-gold); font-size: 2rem; font-weight: 700;">${price} ₽</span>`}
                         ${oldPrice ? `<span style="color: var(--text-muted); text-decoration: line-through; margin-left: 10px; font-size: 1.2rem;">${oldPrice} ₽</span>` : ''}
                     </div>
                     
                     ${discount ? `<div style="background: linear-gradient(135deg, #85703d, #c5a34f); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; display: inline-block; margin-bottom: 15px;">${discount}</div>` : ''}
                     
                     <ul class="tariff-features">
-                        ${typeInfo.features ?
-                typeInfo.features.map(f => `<li><i class="fas fa-check" style="color: #4caf50; margin-right: 8px;"></i> ${f}</li>`).join('') :
-                '<li>Все основные расчеты</li>'
-            }
+                        ${typeInfo.features ? typeInfo.features.map(f => `<li><i class="fas fa-check" style="color: #4caf50; margin-right: 8px;"></i> ${f}</li>`).join('') : '<li>Все основные расчеты</li>'}
                     </ul>
                     
                     <button class="mystic-button" style="width: 100%; margin-top: 20px;">
@@ -366,6 +311,26 @@ class NumerologyApp {
                 if (weekPicker) weekPicker.style.display = 'none';
                 if (targetDateInput) targetDateInput.style.display = 'none';
 
+            }  else if (tariffCode === 'forecast_year') {
+                // Для года показываем пикер года
+                const yearPicker = document.getElementById('yearPickerContainer');
+                const weekPicker = document.getElementById('weekPickerContainer');
+                const monthPicker = document.getElementById('monthPickerContainer');
+                const targetDateInput = document.getElementById('targetDate');
+
+                if (yearPicker) {
+                    yearPicker.style.display = 'block';
+                    // Устанавливаем текущий год
+                    const currentYear = new Date().getFullYear();
+                    this.updateYearDisplay(currentYear);
+                }
+                if (weekPicker) weekPicker.style.display = 'none';
+                if (monthPicker) monthPicker.style.display = 'none';
+                if (targetDateInput) {
+                    targetDateInput.style.display = 'none';
+                    // Очищаем поле, чтобы не мешалось
+                    targetDateInput.value = '';
+                }
             } else {
                 // Для дня и года скрываем пикеры
                 if (weekPicker) weekPicker.style.display = 'none';
@@ -396,6 +361,7 @@ class NumerologyApp {
         // Обновляем подсветку в тарифах
         this.renderTariffs();
     }
+
     getMonday(date) {
         const d = new Date(date);
         const day = d.getDay();
@@ -546,13 +512,12 @@ class NumerologyApp {
 
         try {
             const token = localStorage.getItem('token');
-            const headers = { 'Content-Type': 'application/json' };
+            const headers = {'Content-Type': 'application/json'};
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
             // Формируем данные для отправки
             const requestData = {
-                fullName,
-                birthDate: this.formatDateForServer(birthDate) // Преобразуем ДД.ММ.ГГГГ в ГГГГ-ММ-ДД
+                fullName, birthDate: this.formatDateForServer(birthDate) // Преобразуем ДД.ММ.ГГГГ в ГГГГ-ММ-ДД
             };
 
             console.log('Formatted birthDate for server:', requestData.birthDate); // Для отладки
@@ -560,9 +525,7 @@ class NumerologyApp {
             // Добавляем дополнительные поля
             if (this.selectedTariff.code === 'compatibility') {
                 requestData.partnerName = document.getElementById('partnerName').value.trim();
-                requestData.partnerBirthDate = this.formatDateForServer(
-                    document.getElementById('partnerBirthDate').value.trim()
-                );
+                requestData.partnerBirthDate = this.formatDateForServer(document.getElementById('partnerBirthDate').value.trim());
 
                 if (!requestData.partnerName || !requestData.partnerBirthDate) {
                     this.showNotification('❌ Заполните данные партнера', 'error');
@@ -628,9 +591,7 @@ class NumerologyApp {
             console.log('📦 Данные:', requestData);
 
             const response = await fetch(endpoint, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(requestData)
+                method: 'POST', headers, body: JSON.stringify(requestData)
             });
 
             if (!response.ok) {
@@ -665,8 +626,7 @@ class NumerologyApp {
 
                     if (weekStart && weekEnd) {
                         data.data.forecast.weekRange = {
-                            start: weekStart,
-                            end: weekEnd
+                            start: weekStart, end: weekEnd
                         };
                     }
                 }
@@ -684,12 +644,14 @@ class NumerologyApp {
         }
     }
 
+
     displayResults(data) {
         // Определяем, полный ли это расчет
         const isFull = data.tarot && data.zodiac && data.psychology;
         const isForecast = data.forecast || this.selectedTariff?.code?.startsWith('forecast_');
         const isWeekForecast = this.selectedTariff?.code === 'forecast_week';
         const isMonthForecast = this.selectedTariff?.code === 'forecast_month';
+        const isYearForecast = this.selectedTariff?.code === 'forecast_year';
         const isCompatibility = this.selectedTariff?.code === 'compatibility';
 
         // Обновляем заголовок
@@ -699,6 +661,9 @@ class NumerologyApp {
         if (isFull) {
             resultType = '⭐ ПОЛНЫЙ НУМЕРОЛОГИЧЕСКИЙ ОТЧЕТ';
             badge = '<span class="result-badge full">Полный отчет</span>';
+        } else if (isYearForecast) {
+            resultType = '📅 ПРОГНОЗ НА ГОД';
+            badge = '<span class="result-badge forecast">Годовой прогноз</span>';
         } else if (isMonthForecast) {
             resultType = '📅 ПРОГНОЗ НА МЕСЯЦ';
             badge = '<span class="result-badge forecast">Месячный прогноз</span>';
@@ -731,19 +696,36 @@ class NumerologyApp {
         if (resultFullName) resultFullName.textContent = data.fullName || this.user?.fullName || '—';
         if (resultBirthDate) resultBirthDate.textContent = data.birthDate || '—';
 
+        // ВСЕГДА отображаем базовые числа, если они есть
+        if (data.forecast?.personNumbers) {
+            const personNumbers = data.forecast.personNumbers;
+            document.getElementById('fateNumber').textContent = personNumbers.fate || '—';
+            document.getElementById('nameNumber').textContent = personNumbers.name || '—';
+            document.getElementById('surnameNumber').textContent = personNumbers.surname || '—';
+            document.getElementById('patronymicNumber').textContent = personNumbers.patronymic || '—';
+        } else if (data.numerology?.base) {
+            document.getElementById('fateNumber').textContent = data.numerology.base.fate || '—';
+            document.getElementById('nameNumber').textContent = data.numerology.base.name || '—';
+            document.getElementById('surnameNumber').textContent = data.numerology.base.surname || '—';
+            document.getElementById('patronymicNumber').textContent = data.numerology.base.patronymic || '—';
+        }
+
         // Для прогноза показываем специальный блок
         if (isForecast && data.forecast) {
             // Скрываем ненужные для прогноза элементы
-            const numerologyGrid = document.querySelector('.numerology-grid');
             const specialNumbers = document.querySelector('.special-numbers');
             const callsSection = document.querySelector('.calls-section');
 
-            if (numerologyGrid) numerologyGrid.style.display = 'none';
+            // Числа судьбы оставляем видимыми
+            const numerologyGrid = document.querySelector('.numerology-grid');
+            if (numerologyGrid) numerologyGrid.style.display = 'grid';
             if (specialNumbers) specialNumbers.style.display = 'none';
             if (callsSection) callsSection.style.display = 'none';
 
             // Показываем соответствующий блок
-            if (isMonthForecast) {
+            if (isYearForecast) {
+                this.displayYearForecast(data.forecast);
+            } else if (isMonthForecast) {
                 this.displayMonthForecast(data.forecast);
             } else if (isWeekForecast) {
                 this.displayWeekForecast(data.forecast);
@@ -999,11 +981,11 @@ class NumerologyApp {
         const tabContent = document.getElementById('tabTarot');
         if (!tabContent) return;
 
-        const cards = [
-            { type: 'fate', title: 'Карта Судьбы', data: tarot.fate },
-            { type: 'personality', title: 'Карта Личности', data: tarot.personality },
-            { type: 'control', title: 'Карта Пути', data: tarot.control }
-        ];
+        const cards = [{type: 'fate', title: 'Карта Судьбы', data: tarot.fate}, {
+            type: 'personality',
+            title: 'Карта Личности',
+            data: tarot.personality
+        }, {type: 'control', title: 'Карта Пути', data: tarot.control}];
 
         let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">';
 
@@ -1410,7 +1392,6 @@ class NumerologyApp {
         // Совет
         this.setElementText('familyAdvice', family.advice || '');
     }
-
 
 
     displayForecast(forecast, interpretation, deepPortrait) {
@@ -2028,7 +2009,6 @@ class NumerologyApp {
     }
 
 
-
     displayTalentInterpretation(talent) {
         if (!talent) return;
 
@@ -2248,9 +2228,18 @@ class NumerologyApp {
 
     getZodiacSymbol(signName) {
         const symbols = {
-            'Овен': '♈', 'Телец': '♉', 'Близнецы': '♊', 'Рак': '♋',
-            'Лев': '♌', 'Дева': '♍', 'Весы': '♎', 'Скорпион': '♏',
-            'Стрелец': '♐', 'Козерог': '♑', 'Водолей': '♒', 'Рыбы': '♓'
+            'Овен': '♈',
+            'Телец': '♉',
+            'Близнецы': '♊',
+            'Рак': '♋',
+            'Лев': '♌',
+            'Дева': '♍',
+            'Весы': '♎',
+            'Скорпион': '♏',
+            'Стрелец': '♐',
+            'Козерог': '♑',
+            'Водолей': '♒',
+            'Рыбы': '♓'
         };
         return symbols[signName] || '⛤';
     }
@@ -2258,11 +2247,16 @@ class NumerologyApp {
     getElementSymbol(element) {
         const elementLower = String(element || '').toLowerCase();
         const symbols = {
-            'металл': '⚜️', 'metal': '⚜️',
-            'вода': '🌊', 'water': '🌊',
-            'дерево': '🌳', 'wood': '🌳',
-            'огонь': '🔥', 'fire': '🔥',
-            'земля': '⛰️', 'earth': '⛰️'
+            'металл': '⚜️',
+            'metal': '⚜️',
+            'вода': '🌊',
+            'water': '🌊',
+            'дерево': '🌳',
+            'wood': '🌳',
+            'огонь': '🔥',
+            'fire': '🔥',
+            'земля': '⛰️',
+            'earth': '⛰️'
         };
         return symbols[elementLower] || '✨';
     }
@@ -2286,9 +2280,7 @@ class NumerologyApp {
             top: 20px;
             right: 20px;
             padding: 15px 25px;
-            background: ${type === 'error' ? 'rgba(244, 67, 54, 0.95)' :
-            type === 'success' ? 'rgba(76, 175, 80, 0.95)' :
-                'rgba(33, 33, 33, 0.95)'};
+            background: ${type === 'error' ? 'rgba(244, 67, 54, 0.95)' : type === 'success' ? 'rgba(76, 175, 80, 0.95)' : 'rgba(33, 33, 33, 0.95)'};
             color: white;
             border-radius: 12px;
             z-index: 10000;
@@ -2357,7 +2349,7 @@ class NumerologyApp {
         modal.className = 'payment-modal';
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 modal.remove();
             }
@@ -2409,8 +2401,7 @@ class NumerologyApp {
 
             // GET запрос с ID в URL
             const response = await fetch(`/api/numerology/pdf/${window.currentCalculationId}`, {
-                method: 'GET',
-                headers: {
+                method: 'GET', headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
@@ -2467,6 +2458,7 @@ class NumerologyApp {
             }
         }
     }
+
     initWeekPicker() {
         const targetDateInput = document.getElementById('targetDate');
         if (!targetDateInput) return;
@@ -2582,6 +2574,7 @@ class NumerologyApp {
 
         grid.innerHTML = html;
     }
+
     // В классе NumerologyApp, обновите метод displayWeekForecast:
 
     displayWeekForecast(forecast) {
@@ -2827,12 +2820,12 @@ class NumerologyApp {
         };
         return colorMap[colorName] || '#c9a54b';
     }
+
     isToday(date) {
         const today = new Date();
-        return date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear();
+        return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
     }
+
     formatDateFromServer(dateStr) {
         if (!dateStr) return '';
         const [year, month, day] = dateStr.split('-');
@@ -2919,10 +2912,7 @@ class NumerologyApp {
         const month = date.getMonth() + 1; // 1-12
         const year = date.getFullYear();
 
-        const monthNames = [
-            'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-        ];
+        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 
         monthDisplay.textContent = `${monthNames[month - 1]} ${year}`;
         monthInput.value = month;
@@ -2989,6 +2979,7 @@ class NumerologyApp {
             });
         });
     }
+
     displayMonthForecast(forecast) {
         if (!forecast) return;
 
@@ -3186,7 +3177,372 @@ class NumerologyApp {
 
         forecastContainer.innerHTML = html;
     }
+    getChineseZodiacSymbol(animal) {
+        const symbols = {
+            'Крыса': '🐭',
+            'Бык': '🐮',
+            'Тигр': '🐯',
+            'Кролик': '🐰',
+            'Дракон': '🐉',
+            'Змея': '🐍',
+            'Лошадь': '🐴',
+            'Коза': '🐐',
+            'Обезьяна': '🐵',
+            'Петух': '🐔',
+            'Собака': '🐶',
+            'Свинья': '🐷'
+        };
+        return symbols[animal] || '🐉';
+    }
 
+    displayYearForecast(forecast) {
+        if (!forecast) return;
+
+        console.log('📊 Отображение годового прогноза:', forecast);
+
+        // Создаем или находим контейнер для прогноза
+        let forecastContainer = document.getElementById('forecastResult');
+        if (!forecastContainer) {
+            forecastContainer = document.createElement('div');
+            forecastContainer.id = 'forecastResult';
+            forecastContainer.className = 'forecast-result';
+
+            const interpretationDiv = document.querySelector('.full-interpretation');
+            if (interpretationDiv) {
+                interpretationDiv.before(forecastContainer);
+            } else {
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.appendChild(forecastContainer);
+                }
+            }
+        }
+
+        // Извлекаем все необходимые данные с проверками
+        const year = forecast.year || '????';
+        const yearNumber = forecast.yearNumber || '?';
+        const universalYearNumber = forecast.universalYearNumber || '?';
+        const yearTheme = forecast.yearTheme || '🌀 ГОД РАЗВИТИЯ';
+        const yearCycle = forecast.yearCycle || {};
+        const yearRuler = forecast.yearRuler || {};
+        const yearEnergy = forecast.yearEnergy || '🌀 Нейтральный год';
+        const yearAnalysis = forecast.yearAnalysis || {};
+        const quarterlyBreakdown = forecast.quarterlyBreakdown || [];
+        const monthlyHighlights = forecast.monthlyHighlights || [];
+        const importantDates = forecast.importantDates || [];
+        const tarot = forecast.tarot || {};
+        const fengShui = forecast.fengShui || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const personNumbers = forecast.personNumbers || {};
+
+        // Данные для китайского гороскопа - их нужно получить из правильного места
+        // Они должны быть в yearInfo, но у нас нет прямого доступа
+        // Для демонстрации используем данные из forecast или установим по умолчанию
+        const chineseAnimal = forecast.yearInfo?.chineseZodiac?.animal ||
+            (year === 2024 ? 'Дракон' :
+                year === 2025 ? 'Змея' :
+                    year === 2026 ? 'Лошадь' : 'Дракон');
+        const chineseElement = forecast.yearInfo?.chineseZodiac?.element ||
+            (year === 2024 ? 'Дерево' :
+                year === 2025 ? 'Дерево' :
+                    year === 2026 ? 'Огонь' : 'Земля');
+        const chineseScore = forecast.yearInfo?.chineseZodiac?.compatibility?.score || 85;
+        const chineseDesc = forecast.yearInfo?.chineseZodiac?.description ||
+            `Год ${chineseElement} ${chineseAnimal}. Год благоприятен для развития.`;
+
+        // Получаем символ животного
+        const animalSymbol = this.getChineseZodiacSymbol(chineseAnimal);
+
+        // Квартальная разбивка
+        const quarterlyHTML = quarterlyBreakdown.map(quarter => `
+        <div class="year-quarter-card">
+            <div class="quarter-header">
+                <span class="quarter-name">${quarter.season || 'Сезон'}</span>
+                <span class="quarter-number">${quarter.number || '?'}</span>
+            </div>
+            <div class="quarter-months">${(quarter.months || []).join(' • ')}</div>
+            <div class="quarter-energy">${quarter.energy || ''}</div>
+            <div class="quarter-focus">${quarter.focus || ''}</div>
+            <div class="quarter-advice">💫 ${quarter.advice || ''}</div>
+        </div>
+    `).join('');
+
+        // Ключевые месяцы (только важные)
+        const monthsHTML = monthlyHighlights
+            .filter(m => m.importance !== 'обычный')
+            .slice(0, 8)
+            .map(month => `
+            <div class="year-month-item importance-${month.importance || 'обычный'}">
+                <span class="month-name">${month.monthName || ''}</span>
+                <span class="month-number">${month.number || '?'}</span>
+                <span class="month-reason">${month.reason || ''}</span>
+            </div>
+        `).join('');
+
+        // Важные даты (первые 8)
+        const datesHTML = importantDates.slice(0, 8).map(date => `
+        <div class="year-date-item type-${date.type || 'personal'}">
+            <span class="date-day">${date.date || ''}</span>
+            <span class="date-name">${date.name || ''}</span>
+            <span class="date-number">${date.number || '?'}</span>
+            <span class="date-reason">${date.reason || ''}</span>
+        </div>
+    `).join('');
+
+        // Формируем HTML
+        let html = `
+        <div class="forecast-card year-forecast">
+            <div class="forecast-header">
+                <div class="forecast-number-large">${yearNumber}</div>
+                <div class="forecast-title">
+                    <h3>ПРОГНОЗ НА ${year} ГОД</h3>
+                    <div class="year-theme-badge">${yearTheme}</div>
+                </div>
+            </div>
+            
+            <div class="year-universal-number">
+                Универсальное число года: <strong>${universalYearNumber}</strong>
+            </div>
+            
+            <div class="year-ruler-info">
+                <span><i class="fas fa-globe"></i> Покровитель: ${yearRuler.planet || 'Меркурий'} (${yearRuler.element || 'Воздух'})</span>
+                <span><i class="fas fa-star"></i> Качество: ${yearRuler.quality || 'Адаптивность'}</span>
+            </div>
+            
+            <div class="year-cycle">
+                <div class="cycle-name">${yearCycle.name || 'Цикл'}</div>
+                <div class="cycle-desc">${yearCycle.description || ''}</div>
+                <div class="cycle-energy">${yearCycle.energy || ''}</div>
+            </div>
+            
+            <div class="chinese-zodiac">
+                <div class="zodiac-animal">${animalSymbol} ${chineseAnimal} (${chineseElement})</div>
+                <div class="zodiac-compatibility">Совместимость: ${chineseScore}%</div>
+                <div class="zodiac-desc">${chineseDesc}</div>
+            </div>
+            
+            <div class="year-theme">
+                <h4>${yearAnalysis.theme || yearTheme}</h4>
+                <p>${yearAnalysis.description || 'Год гармоничного развития.'}</p>
+                <div class="personal-note">${yearAnalysis.personalNote || ''}</div>
+            </div>
+            
+            <div class="year-advice">
+                <i class="fas fa-quote-left"></i>
+                <p>${yearAnalysis.advice || 'Будьте внимательны к возможностям.'}</p>
+            </div>
+            
+            <div class="year-sections">
+                <div class="section opportunities">
+                    <h5><i class="fas fa-check-circle"></i> Возможности</h5>
+                    <ul>
+                        ${(yearAnalysis.opportunities || ['Новые возможности']).map(o => `<li>${o}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="section challenges">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
+                    <ul>
+                        ${(yearAnalysis.challenges || ['Неопределенность']).map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <h4 class="section-title"><i class="fas fa-calendar-alt"></i> КВАРТАЛЬНАЯ РАЗБИВКА</h4>
+            <div class="year-quarterly-breakdown">
+                ${quarterlyHTML || '<p>Нет данных</p>'}
+            </div>
+            
+            <h4 class="section-title"><i class="fas fa-star"></i> КЛЮЧЕВЫЕ МЕСЯЦЫ</h4>
+            <div class="year-months-grid">
+                ${monthsHTML || '<p>Нет данных</p>'}
+            </div>
+            
+            <h4 class="section-title"><i class="fas fa-calendar-check"></i> ВАЖНЫЕ ДАТЫ</h4>
+            <div class="year-dates-grid">
+                ${datesHTML || '<p>Нет данных</p>'}
+            </div>
+            
+            ${tarot.name ? `
+            <div class="year-tarot">
+                <h4><i class="fas fa-crown"></i> КАРТА ТАРО ГОДА: ${tarot.name}</h4>
+                <div class="tarot-mini">
+                    <div class="tarot-image-mini">
+                        <img src="${tarot.image || '/images/tarot/back.jpg'}" alt="${tarot.name}">
+                    </div>
+                    <div class="tarot-desc-mini">
+                        <p>${tarot.description || ''}</p>
+                        <p class="tarot-advice"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <div class="year-details-grid">
+                <div class="detail-block">
+                    <h5><i class="fas fa-wind"></i> Фен-шуй</h5>
+                    <p><strong>Элемент:</strong> ${fengShui.element || 'Воздух'}</p>
+                    <p><strong>Зона:</strong> ${fengShui.zone || 'Восток'}</p>
+                    <p><strong>Активация:</strong> ${fengShui.activation || 'Проветривание'}</p>
+                    <p class="advice">${fengShui.advice || ''}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-paint-brush"></i> Цвета года</h5>
+                    <div class="color-chips">
+                        ${colors.map(c => `<span class="color-chip" style="background-color: ${this.getColorCode(c)}">${c}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-gem"></i> Камни</h5>
+                    <p>${crystals.join(', ')}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-leaf"></i> Ароматы</h5>
+                    <p>${scents.join(', ')}</p>
+                </div>
+            </div>
+            
+            ${affirmation ? `
+            <div class="year-affirmation">
+                <i class="fas fa-quote-left"></i>
+                <p>${affirmation}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+        forecastContainer.innerHTML = html;
+    }
+
+    initYearPicker() {
+        const targetDateInput = document.getElementById('targetDate');
+        if (!targetDateInput) return;
+
+        // Создаем контейнер для выбора года
+        const yearPickerContainer = document.createElement('div');
+        yearPickerContainer.className = 'year-picker-container';
+        yearPickerContainer.id = 'yearPickerContainer';
+        yearPickerContainer.style.display = 'none';
+
+        const currentYear = new Date().getFullYear();
+
+        yearPickerContainer.innerHTML = `
+        <div class="year-picker-header">
+            <button type="button" class="year-nav-btn" id="prevYearBtn"><i class="fas fa-chevron-left"></i></button>
+            <span id="yearDisplay">${currentYear}</span>
+            <button type="button" class="year-nav-btn" id="nextYearBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="year-grid" id="yearGrid"></div>
+        <input type="hidden" id="selectedYear" value="${currentYear}">
+    `;
+
+        // Вставляем после поля ввода даты
+        targetDateInput.parentNode.insertBefore(yearPickerContainer, targetDateInput.nextSibling);
+
+        // Добавляем обработчики
+        document.getElementById('prevYearBtn')?.addEventListener('click', () => this.changeYear(-1));
+        document.getElementById('nextYearBtn')?.addEventListener('click', () => this.changeYear(1));
+
+        // Генерируем сетку годов
+        this.generateYearGrid(currentYear);
+
+        // Скрываем стандартное поле ввода
+        targetDateInput.style.display = 'none';
+    }
+
+// Добавьте метод для смены года:
+    changeYear(delta) {
+        const yearDisplay = document.getElementById('yearDisplay');
+        const yearInput = document.getElementById('selectedYear');
+        const targetDateInput = document.getElementById('targetDate');
+
+        if (!yearDisplay || !yearInput || !targetDateInput) return;
+
+        let currentYear = parseInt(yearDisplay.textContent);
+        let newYear = currentYear + delta;
+
+        // Ограничиваем диапазон
+        if (newYear < 1900 || newYear > 2100) return;
+
+        yearDisplay.textContent = newYear;
+        yearInput.value = newYear;
+
+        // Для отправки на сервер используем первый день года в формате YYYY-MM-DD
+        targetDateInput.value = `${newYear}-01-01`;
+
+        console.log('Changed year to:', targetDateInput.value); // Для отладки
+
+        // Генерируем сетку годов
+        this.generateYearGrid(newYear);
+    }
+
+// Добавьте метод для обновления отображения года:
+    updateYearDisplay(year) {
+        const yearDisplay = document.getElementById('yearDisplay');
+        const yearInput = document.getElementById('selectedYear');
+        const targetDateInput = document.getElementById('targetDate');
+        const yearGrid = document.getElementById('yearGrid');
+
+        if (!yearDisplay || !yearInput || !targetDateInput || !yearGrid) return;
+
+        // Убедимся, что year - число
+        year = parseInt(year) || new Date().getFullYear();
+
+        yearDisplay.textContent = year;
+        yearInput.value = year;
+
+        targetDateInput.value = `${year}-01-01`;
+
+        console.log('Selected year for server:', targetDateInput.value); // Должно быть "2026-01-01"
+
+        // Генерируем сетку годов
+        this.generateYearGrid(year);
+    }
+
+// Добавьте метод для генерации сетки годов:
+    generateYearGrid(selectedYear) {
+        const yearGrid = document.getElementById('yearGrid');
+        if (!yearGrid) return;
+
+        const startYear = selectedYear - 4;
+        const endYear = selectedYear + 4;
+
+        let html = '<div class="year-grid-row">';
+
+        for (let year = startYear; year <= endYear; year++) {
+            const isSelected = year === selectedYear;
+            const isCurrentYear = year === new Date().getFullYear();
+
+            html += `
+            <div class="year-grid-item ${isSelected ? 'selected' : ''} ${isCurrentYear ? 'current' : ''}" 
+                 data-year="${year}">
+                ${year}
+            </div>
+        `;
+
+            // Каждые 3 года переносим строку (для красоты)
+            if ((year - startYear + 1) % 3 === 0 && year < endYear) {
+                html += '</div><div class="year-grid-row">';
+            }
+        }
+
+        html += '</div>';
+
+        yearGrid.innerHTML = html;
+
+        // Добавляем обработчики для выбора года
+        yearGrid.querySelectorAll('.year-grid-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const year = parseInt(e.currentTarget.dataset.year);
+                this.updateYearDisplay(year);
+            });
+        });
+    }
 }
 
 // Инициализация

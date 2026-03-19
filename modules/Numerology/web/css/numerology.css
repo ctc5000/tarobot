@@ -1972,18 +1972,18 @@
 }
 
 .forecast-number-large {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, #c9a54b, #e2b96b);
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #c9a54b, #686971);
     color: #1a1a24;
     border-radius: 50%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3.5rem;
+    font-size: 2.5rem;
     font-weight: 700;
     font-family: 'Playfair Display', serif;
     box-shadow: 0 10px 30px rgba(201, 165, 75, 0.4);
+    text-align: center;
 }
 
 .forecast-title h3 {
@@ -3393,4 +3393,415 @@
         align-items: center;
         gap: 10px;
     }
+}
+/* Стили для годового прогноза */
+.year-forecast {
+    background: linear-gradient(135deg, #1a1a24, #0a0a0f);
+}
+
+.year-theme-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #c9a54b, #e2b96b);
+    color: #1a1a24;
+    border-radius: 40px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.year-universal-number {
+    text-align: center;
+    padding: 10px;
+    background: rgba(201, 165, 75, 0.1);
+    border-radius: 30px;
+    margin: 15px 0;
+    color: #a0a0b0;
+}
+
+.year-universal-number strong {
+    color: #c9a54b;
+    font-size: 1.2rem;
+    margin-left: 8px;
+}
+
+.year-cycle {
+    background: rgba(201, 165, 75, 0.15);
+    border: 1px solid #c9a54b;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 25px 0;
+    text-align: center;
+}
+
+.cycle-name {
+    font-size: 1.5rem;
+    color: #c9a54b;
+    margin-bottom: 10px;
+    font-family: 'Playfair Display', serif;
+}
+
+.cycle-desc {
+    color: #e5e5e5;
+    margin-bottom: 10px;
+}
+
+.cycle-energy {
+    color: #a0a0b0;
+    font-style: italic;
+}
+
+.chinese-zodiac {
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 25px 0;
+}
+
+.zodiac-animal {
+    font-size: 1.3rem;
+    color: #c9a54b;
+    margin-bottom: 10px;
+}
+
+.zodiac-compatibility {
+    color: #e5e5e5;
+    margin-bottom: 10px;
+}
+
+.zodiac-desc {
+    color: #a0a0b0;
+    line-height: 1.6;
+}
+
+.year-quarterly-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.year-quarter-card {
+    background: rgba(10, 10, 15, 0.5);
+    border: 1px solid rgba(201, 165, 75, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.year-quarter-card:hover {
+    border-color: #c9a54b;
+    transform: translateY(-3px);
+}
+
+.quarter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(201, 165, 75, 0.2);
+}
+
+.quarter-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #c9a54b;
+}
+
+.quarter-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e5e5e5;
+}
+
+.quarter-months {
+    color: #a0a0b0;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.quarter-energy {
+    color: #e5e5e5;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.quarter-focus {
+    color: #a0a0b0;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.quarter-advice {
+    font-style: italic;
+    color: #c9a54b;
+    font-size: 0.9rem;
+}
+
+.year-months-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 25px 0;
+}
+
+.year-month-item {
+    padding: 15px;
+    border-radius: 12px;
+    border-left: 3px solid;
+}
+
+.year-month-item.importance-судьбоносный {
+    background: rgba(201, 165, 75, 0.2);
+    border-left-color: #c9a54b;
+}
+
+.year-month-item.importance-важный {
+    background: rgba(76, 175, 80, 0.1);
+    border-left-color: #4caf50;
+}
+
+.year-month-item.importance-благоприятный {
+    background: rgba(33, 150, 243, 0.1);
+    border-left-color: #2196f3;
+}
+
+.month-name {
+    display: block;
+    font-weight: 600;
+    color: #e5e5e5;
+    margin-bottom: 5px;
+}
+
+.month-number {
+    display: inline-block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #c9a54b;
+    margin-right: 8px;
+}
+
+.month-reason {
+    color: #a0a0b0;
+    font-size: 0.85rem;
+}
+
+.year-dates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    margin: 25px 0;
+}
+
+.year-date-item {
+    padding: 15px;
+    background: rgba(10, 10, 15, 0.5);
+    border-radius: 12px;
+    border-left: 3px solid;
+}
+
+.year-date-item.type-astronomical {
+    border-left-color: #ff9800;
+}
+
+.year-date-item.type-personal {
+    border-left-color: #c9a54b;
+}
+
+.date-day {
+    display: block;
+    font-weight: 600;
+    color: #e5e5e5;
+    margin-bottom: 5px;
+}
+
+.date-name {
+    display: block;
+    color: #c9a54b;
+    margin-bottom: 5px;
+}
+
+.date-number {
+    display: inline-block;
+    background: rgba(201, 165, 75, 0.2);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #c9a54b;
+    margin-bottom: 5px;
+}
+
+.date-reason {
+    color: #a0a0b0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.year-tarot {
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(201, 165, 75, 0.05);
+    border-radius: 20px;
+}
+
+.year-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.year-affirmation {
+    position: relative;
+    padding: 25px 30px;
+    background: linear-gradient(135deg, rgba(201, 165, 75, 0.15), rgba(10, 10, 15, 0.5));
+    border-radius: 20px;
+    border: 1px solid #c9a54b;
+    margin-top: 25px;
+}
+
+.year-affirmation i {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 2rem;
+    color: #c9a54b;
+    opacity: 0.3;
+}
+
+.year-affirmation p {
+    color: #e5e5e5;
+    font-size: 1.2rem;
+    line-height: 1.7;
+    font-style: italic;
+    margin: 0;
+    padding-left: 35px;
+}
+
+@media (max-width: 768px) {
+    .year-quarterly-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .year-months-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .year-dates-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .year-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* Стили для пикера года */
+.year-picker-container {
+    background: rgba(26, 26, 36, 0.8);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.year-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.year-nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    background: rgba(201, 165, 75, 0.1);
+    color: #c9a54b;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.year-nav-btn:hover {
+    background: #c9a54b;
+    color: #1a1a24;
+    transform: scale(1.1);
+}
+
+#yearDisplay {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #c9a54b;
+    font-family: 'Playfair Display', serif;
+}
+
+.year-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.year-grid-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.year-grid-item {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 10, 15, 0.5);
+    border: 1px solid rgba(201, 165, 75, 0.2);
+    border-radius: 50%;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.year-grid-item:hover {
+    border-color: #c9a54b;
+    transform: scale(1.1);
+}
+
+.year-grid-item.selected {
+    background: #c9a54b;
+    color: #1a1a24;
+    border-color: #c9a54b;
+    box-shadow: 0 0 20px rgba(201, 165, 75, 0.5);
+}
+
+.year-grid-item.current {
+    border-color: #4caf50;
+    border-width: 2px;
+}
+
+@media (max-width: 768px) {
+    .year-grid-item {
+        width: 60px;
+        height: 60px;
+        font-size: 1rem;
+    }
+}
+.section-title
+{
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 16px;
+    color: #c9a54b;
+    margin-top: 30px;
 }
