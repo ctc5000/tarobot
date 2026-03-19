@@ -30,6 +30,8 @@ class NumerologyApp {
             console.error('❌ Форма не найдена');
             return;
         }
+        this.initWeekPicker();
+        this.initMonthPicker();
 
         // Инициализируем маски для дат
         this.initDateMasks();
@@ -325,12 +327,63 @@ class NumerologyApp {
         if (tariffCode === 'compatibility') {
             this.compatibilityFields.style.display = 'block';
             this.targetDateField.style.display = 'none';
+
+            // Скрываем пикеры
+            const weekPicker = document.getElementById('weekPickerContainer');
+            const monthPicker = document.getElementById('monthPickerContainer');
+            if (weekPicker) weekPicker.style.display = 'none';
+            if (monthPicker) monthPicker.style.display = 'none';
+
+            // Показываем стандартное поле даты
+            const targetDateInput = document.getElementById('targetDate');
+            if (targetDateInput) targetDateInput.style.display = 'block';
+
         } else if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariffCode)) {
             this.compatibilityFields.style.display = 'none';
             this.targetDateField.style.display = 'block';
+
+            const weekPicker = document.getElementById('weekPickerContainer');
+            const monthPicker = document.getElementById('monthPickerContainer');
+            const targetDateInput = document.getElementById('targetDate');
+
+            if (tariffCode === 'forecast_week') {
+                // Для недели показываем пикер недели
+                if (weekPicker) {
+                    weekPicker.style.display = 'block';
+                    const today = new Date();
+                    const monday = this.getMonday(today);
+                    this.updateWeekDisplay(monday);
+                }
+                if (monthPicker) monthPicker.style.display = 'none';
+                if (targetDateInput) targetDateInput.style.display = 'none';
+
+            } else if (tariffCode === 'forecast_month') {
+                // Для месяца показываем пикер месяца
+                if (monthPicker) {
+                    monthPicker.style.display = 'block';
+                    this.updateMonthDisplay(new Date());
+                }
+                if (weekPicker) weekPicker.style.display = 'none';
+                if (targetDateInput) targetDateInput.style.display = 'none';
+
+            } else {
+                // Для дня и года скрываем пикеры
+                if (weekPicker) weekPicker.style.display = 'none';
+                if (monthPicker) monthPicker.style.display = 'none';
+                if (targetDateInput) {
+                    targetDateInput.style.display = 'block';
+                    targetDateInput.value = '';
+                }
+            }
         } else {
             this.compatibilityFields.style.display = 'none';
             this.targetDateField.style.display = 'none';
+
+            // Скрываем все пикеры
+            const weekPicker = document.getElementById('weekPickerContainer');
+            const monthPicker = document.getElementById('monthPickerContainer');
+            if (weekPicker) weekPicker.style.display = 'none';
+            if (monthPicker) monthPicker.style.display = 'none';
         }
 
         // Обновляем информацию о цене
@@ -342,6 +395,12 @@ class NumerologyApp {
 
         // Обновляем подсветку в тарифах
         this.renderTariffs();
+    }
+    getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
     }
 
     updatePriceInfo(tariff) {
@@ -493,8 +552,10 @@ class NumerologyApp {
             // Формируем данные для отправки
             const requestData = {
                 fullName,
-                birthDate: this.formatDateForServer(birthDate)
+                birthDate: this.formatDateForServer(birthDate) // Преобразуем ДД.ММ.ГГГГ в ГГГГ-ММ-ДД
             };
+
+            console.log('Formatted birthDate for server:', requestData.birthDate); // Для отладки
 
             // Добавляем дополнительные поля
             if (this.selectedTariff.code === 'compatibility') {
@@ -509,18 +570,47 @@ class NumerologyApp {
                     return;
                 }
             } else if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(this.selectedTariff.code)) {
-                requestData.targetDate = this.formatDateForServer(
-                    document.getElementById('targetDate').value.trim()
-                );
 
-                if (!requestData.targetDate) {
-                    this.showNotification('❌ Укажите дату прогноза', 'error');
-                    this.showLoading(false);
-                    return;
+                let targetDateValue = '';
+
+                if (this.selectedTariff.code === 'forecast_week') {
+                    // Для недели используем выбранную дату начала
+                    targetDateValue = document.getElementById('selectedWeekStart')?.value;
+                    if (!targetDateValue) {
+                        this.showNotification('❌ Выберите неделю', 'error');
+                        this.showLoading(false);
+                        return;
+                    }
+                    // selectedWeekStart уже в формате YYYY-MM-DD
+                    requestData.targetDate = targetDateValue;
+
+                } else if (this.selectedTariff.code === 'forecast_month') {
+                    // Для месяца используем выбранный месяц (первый день месяца)
+                    targetDateValue = document.getElementById('targetDate')?.value;
+                    if (!targetDateValue) {
+                        this.showNotification('❌ Выберите месяц', 'error');
+                        this.showLoading(false);
+                        return;
+                    }
+                    // targetDate уже в формате YYYY-MM-DD от пикера месяца
+                    requestData.targetDate = targetDateValue;
+
+                } else {
+                    // Для дня и года используем введенную дату
+                    const inputDate = document.getElementById('targetDate').value.trim();
+                    if (!inputDate) {
+                        this.showNotification('❌ Укажите дату прогноза', 'error');
+                        this.showLoading(false);
+                        return;
+                    }
+                    // Преобразуем ДД.ММ.ГГГГ в ГГГГ-ММ-ДД
+                    requestData.targetDate = this.formatDateForServer(inputDate);
                 }
+
+                console.log('Target date for server:', requestData.targetDate); // Для отладки
             }
 
-            // Определяем эндпоинт - ИСПРАВЛЕНО!
+            // Определяем эндпоинт
             let endpoint = '';
 
             if (this.selectedTariff.code === 'forecast_basic') {
@@ -530,7 +620,6 @@ class NumerologyApp {
             } else if (this.selectedTariff.code === 'compatibility') {
                 endpoint = '/api/numerology/compatibility';
             } else if (this.selectedTariff.code.startsWith('forecast_')) {
-                // Для прогнозов: forecast_day -> day
                 const forecastType = this.selectedTariff.code.replace('forecast_', '');
                 endpoint = `/api/numerology/forecast/${forecastType}`;
             }
@@ -568,6 +657,20 @@ class NumerologyApp {
                 window.currentNumerologyData = data.data;
                 window.currentCalculationId = data.calculationId;
                 this.currentCalculation = data.data;
+
+                // Для недели добавляем дополнительную информацию
+                if (this.selectedTariff.code === 'forecast_week' && data.data.forecast) {
+                    const weekStart = document.getElementById('selectedWeekStart')?.value;
+                    const weekEnd = document.getElementById('selectedWeekEnd')?.value;
+
+                    if (weekStart && weekEnd) {
+                        data.data.forecast.weekRange = {
+                            start: weekStart,
+                            end: weekEnd
+                        };
+                    }
+                }
+
                 this.displayResults(data.data);
             } else {
                 throw new Error(data.error || 'Ошибка расчета');
@@ -585,6 +688,8 @@ class NumerologyApp {
         // Определяем, полный ли это расчет
         const isFull = data.tarot && data.zodiac && data.psychology;
         const isForecast = data.forecast || this.selectedTariff?.code?.startsWith('forecast_');
+        const isWeekForecast = this.selectedTariff?.code === 'forecast_week';
+        const isMonthForecast = this.selectedTariff?.code === 'forecast_month';
         const isCompatibility = this.selectedTariff?.code === 'compatibility';
 
         // Обновляем заголовок
@@ -594,6 +699,12 @@ class NumerologyApp {
         if (isFull) {
             resultType = '⭐ ПОЛНЫЙ НУМЕРОЛОГИЧЕСКИЙ ОТЧЕТ';
             badge = '<span class="result-badge full">Полный отчет</span>';
+        } else if (isMonthForecast) {
+            resultType = '📅 ПРОГНОЗ НА МЕСЯЦ';
+            badge = '<span class="result-badge forecast">Месячный прогноз</span>';
+        } else if (isWeekForecast) {
+            resultType = '📅 ПРОГНОЗ НА НЕДЕЛЮ';
+            badge = '<span class="result-badge forecast">Недельный прогноз</span>';
         } else if (isForecast) {
             const forecastName = this.selectedTariff?.name || 'Прогноз';
             resultType = `📅 ${forecastName.toUpperCase()}`;
@@ -631,8 +742,14 @@ class NumerologyApp {
             if (specialNumbers) specialNumbers.style.display = 'none';
             if (callsSection) callsSection.style.display = 'none';
 
-            // Показываем блок с прогнозом
-            this.displayForecast(data.forecast, data.interpretation, data.deepPortrait);
+            // Показываем соответствующий блок
+            if (isMonthForecast) {
+                this.displayMonthForecast(data.forecast);
+            } else if (isWeekForecast) {
+                this.displayWeekForecast(data.forecast);
+            } else {
+                this.displayForecast(data.forecast, data.interpretation, data.deepPortrait);
+            }
         } else {
             // Для других типов показываем стандартные элементы
             const numerologyGrid = document.querySelector('.numerology-grid');
@@ -2350,6 +2467,726 @@ class NumerologyApp {
             }
         }
     }
+    initWeekPicker() {
+        const targetDateInput = document.getElementById('targetDate');
+        if (!targetDateInput) return;
+
+        // Создаем контейнер для выбора недели
+        const weekPickerContainer = document.createElement('div');
+        weekPickerContainer.className = 'week-picker-container';
+        weekPickerContainer.id = 'weekPickerContainer';
+        weekPickerContainer.style.display = 'none';
+
+        weekPickerContainer.innerHTML = `
+        <div class="week-picker-header">
+            <button type="button" class="week-nav-btn" id="prevWeekBtn"><i class="fas fa-chevron-left"></i></button>
+            <span id="weekDisplay">Текущая неделя</span>
+            <button type="button" class="week-nav-btn" id="nextWeekBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="week-days-grid" id="weekDaysGrid"></div>
+        <input type="hidden" id="selectedWeekStart" value="">
+        <input type="hidden" id="selectedWeekEnd" value="">
+    `;
+
+        // Вставляем после поля ввода даты
+        targetDateInput.parentNode.insertBefore(weekPickerContainer, targetDateInput.nextSibling);
+
+        // Добавляем обработчики
+        document.getElementById('prevWeekBtn')?.addEventListener('click', () => this.changeWeek(-1));
+        document.getElementById('nextWeekBtn')?.addEventListener('click', () => this.changeWeek(1));
+
+        // Скрываем стандартное поле ввода
+        targetDateInput.style.display = 'none';
+    }
+
+    changeWeek(delta) {
+        const currentStartStr = document.getElementById('selectedWeekStart')?.value;
+        if (!currentStartStr) return;
+
+        const currentStart = new Date(currentStartStr);
+        currentStart.setDate(currentStart.getDate() + (delta * 7));
+
+        this.updateWeekDisplay(currentStart);
+    }
+
+    updateWeekDisplay(startDate) {
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+
+        const weekDisplay = document.getElementById('weekDisplay');
+        const weekStartInput = document.getElementById('selectedWeekStart');
+        const weekEndInput = document.getElementById('selectedWeekEnd');
+        const targetDateInput = document.getElementById('targetDate');
+
+        if (!weekDisplay || !weekStartInput || !weekEndInput || !targetDateInput) return;
+
+        const formatDate = (date) => {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+
+        const formatDateForServer = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const startStr = formatDate(startDate);
+        const endStr = formatDate(endDate);
+
+        weekDisplay.textContent = `${startStr} — ${endStr}`;
+        weekStartInput.value = formatDateForServer(startDate);
+        weekEndInput.value = formatDateForServer(endDate);
+
+        // Для отправки на сервер используем начало недели
+        targetDateInput.value = formatDateForServer(startDate);
+
+        console.log('Selected week for server:', targetDateInput.value); // Для отладки
+
+        // Обновляем сетку дней
+        this.updateWeekDaysGrid(startDate);
+    }
+
+    updateWeekDaysGrid(startDate) {
+        const grid = document.getElementById('weekDaysGrid');
+        if (!grid) return;
+
+        const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let html = '';
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+
+            const dayNumber = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const dateStr = `${dayNumber}.${month}`;
+
+            const isToday = date.getTime() === today.getTime();
+            const isPast = date < today;
+            const isFuture = date > today;
+
+            html += `
+            <div class="week-day ${isToday ? 'today' : ''} ${isPast ? 'past' : ''} ${isFuture ? 'future' : ''}">
+                <span class="day-name">${days[i]}</span>
+                <span class="day-date">${dateStr}</span>
+            </div>
+        `;
+        }
+
+        grid.innerHTML = html;
+    }
+    // В классе NumerologyApp, обновите метод displayWeekForecast:
+
+    displayWeekForecast(forecast) {
+        if (!forecast) return;
+
+        // Создаем или находим контейнер для прогноза
+        let forecastContainer = document.getElementById('forecastResult');
+        if (!forecastContainer) {
+            forecastContainer = document.createElement('div');
+            forecastContainer.id = 'forecastResult';
+            forecastContainer.className = 'forecast-result';
+
+            // Вставляем перед свитком судьбы
+            const interpretationDiv = document.querySelector('.full-interpretation');
+            if (interpretationDiv) {
+                interpretationDiv.before(forecastContainer);
+            } else {
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.appendChild(forecastContainer);
+                }
+            }
+        }
+
+        const weekRange = forecast.weekRange || {};
+        const weekAnalysis = forecast.weekAnalysis || {};
+        const lifeAreas = forecast.lifeAreas || {};
+        const dailyBreakdown = forecast.dailyBreakdown || [];
+        const favorableDays = forecast.favorableDays || {};
+        const tarot = forecast.tarot || {};
+        const fengShui = forecast.fengShui || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const weekRuler = forecast.weekRuler || {};
+        const weekEnergy = forecast.weekEnergy || '';
+
+        // Форматируем даты
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return dateStr;
+        };
+
+        // Создаем HTML для дневной разбивки
+        const dailyHTML = dailyBreakdown.map(day => {
+            const todayClass = day.isToday ? ' today' : '';
+            return `
+            <div class="week-day-card${todayClass}">
+                <div class="day-header">
+                    <span class="day-name">${day.dayName}</span>
+                    <span class="day-date">${day.date}</span>
+                </div>
+                <div class="day-numbers">
+                    <span class="day-number-large">${day.universalNumber}</span>
+                    <span class="day-personal">личн. ${day.personalNumber}</span>
+                </div>
+                <div class="day-energy">${day.energy}</div>
+                <div class="day-focus">${day.focus.substring(0, 30)}...</div>
+                <div class="day-advice">💫 ${day.advice}</div>
+                <div class="day-details">
+                    <span><i class="fas fa-clock"></i> ${day.favorableHours[0]}</span>
+                    <span><i class="fas fa-palette"></i> ${day.color}</span>
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        // Создаем HTML для благоприятных дней
+        const favorableHTML = (favorableDays.favorable || []).map(day => `
+        <div class="favorable-day-item">
+            <span class="day-name">${day.name}</span>
+            <span class="day-date">${day.date}</span>
+            <span class="day-number">${day.number}</span>
+            <span class="day-reason">${day.reason}</span>
+        </div>
+    `).join('');
+
+        const neutralHTML = (favorableDays.neutral || []).map(day => `
+        <div class="neutral-day-item">
+            <span class="day-name">${day.name}</span>
+            <span class="day-date">${day.date}</span>
+            <span class="day-number">${day.number}</span>
+            <span class="day-reason">${day.reason}</span>
+        </div>
+    `).join('');
+
+        let html = `
+        <div class="forecast-card week-forecast">
+            <div class="forecast-header">
+                <div class="forecast-number-large">${forecast.weekNumber || '?'}</div>
+                <div class="forecast-title">
+                    <h3>ПРОГНОЗ НА НЕДЕЛЮ</h3>
+                    <p class="week-range">${formatDate(weekRange.start)} — ${formatDate(weekRange.end)}</p>
+                    <div class="week-energy-badge">${weekEnergy}</div>
+                </div>
+            </div>
+            
+            <div class="week-ruler-info">
+                <span><i class="fas fa-globe"></i> Покровитель: ${weekRuler.planet} (${weekRuler.element})</span>
+                <span><i class="fas fa-star"></i> Качество: ${weekRuler.quality}</span>
+            </div>
+            
+            <div class="week-theme">
+                <h4>${weekAnalysis.theme}</h4>
+                <p>${weekAnalysis.description}</p>
+                <div class="personal-note">${weekAnalysis.personalNote}</div>
+            </div>
+            
+            <div class="week-advice">
+                <i class="fas fa-quote-left"></i>
+                <p>${weekAnalysis.advice}</p>
+            </div>
+            
+            <div class="week-sections">
+                <div class="section opportunities">
+                    <h5><i class="fas fa-check-circle"></i> Возможности</h5>
+                    <ul>
+                        ${(weekAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="section challenges">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
+                    <ul>
+                        ${(weekAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="life-areas-grid">
+                <div class="life-area career">
+                    <i class="fas fa-briefcase"></i>
+                    <p>${lifeAreas.career || ''}</p>
+                </div>
+                <div class="life-area love">
+                    <i class="fas fa-heart"></i>
+                    <p>${lifeAreas.love || ''}</p>
+                </div>
+                <div class="life-area health">
+                    <i class="fas fa-leaf"></i>
+                    <p>${lifeAreas.health || ''}</p>
+                </div>
+                <div class="life-area finance">
+                    <i class="fas fa-coins"></i>
+                    <p>${lifeAreas.finance || ''}</p>
+                </div>
+            </div>
+            
+            <h4 class="section-title"><i class="fas fa-calendar-alt"></i> ДНЕВНАЯ РАЗБИВКА</h4>
+            <div class="week-daily-breakdown">
+                ${dailyHTML}
+            </div>
+            
+            <div class="favorable-days-section">
+                <h4><i class="fas fa-star"></i> БЛАГОПРИЯТНЫЕ ДНИ</h4>
+                <div class="favorable-days-grid">
+                    ${favorableHTML}
+                </div>
+                
+                ${neutralHTML ? `
+                <h4><i class="fas fa-minus-circle"></i> НЕЙТРАЛЬНЫЕ ДНИ</h4>
+                <div class="neutral-days-grid">
+                    ${neutralHTML}
+                </div>
+                ` : ''}
+            </div>
+            
+            ${tarot.name ? `
+            <div class="week-tarot">
+                <h4><i class="fas fa-crown"></i> КАРТА ТАРО НЕДЕЛИ: ${tarot.name}</h4>
+                <div class="tarot-mini">
+                    <div class="tarot-image-mini">
+                        <img src="${tarot.image || '/images/tarot/back.jpg'}" alt="${tarot.name}">
+                    </div>
+                    <div class="tarot-desc-mini">
+                        <p>${tarot.description || ''}</p>
+                        <p class="tarot-advice"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <div class="week-details-grid">
+                <div class="detail-block">
+                    <h5><i class="fas fa-wind"></i> Фен-шуй</h5>
+                    <p><strong>Элемент:</strong> ${fengShui.element}</p>
+                    <p><strong>Зона:</strong> ${fengShui.zone}</p>
+                    <p><strong>Активация:</strong> ${fengShui.activation}</p>
+                    <p class="advice">${fengShui.advice || ''}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-paint-brush"></i> Цвета недели</h5>
+                    <div class="color-chips">
+                        ${colors.map(c => `<span class="color-chip" style="background-color: ${this.getColorCode(c)}">${c}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-gem"></i> Камни</h5>
+                    <p>${crystals.join(', ')}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-leaf"></i> Ароматы</h5>
+                    <p>${scents.join(', ')}</p>
+                </div>
+            </div>
+            
+            ${affirmation ? `
+            <div class="week-affirmation">
+                <i class="fas fa-quote-left"></i>
+                <p>${affirmation}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+        forecastContainer.innerHTML = html;
+    }
+
+// Вспомогательный метод для получения кода цвета
+    getColorCode(colorName) {
+        const colorMap = {
+            'Красный': '#ff4444',
+            'Золотой': '#ffd700',
+            'Оранжевый': '#ffa500',
+            'Голубой': '#00bfff',
+            'Серебряный': '#c0c0c0',
+            'Белый': '#ffffff',
+            'Желтый': '#ffff00',
+            'Зеленый': '#4caf50',
+            'Бирюзовый': '#40e0d0',
+            'Фиолетовый': '#9c27b0',
+            'Синий': '#2196f3',
+            'Розовый': '#ff69b4',
+            'Коричневый': '#8b4513',
+            'Бежевый': '#f5f5dc',
+            'Пурпурный': '#800080',
+            'Лавандовый': '#e6e6fa',
+            'Жемчужный': '#fdeef4',
+            'Индиго': '#4b0082'
+        };
+        return colorMap[colorName] || '#c9a54b';
+    }
+    isToday(date) {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    }
+    formatDateFromServer(dateStr) {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}.${month}.${year}`;
+    }
+
+    initMonthPicker() {
+        const targetDateInput = document.getElementById('targetDate');
+        if (!targetDateInput) return;
+
+        // Создаем контейнер для выбора месяца
+        const monthPickerContainer = document.createElement('div');
+        monthPickerContainer.className = 'month-picker-container';
+        monthPickerContainer.id = 'monthPickerContainer';
+        monthPickerContainer.style.display = 'none';
+
+        monthPickerContainer.innerHTML = `
+        <div class="month-picker-header">
+            <button type="button" class="month-nav-btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+            <span id="monthDisplay">Март 2026</span>
+            <button type="button" class="month-nav-btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="month-calendar" id="monthCalendar"></div>
+        <input type="hidden" id="selectedMonth" value="">
+        <input type="hidden" id="selectedYear" value="">
+    `;
+
+        // Вставляем после поля ввода даты
+        targetDateInput.parentNode.insertBefore(monthPickerContainer, targetDateInput.nextSibling);
+
+        // Добавляем обработчики
+        document.getElementById('prevMonthBtn')?.addEventListener('click', () => this.changeMonth(-1));
+        document.getElementById('nextMonthBtn')?.addEventListener('click', () => this.changeMonth(1));
+
+        // Скрываем стандартное поле ввода
+        targetDateInput.style.display = 'none';
+    }
+
+// Добавьте метод для смены месяца:
+    changeMonth(delta) {
+        const currentMonthStr = document.getElementById('selectedMonth')?.value;
+        const currentYearStr = document.getElementById('selectedYear')?.value;
+
+        let date;
+
+        if (currentMonthStr && currentYearStr) {
+            const currentMonth = parseInt(currentMonthStr);
+            const currentYear = parseInt(currentYearStr);
+
+            let newMonth = currentMonth + delta;
+            let newYear = currentYear;
+
+            if (newMonth > 12) {
+                newMonth = 1;
+                newYear++;
+            } else if (newMonth < 1) {
+                newMonth = 12;
+                newYear--;
+            }
+
+            date = new Date(newYear, newMonth - 1, 1);
+        } else {
+            date = new Date();
+        }
+
+        this.updateMonthDisplay(date);
+    }
+
+// Добавьте метод для обновления отображения месяца:
+    updateMonthDisplay(date) {
+        const monthDisplay = document.getElementById('monthDisplay');
+        const monthInput = document.getElementById('selectedMonth');
+        const yearInput = document.getElementById('selectedYear');
+        const monthCalendar = document.getElementById('monthCalendar');
+        const targetDateInput = document.getElementById('targetDate');
+
+        if (!monthDisplay || !monthInput || !yearInput || !monthCalendar || !targetDateInput) return;
+
+        // Убедимся, что date - это объект Date
+        if (!(date instanceof Date)) {
+            date = new Date();
+        }
+
+        const month = date.getMonth() + 1; // 1-12
+        const year = date.getFullYear();
+
+        const monthNames = [
+            'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+        ];
+
+        monthDisplay.textContent = `${monthNames[month - 1]} ${year}`;
+        monthInput.value = month;
+        yearInput.value = year;
+
+        // Для отправки на сервер используем первый день месяца в формате YYYY-MM-DD
+        const formattedMonth = String(month).padStart(2, '0');
+        targetDateInput.value = `${year}-${formattedMonth}-01`;
+
+        console.log('Selected month date for server:', targetDateInput.value); // Для отладки
+
+        // Генерируем календарь
+        this.generateMonthCalendar(month, year);
+    }
+
+
+// Добавьте метод для генерации календаря:
+    generateMonthCalendar(month, year) {
+        const calendar = document.getElementById('monthCalendar');
+        if (!calendar) return;
+
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        const today = new Date();
+        const isCurrentMonth = today.getMonth() + 1 === month && today.getFullYear() === year;
+        const currentDay = today.getDate();
+
+        let html = `
+        <div class="calendar-weekdays">
+            ${daysOfWeek.map(day => `<div class="weekday">${day}</div>`).join('')}
+        </div>
+        <div class="calendar-days">
+    `;
+
+        // Пустые ячейки перед первым днем
+        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+        for (let i = 0; i < adjustedFirstDay; i++) {
+            html += `<div class="calendar-day empty"></div>`;
+        }
+
+        // Ячейки для дней месяца
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = isCurrentMonth && day === currentDay;
+            const dateStr = `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year}`;
+
+            html += `
+            <div class="calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">
+                <span class="day-number">${day}</span>
+            </div>
+        `;
+        }
+
+        html += '</div>';
+        calendar.innerHTML = html;
+
+        // Добавляем обработчики для дней (опционально)
+        calendar.querySelectorAll('.calendar-day:not(.empty)').forEach(dayEl => {
+            dayEl.addEventListener('click', () => {
+                // Можно показать информацию о дне или выбрать конкретную дату
+                const date = dayEl.dataset.date;
+                console.log('Выбрана дата:', date);
+            });
+        });
+    }
+    displayMonthForecast(forecast) {
+        if (!forecast) return;
+
+        // Создаем или находим контейнер для прогноза
+        let forecastContainer = document.getElementById('forecastResult');
+        if (!forecastContainer) {
+            forecastContainer = document.createElement('div');
+            forecastContainer.id = 'forecastResult';
+            forecastContainer.className = 'forecast-result';
+
+            const interpretationDiv = document.querySelector('.full-interpretation');
+            if (interpretationDiv) {
+                interpretationDiv.before(forecastContainer);
+            } else {
+                const resultCard = document.querySelector('.result-card');
+                if (resultCard) {
+                    resultCard.appendChild(forecastContainer);
+                }
+            }
+        }
+
+        const monthRange = forecast.monthRange || {};
+        const monthAnalysis = forecast.monthAnalysis || {};
+        const lifeAreas = forecast.lifeAreas || {};
+        const weeklyBreakdown = forecast.weeklyBreakdown || [];
+        const importantDates = forecast.importantDates || [];
+        const tarot = forecast.tarot || {};
+        const fengShui = forecast.fengShui || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const monthRuler = forecast.monthRuler || {};
+        const monthEnergy = forecast.monthEnergy || '';
+        const monthElement = forecast.monthElement || '';
+
+        // Форматируем даты
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            return dateStr;
+        };
+
+        // Создаем HTML для недельной разбивки
+        const weeklyHTML = weeklyBreakdown.map(week => `
+        <div class="month-week-card">
+            <div class="week-header">
+                <span class="week-number">Неделя ${week.weekNumber}</span>
+                <span class="week-dates">${week.startDate} — ${week.endDate}</span>
+                <span class="week-energy">${week.energy}</span>
+            </div>
+            <div class="week-content">
+                <div class="week-number-value">Число недели: <strong>${week.weekNumberValue}</strong></div>
+                <div class="week-focus">${week.focus}</div>
+            </div>
+        </div>
+    `).join('');
+
+        // Создаем HTML для важных дат
+        const importantDatesHTML = importantDates.map(date => `
+        <div class="important-date-item">
+            <span class="date-day">${date.date}</span>
+            <span class="date-dayofweek">${date.dayOfWeek}</span>
+            <span class="date-number">${date.dayNumber}</span>
+            <span class="date-reason">${date.reason}</span>
+        </div>
+    `).join('');
+
+        let html = `
+        <div class="forecast-card month-forecast">
+            <div class="forecast-header">
+                <div class="forecast-number-large">${forecast.monthNumber || '?'}</div>
+                <div class="forecast-title">
+                    <h3>ПРОГНОЗ НА МЕСЯЦ</h3>
+                    <p class="month-range">${monthRange.monthName || ''} ${monthRange.year || ''}</p>
+                    <p class="month-dates">${formatDate(monthRange.start)} — ${formatDate(monthRange.end)}</p>
+                    <div class="month-energy-badge">${monthEnergy}</div>
+                </div>
+            </div>
+            
+            <div class="month-ruler-info">
+                <span><i class="fas fa-globe"></i> Покровитель: ${monthRuler.planet} (${monthRuler.element})</span>
+                <span><i class="fas fa-star"></i> Качество: ${monthRuler.quality}</span>
+                <span><i class="fas fa-wind"></i> Стихия: ${monthElement}</span>
+            </div>
+            
+            <div class="month-theme">
+                <h4>${monthAnalysis.theme}</h4>
+                <p>${monthAnalysis.description}</p>
+                <div class="personal-note">${monthAnalysis.personalNote}</div>
+            </div>
+            
+            <div class="month-advice">
+                <i class="fas fa-quote-left"></i>
+                <p>${monthAnalysis.advice}</p>
+            </div>
+            
+            <div class="month-sections">
+                <div class="section opportunities">
+                    <h5><i class="fas fa-check-circle"></i> Возможности месяца</h5>
+                    <ul>
+                        ${(monthAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="section challenges">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Вызовы месяца</h5>
+                    <ul>
+                        ${(monthAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="life-areas-grid">
+                <div class="life-area career">
+                    <i class="fas fa-briefcase"></i>
+                    <p>${lifeAreas.career || ''}</p>
+                </div>
+                <div class="life-area love">
+                    <i class="fas fa-heart"></i>
+                    <p>${lifeAreas.love || ''}</p>
+                </div>
+                <div class="life-area health">
+                    <i class="fas fa-leaf"></i>
+                    <p>${lifeAreas.health || ''}</p>
+                </div>
+                <div class="life-area finance">
+                    <i class="fas fa-coins"></i>
+                    <p>${lifeAreas.finance || ''}</p>
+                </div>
+            </div>
+            
+            <h4 class="section-title"><i class="fas fa-calendar-alt"></i> НЕДЕЛЬНАЯ РАЗБИВКА</h4>
+            <div class="month-weekly-breakdown">
+                ${weeklyHTML}
+            </div>
+            
+            ${importantDatesHTML ? `
+            <div class="important-dates-section">
+                <h4><i class="fas fa-star"></i> ВАЖНЫЕ ДАТЫ МЕСЯЦА</h4>
+                <div class="important-dates-grid">
+                    ${importantDatesHTML}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${tarot.name ? `
+            <div class="month-tarot">
+                <h4><i class="fas fa-crown"></i> КАРТА ТАРО МЕСЯЦА: ${tarot.name}</h4>
+                <div class="tarot-mini">
+                    <div class="tarot-image-mini">
+                        <img src="${tarot.image || '/images/tarot/back.jpg'}" alt="${tarot.name}">
+                    </div>
+                    <div class="tarot-desc-mini">
+                        <p>${tarot.description || ''}</p>
+                        <p class="tarot-advice"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+            
+            <div class="month-details-grid">
+                <div class="detail-block">
+                    <h5><i class="fas fa-wind"></i> Фен-шуй</h5>
+                    <p><strong>Элемент:</strong> ${fengShui.element}</p>
+                    <p><strong>Зона:</strong> ${fengShui.zone}</p>
+                    <p><strong>Активация:</strong> ${fengShui.activation}</p>
+                    <p class="advice">${fengShui.advice || ''}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-paint-brush"></i> Цвета месяца</h5>
+                    <div class="color-chips">
+                        ${colors.map(c => `<span class="color-chip" style="background-color: ${this.getColorCode(c)}">${c}</span>`).join('')}
+                    </div>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-gem"></i> Камни</h5>
+                    <p>${crystals.join(', ')}</p>
+                </div>
+                
+                <div class="detail-block">
+                    <h5><i class="fas fa-leaf"></i> Ароматы</h5>
+                    <p>${scents.join(', ')}</p>
+                </div>
+            </div>
+            
+            ${affirmation ? `
+            <div class="month-affirmation">
+                <i class="fas fa-quote-left"></i>
+                <p>${affirmation}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+        forecastContainer.innerHTML = html;
+    }
+
 }
 
 // Инициализация

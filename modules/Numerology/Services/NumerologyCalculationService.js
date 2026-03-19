@@ -6,7 +6,8 @@ const ZodiacService = require('../../../services/zodiacService');
 const FengShuiService = require('../../../services/fengShuiService');
 const TarotService = require('../../../services/tarotService');
 const ForecastService = require('./ForecastService');
-
+const WeekForecastService = require('./WeekForecastService');
+const MothForecastService = require('./MonthForecastService');
 
 const PsychologyService = require('../../../services/psychologyService');
 // Инициализация сервисов
@@ -20,6 +21,8 @@ class NumerologyCalculationService {
     constructor() {
         this.logger = global.log; // Глобальный логгер
         this.forecastService = new ForecastService();
+        this.weekForecastService = new WeekForecastService();
+        this.maothForecastService = new MothForecastService();
     }
 
     /**
@@ -40,7 +43,7 @@ class NumerologyCalculationService {
      */
     async calculateBasic(fullName, birthDate, userId = null) {
         try {
-            this.logger?.info('numerology', 'Базовый расчет', { fullName, birthDate, userId });
+            this.logger?.info('numerology', 'Базовый расчет', {fullName, birthDate, userId});
 
             const nameParts = fullName.trim().split(/\s+/);
             const [surname, firstName, patronymic] = nameParts;
@@ -58,25 +61,18 @@ class NumerologyCalculationService {
             const deepPortrait = this.generateBasicPortrait(numerology);
 
             return {
-                success: true,
-                data: {
-                    fullName,
-                    birthDate,
-                    numerology: {
+                success: true, data: {
+                    fullName, birthDate, numerology: {
                         base: numerology.base,
                         achilles: numerology.achilles,
                         control: numerology.control,
                         calls: numerology.calls
-                    },
-                    interpretation,
-                    deepPortrait
-                },
-                isFree: true,
-                message: 'Бесплатный базовый расчет'
+                    }, interpretation, deepPortrait
+                }, isFree: true, message: 'Бесплатный базовый расчет'
             };
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка базового расчета', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка базового расчета', {error: error.message});
             throw error;
         }
     }
@@ -86,7 +82,7 @@ class NumerologyCalculationService {
      */
     async calculateFull(fullName, birthDate, userId = null) {
         try {
-            this.logger?.info('numerology', 'Полный расчет', { fullName, birthDate, userId });
+            this.logger?.info('numerology', 'Полный расчет', {fullName, birthDate, userId});
 
             const nameParts = fullName.trim().split(/\s+/);
             const [surname, firstName, patronymic] = nameParts;
@@ -115,13 +111,7 @@ class NumerologyCalculationService {
             const psychology = psychologyService.generatePortrait(numerology, zodiac, fengShui, tarot);
 
             // 6. Паттерны личности (ПОЛНЫЕ)
-            const patterns = numerologyService.generatePatterns(
-                numerology,
-                zodiac,
-                fengShui,
-                tarot,
-                psychology
-            );
+            const patterns = numerologyService.generatePatterns(numerology, zodiac, fengShui, tarot, psychology);
 
             // 7. Дополнительные интерпретации (ПОЛНЫЕ)
             const interpretations = numerologyService.getInterpretations(numerology.base);
@@ -133,30 +123,19 @@ class NumerologyCalculationService {
             const deepPortrait = psychology.portrait || this.generateDeepPortrait(numerology, zodiac, fengShui, tarot, psychology);
 
             return {
-                success: true,
-                data: {
-                    fullName,
-                    birthDate,
-                    numerology: {
+                success: true, data: {
+                    fullName, birthDate, numerology: {
                         base: numerology.base,
                         achilles: numerology.achilles,
                         control: numerology.control,
                         calls: numerology.calls,
                         interpretations
-                    },
-                    zodiac,
-                    fengShui,
-                    tarot,
-                    psychology,
-                    patterns,
-                    interpretation,
-                    deepPortrait
-                },
-                isFull: true
+                    }, zodiac, fengShui, tarot, psychology, patterns, interpretation, deepPortrait
+                }, isFull: true
             };
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка полного расчета', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка полного расчета', {error: error.message});
             throw error;
         }
     }
@@ -167,29 +146,44 @@ class NumerologyCalculationService {
     async calculateForecast(fullName, birthDate, forecastType, targetDate, userId = null) {
         try {
             this.logger?.info('numerology', 'Расчет прогноза', {
-                details:{
-                    fullName,
-                    birthDate,
-                    forecastType,
-                    targetDate,
-                    userId
+                details: {
+                    fullName, birthDate, forecastType, targetDate, userId
                 }
 
             });
 
-            // Используем ForecastService для расчета
-            const result = await this.forecastService.calculateForecast(
-                fullName,
-                birthDate,
-                forecastType,
-                targetDate,
-                userId
-            );
+            if (forecastType === 'week') {
+                return await this.weekForecastService.calculateWeekForecast(fullName, birthDate, targetDate, userId);
+            }
+            if (forecastType === 'month') {
+                return await this.maothForecastService.calculateMonthForecast(fullName, birthDate, targetDate, userId);
+            } else {
+                const result = await this.forecastService.calculateForecast(fullName, birthDate, forecastType, targetDate, userId);
+
+                return result;
+            }
+
+        } catch (error) {
+            this.logger?.error('numerology', 'Ошибка расчета прогноза', {error: error.message});
+            throw error;
+        }
+    }
+
+    /**
+     * Прогноз на неделю
+     */
+    async calculateWeekForecast(fullName, birthDate, targetDate, userId = null) {
+        try {
+            this.logger?.info('numerology', 'Расчет недельного прогноза', {
+                fullName, birthDate, targetDate, userId
+            });
+
+            const result = await this.weekForecastService.calculateWeekForecast(fullName, birthDate, targetDate, userId);
 
             return result;
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка расчета прогноза', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка расчета недельного прогноза', {error: error.message});
             throw error;
         }
     }
@@ -199,7 +193,9 @@ class NumerologyCalculationService {
      */
     async calculateCompatibility(fullName, birthDate, partnerName, partnerBirthDate, userId = null) {
         try {
-            this.logger?.info('numerology', 'Расчет совместимости', { fullName, birthDate, partnerName, partnerBirthDate, userId });
+            this.logger?.info('numerology', 'Расчет совместимости', {
+                fullName, birthDate, partnerName, partnerBirthDate, userId
+            });
 
             const nameParts = fullName.trim().split(/\s+/);
             const [surname, firstName, patronymic] = nameParts;
@@ -224,31 +220,23 @@ class NumerologyCalculationService {
             const interpretation = this.generateCompatibilityInterpretation(numerology1, numerology2, compatibility);
 
             return {
-                success: true,
-                data: {
+                success: true, data: {
                     person1: {
-                        fullName,
-                        birthDate,
-                        numerology: numerology1.base
-                    },
-                    person2: {
-                        fullName: partnerName,
-                        birthDate: partnerBirthDate,
-                        numerology: numerology2.base
-                    },
-                    compatibility: {
+                        fullName, birthDate, numerology: numerology1.base
+                    }, person2: {
+                        fullName: partnerName, birthDate: partnerBirthDate, numerology: numerology2.base
+                    }, compatibility: {
                         score: compatibility.score,
                         level: compatibility.level,
                         strengths: compatibility.strengths,
                         challenges: compatibility.challenges,
                         advice: compatibility.advice
-                    },
-                    interpretation
+                    }, interpretation
                 }
             };
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка расчета совместимости', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка расчета совместимости', {error: error.message});
             throw error;
         }
     }
@@ -292,40 +280,27 @@ class NumerologyCalculationService {
         let score = 0;
 
         // Сравнение чисел судьбы
-        if (f1 === f2) score += 30;
-        else if (Math.abs(f1 - f2) <= 3) score += 20;
-        else if (Math.abs(f1 - f2) <= 6) score += 10;
+        if (f1 === f2) score += 30; else if (Math.abs(f1 - f2) <= 3) score += 20; else if (Math.abs(f1 - f2) <= 6) score += 10;
 
         // Сравнение чисел имени
-        if (n1 === n2) score += 20;
-        else if (Math.abs(n1 - n2) <= 3) score += 15;
-        else if (Math.abs(n1 - n2) <= 6) score += 5;
+        if (n1 === n2) score += 20; else if (Math.abs(n1 - n2) <= 3) score += 15; else if (Math.abs(n1 - n2) <= 6) score += 5;
 
         // Дополнительные факторы
         if (f1 % 2 === f2 % 2) score += 10; // одинаковая четность
 
         // Гармоничные пары чисел
-        const harmoniousPairs = [
-            [1, 5], [1, 7], [2, 4], [2, 6], [3, 9], [4, 8], [5, 9], [6, 9], [7, 9], [8, 4]
-        ];
+        const harmoniousPairs = [[1, 5], [1, 7], [2, 4], [2, 6], [3, 9], [4, 8], [5, 9], [6, 9], [7, 9], [8, 4]];
 
-        if (harmoniousPairs.some(pair =>
-            (pair[0] === f1 && pair[1] === f2) || (pair[0] === f2 && pair[1] === f1)
-        )) {
+        if (harmoniousPairs.some(pair => (pair[0] === f1 && pair[1] === f2) || (pair[0] === f2 && pair[1] === f1))) {
             score += 25;
         }
 
         // Определяем уровень совместимости
         let level;
-        if (score >= 80) level = '✨ Исключительная совместимость';
-        else if (score >= 65) level = '🌟 Высокая совместимость';
-        else if (score >= 50) level = '💫 Хорошая совместимость';
-        else if (score >= 35) level = '⭐ Средняя совместимость';
-        else level = '🌙 Требует работы';
+        if (score >= 80) level = '✨ Исключительная совместимость'; else if (score >= 65) level = '🌟 Высокая совместимость'; else if (score >= 50) level = '💫 Хорошая совместимость'; else if (score >= 35) level = '⭐ Средняя совместимость'; else level = '🌙 Требует работы';
 
         return {
-            score: Math.min(100, score),
-            level
+            score: Math.min(100, score), level
         };
     }
 
@@ -346,9 +321,7 @@ class NumerologyCalculationService {
 
 Общий уровень совместимости: ${compatibility.level} (${compatibility.score}%)
 
-Ваши числа судьбы (${numerology1.base.fate} и ${numerology2.base.fate}) ${numerology1.base.fate === numerology2.base.fate ?
-            'совпадают, что говорит о глубоком родстве душ' :
-            'создают уникальную динамику в отношениях'}
+Ваши числа судьбы (${numerology1.base.fate} и ${numerology2.base.fate}) ${numerology1.base.fate === numerology2.base.fate ? 'совпадают, что говорит о глубоком родстве душ' : 'создают уникальную динамику в отношениях'}
 
 Числа имени (${numerology1.base.name} и ${numerology2.base.name}) определяют то, как вы проявляете себя в отношениях.
 
@@ -357,7 +330,7 @@ class NumerologyCalculationService {
     }
 
     generateBasicInterpretation(numerology) {
-        const { base, achilles, control } = numerology;
+        const {base, achilles, control} = numerology;
 
         return `
 🔮 **КОСМОГРАММА ЛИЧНОСТИ**
@@ -375,7 +348,7 @@ class NumerologyCalculationService {
     }
 
     generateFullInterpretation(numerology, zodiac, fengShui, tarot, psychology, interpretations) {
-        const { base } = numerology;
+        const {base} = numerology;
 
         let interpretation = `
 🔮 **КОСМОГРАММА ЛИЧНОСТИ**
@@ -425,58 +398,49 @@ class NumerologyCalculationService {
     // ========== МЕТОДЫ ДЛЯ РАБОТЫ С ПРОФИЛЕМ И ИСТОРИЕЙ ==========
 
     async checkFreeCalculation(userId, fullName, birthDate) {
-        const { models } = require('../../../sequelize');
+        const {models} = require('../../../sequelize');
 
         try {
             // Ищем профиль
             let profile = await models.NumerologyProfile.findOne({
-                where: { userId }
+                where: {userId}
             });
 
             // Если профиля нет, создаем
             if (!profile) {
                 profile = await models.NumerologyProfile.create({
-                    userId,
-                    fullName,
-                    birthDate,
-                    freeCalculations: 0,
-                    hasFreeCalculation: false
+                    userId, fullName, birthDate, freeCalculations: 0, hasFreeCalculation: false
                 });
             }
 
             // Проверяем, был ли уже бесплатный расчет
             if (profile.hasFreeCalculation) {
                 return {
-                    allowed: false,
-                    message: 'Бесплатный расчет уже использован',
-                    profile
+                    allowed: false, message: 'Бесплатный расчет уже использован', profile
                 };
             }
 
             return {
-                allowed: true,
-                message: 'Бесплатный расчет доступен',
-                profile
+                allowed: true, message: 'Бесплатный расчет доступен', profile
             };
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка проверки бесплатного расчета', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка проверки бесплатного расчета', {error: error.message});
             throw error;
         }
     }
 
     async updateProfileAfterCalculation(userId, fullName, birthDate, isFree = true) {
-        const { models } = require('../../../sequelize');
+        const {models} = require('../../../sequelize');
 
         try {
             const profile = await models.NumerologyProfile.findOne({
-                where: { userId }
+                where: {userId}
             });
 
             if (profile) {
                 const updates = {
-                    lastCalculation: new Date(),
-                    freeCalculations: profile.freeCalculations + (isFree ? 1 : 0)
+                    lastCalculation: new Date(), freeCalculations: profile.freeCalculations + (isFree ? 1 : 0)
                 };
 
                 if (isFree) {
@@ -487,13 +451,13 @@ class NumerologyCalculationService {
             }
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка обновления профиля', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка обновления профиля', {error: error.message});
         }
     }
 
     async saveCalculation(userId, calculationType, resultData, price = 0, targetDate = null, serviceId = null) {
         try {
-            const { models } = require('../../../sequelize');
+            const {models} = require('../../../sequelize');
 
             // Маппинг типов расчетов на допустимые значения ENUM
             const calculationTypeMap = {
@@ -526,7 +490,7 @@ class NumerologyCalculationService {
 
                 if (serviceCode) {
                     const service = await models.Service.findOne({
-                        where: { code: serviceCode }
+                        where: {code: serviceCode}
                     });
 
                     if (service) {
@@ -569,26 +533,17 @@ class NumerologyCalculationService {
     }
 
     async getUserCalculations(userId, limit = 10, offset = 0) {
-        const { models } = require('../../../sequelize');
+        const {models} = require('../../../sequelize');
 
         try {
             const calculations = await models.Calculation.findAndCountAll({
                 where: {
-                    userId,
-                    calculationType: {
+                    userId, calculationType: {
                         [models.Sequelize.Op.in]: ['full', 'day', 'week', 'month', 'year', 'compatibility']
                     }
-                },
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                order: [['createdAt', 'DESC']],
-                include: [
-                    {
-                        model: models.Service,
-                        as: 'service',
-                        attributes: ['id', 'name', 'code', 'price']
-                    }
-                ]
+                }, limit: parseInt(limit), offset: parseInt(offset), order: [['createdAt', 'DESC']], include: [{
+                    model: models.Service, as: 'service', attributes: ['id', 'name', 'code', 'price']
+                }]
             });
 
             return {
@@ -599,30 +554,25 @@ class NumerologyCalculationService {
             };
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка получения истории', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка получения истории', {error: error.message});
             throw error;
         }
     }
 
     async getCalculationById(id, userId) {
-        const { models } = require('../../../sequelize');
+        const {models} = require('../../../sequelize');
 
         try {
             const calculation = await models.Calculation.findOne({
-                where: { id, userId },
-                include: [
-                    {
-                        model: models.Service,
-                        as: 'service',
-                        attributes: ['id', 'name', 'code', 'price']
-                    }
-                ]
+                where: {id, userId}, include: [{
+                    model: models.Service, as: 'service', attributes: ['id', 'name', 'code', 'price']
+                }]
             });
 
             return calculation;
 
         } catch (error) {
-            this.logger?.error('numerology', 'Ошибка получения расчета', { error: error.message });
+            this.logger?.error('numerology', 'Ошибка получения расчета', {error: error.message});
             throw error;
         }
     }
