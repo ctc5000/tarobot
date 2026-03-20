@@ -1,0 +1,882 @@
+/* modules/astrology/web/css/astrology.css */
+
+/* ========== ПЕРЕМЕННЫЕ ========== */
+:root {
+    --primary: #c9a54b;
+    --primary-dark: #b38f3f;
+    --primary-light: #e2b96b;
+    --primary-gradient: linear-gradient(135deg, #c9a54b, #e2b96b);
+    --dark: #0a0a0f;
+    --dark-light: #12121a;
+    --dark-lighter: #1a1a24;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #6a6a7a;
+    --border-color: rgba(201, 165, 75, 0.2);
+    --border-hover: rgba(201, 165, 75, 0.3);
+    --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
+    --shadow-gold: 0 10px 30px rgba(201, 165, 75, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== АНИМАЦИИ ========== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== ХЕРО-СЕКЦИЯ ========== */
+.astrology-hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    animation: fadeInUp 1s ease;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 40px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 25px;
+}
+
+.hero-title span {
+    background: var(--text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-description {
+    max-width: 700px;
+    margin: 0 auto 40px;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.8;
+}
+
+/* ========== БЛОК ДЛЯ ГОСТЕЙ ========== */
+.guest-block {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 50px 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    text-align: center;
+    animation: fadeInScale 0.6s ease;
+}
+
+.guest-content h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.guest-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 30px;
+}
+
+.guest-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ========== СЕКЦИЯ ВВОДА ========== */
+.input-section {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    animation: fadeInScale 0.6s ease;
+}
+
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.input-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.input-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.price-tag {
+    padding: 12px 25px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+}
+
+.price-current {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ========== ФОРМА ========== */
+.astrology-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group label i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(201, 165, 75, 0.1);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-small {
+    padding: 0 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-small:hover {
+    background: rgba(201, 165, 75, 0.2);
+    border-color: var(--primary);
+}
+
+.coordinate-field {
+    background: rgba(0, 0, 0, 0.2) !important;
+    color: var(--text-muted) !important;
+}
+
+/* Подсказки городов */
+.suggestions-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--dark-lighter);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.suggestion-item:hover {
+    background: rgba(201, 165, 75, 0.1);
+}
+
+.suggestion-main {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.suggestion-detail {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* ========== КНОПКА РАСЧЕТА ========== */
+.btn-calculate {
+    width: 100%;
+    padding: 18px 32px;
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 50px;
+    color: var(--dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(201, 165, 75, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-calculate:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(201, 165, 75, 0.4);
+}
+
+.btn-calculate:active {
+    transform: translateY(-1px);
+}
+
+.btn-calculate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-calculate.loading {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.btn-calculate.loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* ========== ЛОАДЕР ========== */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(201, 165, 75, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+.loading-spinner p {
+    color: var(--primary);
+    font-size: 1.1rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ========== СЕКЦИЯ РЕЗУЛЬТАТА ========== */
+.result-section {
+    max-width: 1200px;
+    margin: 40px auto;
+    animation: fadeInScale 0.6s ease;
+}
+
+.result-card {
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+}
+
+.result-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.result-header h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    margin: 0;
+}
+
+.result-person-info {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    flex-wrap: wrap;
+}
+
+.person-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.person-detail .label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.person-detail .value {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+/* ========== НАТАЛЬНАЯ КАРТА (CANVAS) ========== */
+.natal-chart-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+#natalChartCanvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 50%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== ЛЕГЕНДА ========== */
+.natal-legend {
+    display: grid;
+    justify-content: center;
+    gap: 15px;
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: rgba(201, 165, 75, 0.1);
+    border-radius: 30px;
+}
+
+.planet-symbol {
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+
+.planet-name {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.planet-sign {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* ========== ПОЗИЦИИ ПЛАНЕТ ========== */
+.positions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.position-item {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    transition: var(--transition);
+}
+
+.position-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.position-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.position-symbol {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.position-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.position-detail {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.position-detail span:first-child {
+    color: var(--text-muted);
+}
+
+.position-value {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* ========== АСПЕКТЫ ========== */
+.aspects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.aspect-item {
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.aspect-item.conjunction { border-left-color: #ff4d4d; }
+.aspect-item.opposition { border-left-color: #4d4dff; }
+.aspect-item.trine { border-left-color: #4dff4d; }
+.aspect-item.square { border-left-color: #ff4dff; }
+.aspect-item.sextile { border-left-color: #ffff4d; }
+
+/* ========== ИНТЕРПРЕТАЦИЯ ========== */
+.natal-interpretation {
+    margin: 40px 0;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+}
+
+.natal-interpretation h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary);
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+}
+
+.natal-interpretation h4 {
+    color: var(--primary);
+    margin: 20px 0 10px 0;
+    font-size: 1.2rem;
+}
+
+.natal-interpretation p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin: 15px 0;
+}
+
+/* ========== КНОПКИ ДЕЙСТВИЙ ========== */
+.result-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 15px 35px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-action:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.btn-action.primary {
+    background: linear-gradient(135deg, #4a4a5a, #2a2a35);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-action.primary:hover {
+    background: var(--primary-gradient);
+    color: var(--dark);
+    border-color: transparent;
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========== ПОДВАЛ ========== */
+.astrology-footer {
+    margin-top: 80px;
+    text-align: center;
+    padding: 30px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ========== УВЕДОМЛЕНИЯ ========== */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 28px;
+    border-radius: 50px;
+    color: white;
+    z-index: 10001;
+    animation: slideIn 0.3s ease;
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(10px);
+    font-weight: 500;
+    max-width: 350px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    border-left: 4px solid #fff;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    border-left: 4px solid #fff;
+}
+
+.notification.info {
+    background: linear-gradient(135deg, var(--dark-lighter), var(--dark));
+    border: 1px solid var(--primary);
+    color: var(--text-primary);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 768px) {
+    .astrology-hero {
+        padding: 60px 15px 40px;
+    }
+
+    .hero-description {
+        font-size: 1.1rem;
+    }
+
+    .guest-block {
+        padding: 30px 20px;
+    }
+
+    .guest-content h2 {
+        font-size: 1.6rem;
+    }
+
+    .input-section {
+        padding: 25px;
+    }
+
+    .input-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .price-tag {
+        width: 100%;
+        text-align: center;
+    }
+
+    .result-card {
+        padding: 25px;
+    }
+
+    .positions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .result-actions {
+        flex-direction: column;
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* ========== МОДАЛЬНОЕ ОКНО ========== */
+.payment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+.payment-modal .modal-content {
+    max-width: 450px;
+    width: 90%;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 2px solid var(--primary);
+    border-radius: 30px;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    animation: slideInUp 0.4s ease-out;
+}
+
+.modal-icon {
+    font-size: 4rem;
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+.payment-modal h3 {
+    font-size: 1.8rem;
+    color: var(--primary);
+    margin: 20px 0;
+    font-family: 'Playfair Display', serif;
+}
+
+.balance-info {
+    color: var(--text-secondary);
+    margin: 20px 0;
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.balance-info strong {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-actions .btn-primary {
+    background: var(--primary-gradient);
+    color: var(--dark);
+    border: none;
+}
+
+.modal-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+}
+
+.modal-actions .btn-outline {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.modal-actions .btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Анимации */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

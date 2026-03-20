@@ -1,7 +1,7 @@
 {
   "mainNav": [
     { "name": "Нумерология", "url": "/numerology", "icon": "" },
-    { "name": "Натальная карта", "url": "/natal-chart", "icon": "" },
+    { "name": "Натальная карта", "url": "/astrology", "icon": "" },
     { "name": "Таро", "url": "/tarot", "icon": "" },
     { "name": "Соционика", "url": "/socionics", "icon": "" }
   ],

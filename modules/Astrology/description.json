@@ -1,0 +1,97 @@
+{
+  "moduleName": "Astrology",
+  "version": "1.0.0",
+  "order": 6,
+  "description": "Модуль астрологических расчетов и натальных карт",
+  "dependencies": ["Core"],
+
+  "services": {
+    "paidCalculations": {
+      "natal_chart": 500
+    }
+  },
+
+  "overview": {
+    "summary": "Модуль предоставляет полный спектр астрологических расчетов: построение натальной карты, интерпретация планет в знаках и домах, анализ аспектов.",
+    "features": [
+      "Построение натальной карты",
+      "Расчет положения планет",
+      "Анализ аспектов",
+      "Интерпретация знаков зодиака",
+      "Глубинный психологический портрет",
+      "Генерация PDF отчетов"
+    ]
+  },
+
+  "technicalDetails": {
+    "databaseModels": {
+      "AstrologyProfile": {
+        "userId": "ID пользователя",
+        "fullName": "ФИО",
+        "birthDate": "Дата рождения",
+        "birthTime": "Время рождения",
+        "latitude": "Широта",
+        "longitude": "Долгота",
+        "data": "Полные данные расчета",
+        "lastCalculation": "Дата последнего расчета"
+      }
+    },
+    "services": {
+      "AstrologyCalculationService": "Ядро астрологических расчетов",
+      "AstrologyPdfService": "Генерация PDF отчетов"
+    }
+  },
+
+  "endpoints": {
+    "public": [],
+    "protected": [
+      {
+        "method": "POST",
+        "path": "/api/astrology/astrology",
+        "description": "Расчет натальной карты",
+        "auth": true,
+        "price": 500
+      },
+      {
+        "method": "GET",
+        "path": "/api/astrology/history",
+        "description": "История расчетов",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/astrology/calculations/:id",
+        "description": "Получение конкретного расчета",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/astrology/pdf/:id",
+        "description": "Скачать PDF отчета",
+        "auth": true
+      }
+    ],
+    "admin": [
+      {
+        "method": "GET",
+        "path": "/api/astrology/admin/stats",
+        "description": "Статистика расчетов",
+        "auth": true,
+        "role": "admin"
+      }
+    ]
+  },
+
+  "webInterface": {
+    "url": "/astrology",
+    "features": [
+      "Форма ввода данных",
+      "Визуализация натальной карты",
+      "Полная интерпретация",
+      "Личный кабинет с историей"
+    ]
+  },
+
+  "author": "System",
+  "license": "Proprietary"
+}

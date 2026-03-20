@@ -113,9 +113,49 @@ app.use((req, res, next) => {
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
         "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
         "img-src 'self' data: https:; " +
-        "connect-src 'self' ws: wss: https://mc.yandex.ru;"
+        "connect-src 'self' ws: wss: https://mc.yandex.ru https://nominatim.openstreetmap.org; " +  // <- ДОБАВЛЕНО
+        "frame-src 'self' https://yandex.ru;"  // <- для Яндекс.Метрики
     );
     next();
+});
+/**
+ * Прокси для поиска городов (обход CSP)
+ */
+app.get('/api/geocode/search', async (req, res) => {
+    try {
+        const { q, limit = 5 } = req.query;
+
+        if (!q || q.length < 2) {
+            return res.status(400).json({ error: 'Query parameter required' });
+        }
+
+        console.log(`🔍 Поиск города: ${q}`);
+
+        // Добавляем User-Agent для соблюдения правил Nominatim
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=${limit}&addressdetails=1&accept-language=ru`,
+            {
+                headers: {
+                    'User-Agent': 'AlgorithmFate/1.0 (https://yourdomain.com)'
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`Nominatim API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Добавляем небольшую задержку для соблюдения правил Nominatim (не более 1 запроса в секунду)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        res.json(data);
+
+    } catch (error) {
+        console.error('Geocode proxy error:', error);
+        res.status(500).json({ error: 'Search failed', message: error.message });
+    }
 });
 
 // Swagger
@@ -251,7 +291,7 @@ app.post('/api/calculate/numerology', async (req, res) => {
 /**
  * API для расчета натальной карты
  */
-app.post('/api/calculate/natal-chart', (req, res) => {
+app.post('/api/calculate/astrology', (req, res) => {
     try {
         const result = services.natalChart.calculate(req.body);
         logger.info('natal-chart', 'Расчет натальной карты выполнен');

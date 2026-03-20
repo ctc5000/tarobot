@@ -251,7 +251,7 @@ class NumerologyApp {
                 { url: '/', name: 'Главная' },
                 { url: '/numerology', name: 'Нумерология' },
                 { url: '/tarot', name: 'Таро' },
-                { url: '/natal-chart', name: 'Натальная карта' }
+                { url: '/astrology', name: 'Натальная карта' }
             ];
 
             if (this.user) {
@@ -272,7 +272,7 @@ class NumerologyApp {
                 { url: '/', name: 'Главная', icon: 'fas fa-home' },
                 { url: '/numerology', name: 'Нумерология', icon: 'fas fa-calculator' },
                 { url: '/tarot', name: 'Таро', icon: 'fas fa-crown' },
-                { url: '/natal-chart', name: 'Натальная карта', icon: 'fas fa-globe' }
+                { url: '/astrology', name: 'Натальная карта', icon: 'fas fa-globe' }
             ];
 
             if (this.user) {

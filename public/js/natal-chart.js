@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             try {
-                const response = await fetch('/api/calculate/natal-chart', {
+                const response = await fetch('/api/calculate/astrology', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)

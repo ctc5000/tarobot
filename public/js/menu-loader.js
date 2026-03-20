@@ -33,7 +33,7 @@ function highlightActivePage() {
     let page = 'home';
 
     if (currentPath.includes('/numerology')) page = 'numerology';
-    else if (currentPath.includes('/natal-chart')) page = 'natal-chart';
+    else if (currentPath.includes('/astrology')) page = 'natal-chart';
     else if (currentPath.includes('/socionics')) page = 'socionics';
     else if (currentPath.includes('/astropsychology')) page = 'astropsychology';
     else if (currentPath.includes('/tarot')) page = 'tarot';

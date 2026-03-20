@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Натальная карта | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+
+    <!-- Astrology CSS -->
+    <link rel="stylesheet" href="/astrology/css/astrology.css">
+
+    <!-- IMask -->
+    <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
+
+    <!-- html2pdf для сохранения в PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+<div id="menu-placeholder"></div>
+
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+                </a>
+            </div>
+            <nav class="main-nav" id="mainNav"></nav>
+            <div class="auth-links" id="authLinks"></div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <div class="logo">
+            <span class="logo-icon">⛤</span>
+            <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+        </div>
+        <button class="mobile-menu-close" id="mobileMenuClose">×</button>
+    </div>
+    <div class="mobile-nav" id="mobileNav"></div>
+    <div class="mobile-menu-footer">
+        <div class="auth-buttons" id="mobileAuthButtons"></div>
+    </div>
+</div>
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+</div>
+
+<main class="main-content astrology-page">
+    <div class="container">
+        <!-- ХЕРО-СЕКЦИЯ -->
+        <section class="astrology-hero">
+            <div class="hero-badge">АСТРОЛОГИЯ</div>
+            <h1 class="hero-title">Натальная карта<br><span>личности</span></h1>
+            <p class="hero-description">
+                Раскройте тайны своей судьбы через анализ положения планет в момент рождения.
+                Персональный астрологический портрет на основе точных расчетов.
+            </p>
+        </section>
+
+        <!-- БЛОК ДЛЯ НЕАВТОРИЗОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ -->
+        <section class="guest-block" id="guestBlock">
+            <div class="guest-content">
+                <h2>Доступ к натальной карте</h2>
+                <p>Построение натальной карты доступно только для авторизованных пользователей.<br>
+                    Зарегистрируйтесь или войдите в аккаунт, чтобы получить свой астрологический портрет.</p>
+                <div class="guest-actions">
+                    <a href="/register" class="btn btn-primary">Создать аккаунт</a>
+                    <a href="/login" class="btn btn-outline">Войти</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ ВВОДА -->
+        <section class="input-section" id="inputSection" style="display: none;">
+            <div class="input-header">
+                <div>
+                    <h2 class="input-title">Натальная карта</h2>
+                    <p class="input-subtitle">Введите данные для построения карты</p>
+                </div>
+                <div class="price-tag" id="priceTag">
+                    <span class="price-current">500 ₽</span>
+                </div>
+            </div>
+
+            <form class="astrology-form" id="astrologyForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullName">
+                            <i class="fas fa-user"></i>
+                            <span>Ваше имя</span>
+                        </label>
+                        <input type="text" id="fullName" name="fullName" placeholder="Иванов Иван Петрович" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">
+                            <i class="fas fa-venus-mars"></i>
+                            <span>Пол</span>
+                        </label>
+                        <select id="gender">
+                            <option value="male">Мужской</option>
+                            <option value="female">Женский</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="birthDate">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Дата рождения</span>
+                        </label>
+                        <input type="text" id="birthDate" name="birthDate" placeholder="ДД.ММ.ГГГГ" required>
+                        <small class="form-hint">Например: 15.06.1990</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="birthTime">
+                            <i class="fas fa-clock"></i>
+                            <span>Время рождения</span>
+                        </label>
+                        <input type="time" id="birthTime" name="birthTime" value="12:00" required>
+                        <small class="form-hint">Если неизвестно, оставьте 12:00</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="birthPlace">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Место рождения</span>
+                    </label>
+                    <div class="input-with-button">
+                        <input type="text" id="birthPlace" placeholder="Введите город" style="flex: 1;" autocomplete="off">
+                        <button type="button" id="searchCity" class="btn-small" title="Найти координаты">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="citySuggestions" class="suggestions-container"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="latitude">
+                            <i class="fas fa-globe"></i>
+                            <span>Широта</span>
+                        </label>
+                        <input type="number" id="latitude" step="0.000001" placeholder="55.7558" readonly class="coordinate-field">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="longitude">
+                            <i class="fas fa-globe"></i>
+                            <span>Долгота</span>
+                        </label>
+                        <input type="number" id="longitude" step="0.000001" placeholder="37.6173" readonly class="coordinate-field">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="houseSystem">
+                        <i class="fas fa-building"></i>
+                        <span>Система домов</span>
+                    </label>
+                    <select id="houseSystem">
+                        <option value="placidus">Плацидус</option>
+                        <option value="koch">Кох</option>
+                        <option value="whole-sign">Целознаковая</option>
+                        <option value="equal">Равнодомная</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-calculate" id="submitButton">
+                    <span>Построить карту</span>
+                    <i class="fas fa-chart-line"></i>
+                </button>
+            </form>
+
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Вычисляем положение планет...</p>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ РЕЗУЛЬТАТА -->
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 ВАША НАТАЛЬНАЯ КАРТА</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Имя:</span>
+                        <span class="value" id="resultName"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Дата:</span>
+                        <span class="value" id="resultDate"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Время:</span>
+                        <span class="value" id="resultTime"></span>
+                    </div>
+                </div>
+
+                <div class="natal-chart-wrapper">
+                    <canvas id="natalChartCanvas"></canvas>
+                </div>
+
+                <!-- Блок: Значение планет -->
+                <div id="enrichedPlanetsInfo" class="enriched-planets-section"></div>
+
+                <!-- Блок: Значение домов -->
+                <div id="enrichedHousesInfo" class="enriched-houses-section"></div>
+
+                <!-- Блок: Ключевые аспекты -->
+                <div id="enrichedAspectsInfo" class="enriched-aspects-section"></div>
+
+                <!-- Легенда -->
+                <div class="natal-legend" id="planetLegend"></div>
+
+                <!-- Позиции планет -->
+                <div class="natal-positions">
+                    <h3>📊 Позиции планет</h3>
+                    <div class="positions-grid" id="planetPositions"></div>
+                </div>
+
+                <!-- Аспекты -->
+                <div class="natal-aspects">
+                    <h3>⚡ Аспекты</h3>
+                    <div class="aspects-list" id="aspectsList"></div>
+                </div>
+
+                <!-- Интерпретация -->
+                <div id="natalInterpretation" class="natal-interpretation"></div>
+
+                <!-- Расширенный отчет -->
+                <div id="expandedReport" class="expanded-report-container"></div>
+
+                <!-- Кнопки действий -->
+                <button class="mystic-button small" id="newCalculationBtn">
+                    <span class="button-text">Новый расчет</span>
+                </button>
+            </div>
+            <div class="pdf-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                <button class="mystic-button small" id="savePdfBtn">
+                    <span class="button-text">📄 Сохранить в PDF</span>
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <div class="astrology-footer">
+        <p>© 2026 АЛГОРИТМ СУДЬБЫ. Раскройте тайны своей судьбы</p>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
+                </div>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+            </div>
+            <div class="footer-links" id="footerLinks"></div>
+            <div class="footer-social" id="footerSocial"></div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Скрипты -->
+<script src="/core/js/core.js"></script>
+<script src="/core/js/auth.js"></script>
+<script src="/astrology/js/natal-chart-draw.js"></script>
+<script src="/astrology/js/astrology.js"></script>
+</body>
+</html>
