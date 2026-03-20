@@ -71,17 +71,17 @@ class NumerologyApp {
                     mask: Date,
                     pattern: 'd{.}`m{.}`Y',
                     blocks: {
-                        d: { mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2 },
-                        m: { mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2 },
-                        Y: { mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4 }
+                        d: {mask: IMask.MaskedRange, from: 1, to: 31, maxLength: 2},
+                        m: {mask: IMask.MaskedRange, from: 1, to: 12, maxLength: 2},
+                        Y: {mask: IMask.MaskedRange, from: 1900, to: 2100, maxLength: 4}
                     },
-                    format: function(date) {
+                    format: function (date) {
                         const day = String(date.getDate()).padStart(2, '0');
                         const month = String(date.getMonth() + 1).padStart(2, '0');
                         const year = date.getFullYear();
                         return `${day}.${month}.${year}`;
                     },
-                    parse: function(str) {
+                    parse: function (str) {
                         const [day, month, year] = str.split('.');
                         return new Date(year, month - 1, day);
                     },
@@ -99,7 +99,7 @@ class NumerologyApp {
 
         try {
             const response = await fetch('/api/profile', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {'Authorization': `Bearer ${token}`}
             });
 
             if (response.ok) {
@@ -134,7 +134,7 @@ class NumerologyApp {
 
         try {
             const response = await fetch('/api/subscriptions/active', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {'Authorization': `Bearer ${token}`}
             });
 
             if (response.ok) {
@@ -181,111 +181,21 @@ class NumerologyApp {
     }
 
     updateAuthUI() {
-        const authLinks = document.getElementById('authLinks');
-        const mainNav = document.getElementById('mainNav');
-        const mobileNav = document.getElementById('mobileNav');
-        const mobileAuthButtons = document.getElementById('mobileAuthButtons');
 
-        if (!authLinks) return;
 
         if (this.user) {
-            // Десктоп для авторизованных
-            const firstName = this.user.fullName.split(' ')[0] || this.user.fullName;
-            authLinks.innerHTML = `
-            <a href="/cabinet" class="auth-link">
-                <i class="fas fa-user-circle"></i>
-                <span>${firstName}</span>
-            </a>
-        `;
-
-            // Мобильное меню для авторизованных
-            if (mobileAuthButtons) {
-                mobileAuthButtons.innerHTML = `
-                <a href="/cabinet" class="mobile-auth-link">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Личный кабинет</span>
-                </a>
-                <button onclick="numerologyApp.logout()" class="mobile-auth-link logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </button>
-            `;
-            }
-
             // Для авторизованных: показываем блок приветствия для гостей? НЕТ, скрываем
             if (this.guestBlock) this.guestBlock.style.display = 'none';
             // Тарифы всегда видны
             if (this.tariffSection) this.tariffSection.style.display = 'block';
 
         } else {
-            // Десктоп для неавторизованных
-            authLinks.innerHTML = `
-            <a href="/login" class="auth-link">Войти</a>
-            <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
-        `;
-
-            // Мобильное меню для неавторизованных
-            if (mobileAuthButtons) {
-                mobileAuthButtons.innerHTML = `
-                <a href="/login" class="mobile-auth-link">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Войти</span>
-                </a>
-                <a href="/register" class="mobile-auth-link register">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Регистрация</span>
-                </a>
-            `;
-            }
-
             // Для неавторизованных: показываем блок приветствия
             if (this.guestBlock) this.guestBlock.style.display = 'block';
             // ТАРИФЫ ТОЖЕ ПОКАЗЫВАЕМ! (но они будут с замочками)
             if (this.tariffSection) this.tariffSection.style.display = 'block';
         }
 
-        // Обновляем навигацию
-        if (mainNav) {
-            const currentPath = window.location.pathname;
-            const navItems = [
-                { url: '/', name: 'Главная' },
-                { url: '/numerology', name: 'Нумерология' },
-                { url: '/tarot', name: 'Таро' },
-                { url: '/astrology', name: 'Натальная карта' }
-            ];
-
-            if (this.user) {
-                navItems.push({ url: '/cabinet', name: 'Кабинет' });
-            }
-
-            mainNav.innerHTML = navItems.map(item => `
-            <a href="${item.url}" class="${currentPath === item.url ? 'active' : ''}">
-                ${item.name}
-            </a>
-        `).join('');
-        }
-
-        // Обновляем мобильную навигацию
-        if (mobileNav) {
-            const currentPath = window.location.pathname;
-            const mobileNavItems = [
-                { url: '/', name: 'Главная', icon: 'fas fa-home' },
-                { url: '/numerology', name: 'Нумерология', icon: 'fas fa-calculator' },
-                { url: '/tarot', name: 'Таро', icon: 'fas fa-crown' },
-                { url: '/astrology', name: 'Натальная карта', icon: 'fas fa-globe' }
-            ];
-
-            if (this.user) {
-                mobileNavItems.push({ url: '/cabinet', name: 'Кабинет', icon: 'fas fa-user' });
-            }
-
-            mobileNav.innerHTML = mobileNavItems.map(item => `
-            <a href="${item.url}" class="mobile-nav-link ${currentPath === item.url ? 'active' : ''}">
-                <i class="${item.icon}"></i>
-                <span>${item.name}</span>
-            </a>
-        `).join('');
-        }
     }
 
     logout() {
@@ -767,7 +677,7 @@ class NumerologyApp {
 
         try {
             const token = localStorage.getItem('token');
-            const headers = { 'Content-Type': 'application/json' };
+            const headers = {'Content-Type': 'application/json'};
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
             const requestData = {
@@ -1053,7 +963,7 @@ class NumerologyApp {
         if (this.inputSection) this.inputSection.style.display = 'none';
         if (this.resultSection) {
             this.resultSection.style.display = 'block';
-            this.resultSection.scrollIntoView({ behavior: 'smooth' });
+            this.resultSection.scrollIntoView({behavior: 'smooth'});
         }
     }
 
@@ -2007,9 +1917,9 @@ class NumerologyApp {
         if (!tabContent) return;
 
         const cards = [
-            { type: 'fate', title: 'Карта Судьбы', data: tarot.fate },
-            { type: 'personality', title: 'Карта Личности', data: tarot.personality },
-            { type: 'control', title: 'Карта Пути', data: tarot.control }
+            {type: 'fate', title: 'Карта Судьбы', data: tarot.fate},
+            {type: 'personality', title: 'Карта Личности', data: tarot.personality},
+            {type: 'control', title: 'Карта Пути', data: tarot.control}
         ];
 
         let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">';
@@ -2955,7 +2865,7 @@ class NumerologyApp {
 
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 modal.remove();
             }

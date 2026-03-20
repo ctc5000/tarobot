@@ -1,0 +1,140 @@
+{
+  "moduleName": "Tarot",
+  "version": "1.0.0",
+  "order": 7,
+  "description": "Модуль карт Таро - гадание и интерпретация",
+  "dependencies": ["Core", "Logs"],
+
+  "services": {
+    "freeReadings": 3,
+    "paidReadings": {
+      "single": 50,
+      "three": 100,
+      "five": 200,
+      "celtic": 300
+    }
+  },
+
+  "overview": {
+    "summary": "Модуль предоставляет возможность гадания на картах Таро с различными раскладами.",
+    "features": [
+      "4 типа раскладов: одна карта, три карты, пять карт, Кельтский крест",
+      "Анимация вылета карт",
+      "Детальная интерпретация каждой карты",
+      "Сохранение истории раскладов для авторизованных пользователей",
+      "Интеграция с балансом пользователя"
+    ]
+  },
+
+  "technicalDetails": {
+    "databaseModels": {
+      "TarotCard": {
+        "number": "Номер карты (0-21)",
+        "name": "Название карты",
+        "nameEn": "Название на английском",
+        "image": "Путь к изображению",
+        "keywords": "Ключевые слова",
+        "meaningUpright": "Значение в прямом положении",
+        "meaningReversed": "Значение в перевернутом положении",
+        "description": "Подробное описание",
+        "advice": "Совет карты",
+        "element": "Стихия",
+        "planet": "Планета"
+      },
+      "TarotReading": {
+        "userId": "ID пользователя",
+        "question": "Вопрос пользователя",
+        "spreadType": "Тип расклада",
+        "spreadName": "Название расклада",
+        "cards": "JSON с данными выпавших карт",
+        "interpretation": "Полная интерпретация расклада",
+        "createdAt": "Дата создания"
+      }
+    },
+    "services": {
+      "TarotService": "Основной сервис с логикой гадания",
+      "TarotView": "Контроллер для обработки запросов"
+    }
+  },
+
+  "endpoints": {
+    "public": [
+      {
+        "method": "GET",
+        "path": "/api/tarot/cards",
+        "description": "Получить все карты Таро",
+        "auth": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/tarot/reading",
+        "description": "Сделать расклад",
+        "auth": false
+      }
+    ],
+    "protected": [
+      {
+        "method": "POST",
+        "path": "/api/tarot/reading/save",
+        "description": "Сохранить расклад в историю",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/tarot/readings/history",
+        "description": "История раскладов пользователя",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/tarot/readings/:id",
+        "description": "Получить расклад по ID",
+        "auth": true
+      }
+    ],
+    "admin": [
+      {
+        "method": "POST",
+        "path": "/api/tarot/admin/cards",
+        "description": "Создать новую карту",
+        "auth": true,
+        "role": "admin"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/tarot/admin/cards/:id",
+        "description": "Обновить карту",
+        "auth": true,
+        "role": "admin"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/tarot/admin/cards/:id",
+        "description": "Удалить карту",
+        "auth": true,
+        "role": "admin"
+      },
+      {
+        "method": "GET",
+        "path": "/api/tarot/admin/stats",
+        "description": "Статистика раскладов",
+        "auth": true,
+        "role": "admin"
+      }
+    ]
+  },
+
+  "webInterface": {
+    "url": "/tarot",
+    "features": [
+      "Выбор расклада",
+      "Визуальная колода карт",
+      "Анимация вылета карт",
+      "Детальная интерпретация",
+      "Возможность сохранить расклад"
+    ]
+  },
+
+  "author": "System",
+  "license": "Proprietary"
+}

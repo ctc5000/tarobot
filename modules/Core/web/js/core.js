@@ -9,10 +9,139 @@ class CoreApp {
     async init() {
         await this.checkAuth();
         this.initMobileMenu();
+        this.loadMenuData();
         this.renderMainNav();
         this.renderFooter();
     }
+    async loadMenuData() {
+        try {
+            // Загружаем меню из JSON файлов
+            const [mainMenu, mobileMenu, footerMenu] = await Promise.all([
+                fetch('/core/menu.json').then(res => res.json()),
+                fetch('/core/mobile-menu.json').then(res => res.json()),
+                fetch('/core/menu.json').then(res => res.json()) // footer берем из основного меню
+            ]);
 
+            this.menuData = mainMenu;
+            this.mobileMenuData = mobileMenu;
+            this.footerData = mainMenu.footer;
+
+            this.renderMainNav();
+            this.renderMobileNav();
+            this.renderFooter();
+        } catch (error) {
+            console.error('Error loading menu data:', error);
+            this.renderFallbackMenu();
+        }
+    }
+
+    renderMainNav() {
+        const mainNav = document.getElementById('mainNav');
+        if (!mainNav || !this.menuData) return;
+
+        mainNav.innerHTML = this.menuData.mainNav.map(item => `
+            <a href="${item.url}" class="${this.isActive(item.url) ? 'active' : ''}">
+                ${item.icon ? `<span class="nav-icon">${item.icon}</span>` : ''}
+                ${item.name}
+            </a>
+        `).join('');
+    }
+
+    renderMobileNav() {
+        const mobileNav = document.getElementById('mobileNav');
+        if (!mobileNav || !this.mobileMenuData) return;
+
+        let html = '';
+
+        this.mobileMenuData.sections.forEach(section => {
+            html += `<div class="mobile-section">`;
+            html += `<h3 class="mobile-section-title">${section.title}</h3>`;
+
+            section.items.forEach(item => {
+                // Проверяем, нужно ли показывать пункт в зависимости от авторизации
+                if (item.auth && !localStorage.getItem('token')) return;
+                if (item.guest && localStorage.getItem('token')) return;
+
+                html += `
+                    <a href="${item.url}" class="mobile-nav-link ${this.isActive(item.url) ? 'active' : ''}">
+                        <span class="nav-icon">${item.icon}</span>
+                        <span class="nav-text">${item.name}</span>
+                    </a>
+                `;
+            });
+
+            html += `</div>`;
+        });
+
+        mobileNav.innerHTML = html;
+    }
+
+    renderFooter() {
+        const footerInfo = document.querySelector('.footer-info p');
+        const footerLinks = document.querySelector('.footer-links');
+        const footerBottom = document.querySelector('.footer-bottom p');
+
+        if (footerInfo && this.footerData) {
+            footerInfo.textContent = this.footerData.description;
+        }
+
+        if (footerLinks && this.footerData) {
+            footerLinks.innerHTML = this.footerData.links.map(link =>
+                `<a href="${link.url}">${link.name}</a>`
+            ).join('');
+        }
+
+        if (footerBottom && this.footerData) {
+            footerBottom.textContent = this.footerData.copyright;
+        }
+
+        // Добавляем социальные иконки если есть контейнер
+        const socialContainer = document.querySelector('.footer-social');
+        if (socialContainer && this.footerData?.social) {
+            socialContainer.innerHTML = this.footerData.social.map(social => `
+                <a href="${social.url}" target="_blank" rel="noopener" class="social-link">
+                    <i class="${social.icon}"></i>
+                </a>
+            `).join('');
+        }
+    }
+
+    isActive(url) {
+        if (url === '/' && window.location.pathname === '/') return true;
+        if (url !== '/' && window.location.pathname.startsWith(url)) return true;
+        return false;
+    }
+
+    initMobileMenu() {
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                mobileMenu.classList.add('active');
+                menuOverlay.classList.add('active');
+                menuToggle.classList.add('active');
+            });
+        }
+
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+            });
+        }
+
+        if (menuOverlay) {
+            menuOverlay.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                menuToggle.classList.remove('active');
+            });
+        }
+    }
     async checkAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -51,11 +180,13 @@ class CoreApp {
 
         if (isAuthenticated && this.user) {
             // Десктоп
-            const firstName = this.user.fullName.split(' ')[0] || this.user.fullName;
+            const firstNameInitial = this.user.fullName.split(' ')[0]?.charAt(0) || '';
+            const lastNameInitial = this.user.fullName.split(' ')[1]?.charAt(0) || '';
+            const initials = firstNameInitial + lastNameInitial;
             authLinks.innerHTML = `
                 <a href="/cabinet" class="auth-link">
                     <i class="fas fa-user-circle"></i>
-                    <span>${firstName}</span>
+                    <span>${initials}</span>
                 </a>
             `;
 
@@ -104,95 +235,6 @@ class CoreApp {
         this.renderMainNav();
     }
 
-    renderMainNav() {
-        const mainNav = document.getElementById('mainNav');
-        if (!mainNav) return;
-
-        const currentPath = window.location.pathname;
-        const navItems = [
-            { url: '/', name: 'Главная' },
-            { url: '/numerology', name: 'Нумерология' },
-            { url: '/tarot', name: 'Таро' },
-            { url: '/astrology', name: 'Натальная карта' }
-        ];
-
-        if (this.user) {
-            navItems.push({ url: '/cabinet', name: 'Кабинет' });
-        }
-
-        mainNav.innerHTML = navItems.map(item => `
-            <a href="${item.url}" class="${currentPath === item.url ? 'active' : ''}">
-                ${item.name}
-            </a>
-        `).join('');
-    }
-
-    renderFooter() {
-        const footerLinks = document.getElementById('footerLinks');
-        const footerSocial = document.getElementById('footerSocial');
-
-        if (footerLinks) {
-            footerLinks.innerHTML = `
-                <a href="/about">О проекте</a>
-                <a href="/privacy">Конфиденциальность</a>
-                <a href="/contacts">Контакты</a>
-            `;
-        }
-
-        if (footerSocial) {
-            footerSocial.innerHTML = `
-                <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
-                <a href="#" class="social-link"><i class="fab fa-vk"></i></a>
-                <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-            `;
-        }
-    }
-
-    initMobileMenu() {
-        const menuBtn = document.getElementById('mobileMenuBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        const closeBtn = document.getElementById('mobileMenuClose');
-        const overlay = document.getElementById('menuOverlay');
-        const mobileNav = document.getElementById('mobileNav');
-
-        if (!menuBtn || !mobileMenu || !closeBtn || !overlay) return;
-
-        if (mobileNav) {
-            const currentPath = window.location.pathname;
-            const navItems = [
-                { url: '/', name: 'Главная', icon: 'fas fa-home' },
-                { url: '/numerology', name: 'Нумерология', icon: 'fas fa-calculator' },
-                { url: '/tarot', name: 'Таро', icon: 'fas fa-crown' },
-                { url: '/astrology', name: 'Натальная карта', icon: 'fas fa-globe' }
-            ];
-
-            if (this.user) {
-                navItems.push({ url: '/cabinet', name: 'Кабинет', icon: 'fas fa-user' });
-            }
-
-            mobileNav.innerHTML = navItems.map(item => `
-                <a href="${item.url}" class="mobile-nav-link ${currentPath === item.url ? 'active' : ''}">
-                    <i class="${item.icon}"></i>
-                    <span>${item.name}</span>
-                </a>
-            `).join('');
-        }
-
-        menuBtn.addEventListener('click', () => {
-            mobileMenu.classList.add('active');
-            overlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-
-        const closeMenu = () => {
-            mobileMenu.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        closeBtn.addEventListener('click', closeMenu);
-        overlay.addEventListener('click', closeMenu);
-    }
 
     logout() {
         localStorage.removeItem('token');

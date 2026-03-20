@@ -1,0 +1,202 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Гадание на Таро | АЛГОРИТМ СУДЬБЫ</title>
+
+    <!-- Мета-теги для отключения кеширования -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <!-- Baraja CSS для анимации карт -->
+    <link rel="stylesheet" href="/css/vendor/baraja.css">
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="/core/css/core.css">
+    <link rel="stylesheet" href="/tarot/css/tarot.css">
+    <script>
+        (function() {
+            const currentVersion = sessionStorage.getItem('app-version');
+            const urlVersion = new URLSearchParams(window.location.search).get('v');
+
+            if (urlVersion && urlVersion !== currentVersion) {
+                console.log('📦 Новая версия:', urlVersion);
+                sessionStorage.setItem('app-version', urlVersion || Date.now());
+            }
+        })();
+    </script>
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
+
+        ym(107722589, 'init', {
+            ssr:true,
+            webvisor:true,
+            clickmap:true,
+            ecommerce:"dataLayer",
+            referrer: document.referrer,
+            url: location.href,
+            accurateTrackBounce:true,
+            trackLinks:true
+        });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+</head>
+<body>
+<div id="menu-placeholder"></div>
+
+<header class="site-header">
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/">
+                    <span class="logo-icon">⛤</span>
+                    <span class="logo-text">АЛГОРИТМ СУДЬБЫ</span>
+                </a>
+            </div>
+            <nav class="main-nav" id="mainNav"></nav>
+            <div class="auth-links" id="authLinks"></div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<div class="site-background">
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+</div>
+
+<main class="main-content">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Гадание на Таро</h1>
+            <p class="page-subtitle">Раскройте тайны с помощью древних карт</p>
+        </div>
+
+        <section class="input-section glass-card tarot-reading-section">
+            <h2>🔮 Ваш вопрос</h2>
+            <form id="tarotForm">
+                <div class="form-group">
+                    <label for="question">❓ Задайте вопрос</label>
+                    <textarea id="question" name="question" rows="3" placeholder="Что вас интересует?" required></textarea>
+                    <small class="form-hint">Сформулируйте вопрос четко и открыто</small>
+                </div>
+
+                <h3>📊 Выберите расклад</h3>
+                <div class="spread-selector" id="spreadSelector">
+                    <div class="spread-card active" data-spread="single">
+                        <h4>Одна карта</h4>
+                        <p>Быстрый ответ на вопрос</p>
+                    </div>
+                    <div class="spread-card" data-spread="three">
+                        <h4>Три карты</h4>
+                        <p>Прошлое · Настоящее · Будущее</p>
+                    </div>
+                    <div class="spread-card" data-spread="five">
+                        <h4>Пять карт</h4>
+                        <p>Ситуация · Препятствие · Совет</p>
+                    </div>
+                    <div class="spread-card" data-spread="celtic">
+                        <h4>Кельтский крест</h4>
+                        <p>Глубокий анализ ситуации</p>
+                    </div>
+                </div>
+
+                <div class="reading-button">
+                    <button type="button" id="shuffleBtn" class="mystic-button" style="width: auto; margin-right: 10px;">
+                        <span class="button-text">🔄 Перетасовать карты</span>
+                    </button>
+                    <button type="button" id="readingBtn" class="mystic-button" style="width: auto;">
+                        <span class="button-text">🔮 Сделать расклад</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Карты раскладываются...</p>
+            </div>
+        </section>
+
+        <!-- Контейнер для колоды карт -->
+        <section class="card-deck-container" id="cardDeckContainer">
+            <ul class="baraja" id="cardDeck"></ul>
+        </section>
+
+        <!-- Результаты -->
+        <section class="result-section" id="resultSection" style="display: none;">
+            <div class="glass-card result-card">
+                <h2>🔮 ВАШ РАСКЛАД</h2>
+
+                <div class="result-header">
+                    <div class="person-info">
+                        <span class="label">Вопрос:</span>
+                        <span class="value" id="displayQuestion"></span>
+                    </div>
+                    <div class="person-info">
+                        <span class="label">Расклад:</span>
+                        <span class="value" id="displaySpread"></span>
+                    </div>
+                </div>
+
+                <div class="results-section" id="cardsResults"></div>
+
+                <div class="interpretation-box" id="interpretationBox">
+                    <h3>📜 ТОЛКОВАНИЕ</h3>
+                    <div class="question" id="interpretationQuestion"></div>
+                    <div class="answer" id="interpretationAnswer"></div>
+                </div>
+
+                <button class="mystic-button small" id="newReadingBtn">
+                    <span class="button-text">Новое гадание</span>
+                </button>
+            </div>
+        </section>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <span class="logo-icon">⛤</span>
+                    <span>АЛГОРИТМ СУДЬБЫ</span>
+                </div>
+                <p>Система автоматических расчетов на основе древних практик и современной науки</p>
+            </div>
+            <div class="footer-links">
+                <a href="/about">О проекте</a>
+                <a href="/privacy">Конфиденциальность</a>
+                <a href="/contacts">Контакты</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Библиотеки -->
+<script src="/trot/js/baraja.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
+<script src="/core/js/core.js"></script>
+<script src="/core/js/auth.js"></script>
+<script src="/trot/js/tarot-reading.js?v=2.0.0"></script>
+</body>
+</html>

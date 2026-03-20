@@ -203,61 +203,19 @@ class AstrologyApp {
 
     updateAuthUI() {
         const authLinks = document.getElementById('authLinks');
-        const mainNav = document.getElementById('mainNav');
-        const mobileNav = document.getElementById('mobileNav');
         const mobileAuthButtons = document.getElementById('mobileAuthButtons');
 
         if (!authLinks) return;
 
         if (this.user) {
-            const firstName = this.user.fullName.split(' ')[0] || this.user.fullName;
-            authLinks.innerHTML = `
-                <a href="/cabinet" class="auth-link">
-                    <i class="fas fa-user-circle"></i>
-                    <span>${this.escapeHtml(firstName)}</span>
-                </a>
-            `;
-
-            if (mobileAuthButtons) {
-                mobileAuthButtons.innerHTML = `
-                    <a href="/cabinet" class="mobile-auth-link">
-                        <i class="fas fa-user-circle"></i>
-                        <span>Личный кабинет</span>
-                    </a>
-                    <button onclick="astrologyApp.logout()" class="mobile-auth-link logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Выйти</span>
-                    </button>
-                `;
-            }
-
             if (this.guestBlock) this.guestBlock.style.display = 'none';
             if (this.inputSection) this.inputSection.style.display = 'block';
 
         } else {
-            authLinks.innerHTML = `
-                <a href="/login" class="auth-link">Войти</a>
-                <a href="/register" class="btn btn-primary btn-sm">Регистрация</a>
-            `;
-
-            if (mobileAuthButtons) {
-                mobileAuthButtons.innerHTML = `
-                    <a href="/login" class="mobile-auth-link">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>Войти</span>
-                    </a>
-                    <a href="/register" class="mobile-auth-link register">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Регистрация</span>
-                    </a>
-                `;
-            }
-
             if (this.guestBlock) this.guestBlock.style.display = 'block';
-            if (this.inputSection) this.inputSection.style.display = 'none';
+            if (this.inputSection) this.inputSection.style.display = 'block';
         }
 
-        this.updateNavigation(mainNav, mobileNav);
     }
 
     updateNavigation(mainNav, mobileNav) {

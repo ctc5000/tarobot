@@ -12,10 +12,10 @@ const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yaml');
 const basicAuth = require('express-basic-auth');
-const { Umzug, SequelizeStorage } = require('umzug');
+const {Umzug, SequelizeStorage} = require('umzug');
 
 // Импорт sequelize
-const { sequelize, Sequelize, models } = require('./sequelize');
+const {sequelize, Sequelize, models} = require('./sequelize');
 
 // Импорт глобального логгера
 const logger = require('./logger');
@@ -58,7 +58,7 @@ const services = {
 
 process.env.TZ = 'Europe/Samara';
 
-const upload = multer({ dest: '/app/uploads/' });
+const upload = multer({dest: '/app/uploads/'});
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -69,8 +69,8 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(bodyParser.json({limit: '10mb'}));
+app.use(bodyParser.urlencoded({extended: true, limit: '10mb'}));
 app.use(cookieParser());
 app.use(cors());
 
@@ -97,8 +97,7 @@ app.use((req, res, next) => {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-    }
-    else if (req.url.match(/\.(css|js)$/)) {
+    } else if (req.url.match(/\.(css|js)$/)) {
         res.setHeader('Cache-Control', 'public, max-age=300');
     }
     next();
@@ -123,10 +122,10 @@ app.use((req, res, next) => {
  */
 app.get('/api/geocode/search', async (req, res) => {
     try {
-        const { q, limit = 5 } = req.query;
+        const {q, limit = 5} = req.query;
 
         if (!q || q.length < 2) {
-            return res.status(400).json({ error: 'Query parameter required' });
+            return res.status(400).json({error: 'Query parameter required'});
         }
 
         console.log(`🔍 Поиск города: ${q}`);
@@ -154,7 +153,7 @@ app.get('/api/geocode/search', async (req, res) => {
 
     } catch (error) {
         console.error('Geocode proxy error:', error);
-        res.status(500).json({ error: 'Search failed', message: error.message });
+        res.status(500).json({error: 'Search failed', message: error.message});
     }
 });
 
@@ -163,7 +162,7 @@ try {
     const swaggerFile = fs.readFileSync('./tarot.yaml', 'utf8');
     const swaggerDocument = YAML.parse(swaggerFile);
     app.use('/api-docs', basicAuth({
-        users: { 'admin': 'seo123' },
+        users: {'admin': 'seo123'},
         challenge: true,
         unauthorizedResponse: 'Unauthorized'
     }));
@@ -191,7 +190,7 @@ function makeHandlerAwareOfAsyncErrors(handler) {
  * API для получения версии приложения
  */
 app.get('/api/version', (req, res) => {
-    logger.info('api', 'Запрос версии API', { ip: req.ip });
+    logger.info('api', 'Запрос версии API', {ip: req.ip});
     res.json({
         version: res.locals.isTelegram ? 'telegram' : 'web',
         timestamp: Date.now(),
@@ -204,11 +203,11 @@ app.get('/api/version', (req, res) => {
  */
 app.post('/api/calculate/numerology', async (req, res) => {
     try {
-        const { fullName, birthDate } = req.body;
+        const {fullName, birthDate} = req.body;
 
         // Валидация
         if (!fullName || !birthDate) {
-            logger.warn('numerology', 'Неполные данные для расчета', { fullName, birthDate });
+            logger.warn('numerology', 'Неполные данные для расчета', {fullName, birthDate});
             return res.status(400).json({
                 success: false,
                 error: 'Необходимо указать ФИО и дату рождения'
@@ -257,7 +256,7 @@ app.post('/api/calculate/numerology', async (req, res) => {
         // 7. Дополнительные интерпретации
         const interpretations = services.numerology.getInterpretations(numerology.base);
 
-        logger.info('numerology', 'Успешный расчет нумерологии', { fullName, birthDate });
+        logger.info('numerology', 'Успешный расчет нумерологии', {fullName, birthDate});
 
         res.json({
             success: true,
@@ -280,7 +279,7 @@ app.post('/api/calculate/numerology', async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('numerology', 'Ошибка расчета нумерологии', { error: error.message });
+        logger.error('numerology', 'Ошибка расчета нумерологии', {error: error.message});
         res.status(500).json({
             success: false,
             error: error.message
@@ -297,7 +296,7 @@ app.post('/api/calculate/astrology', (req, res) => {
         logger.info('natal-chart', 'Расчет натальной карты выполнен');
         res.json(result);
     } catch (error) {
-        logger.error('natal-chart', 'Ошибка расчета натальной карты', { error: error.message });
+        logger.error('natal-chart', 'Ошибка расчета натальной карты', {error: error.message});
         res.status(500).json({
             success: false,
             error: error.message
@@ -310,7 +309,7 @@ app.post('/api/calculate/astrology', (req, res) => {
  */
 app.post('/api/tarot/reading', (req, res) => {
     try {
-        const { question, spread } = req.body;
+        const {question, spread} = req.body;
 
         if (!question) {
             return res.status(400).json({
@@ -320,10 +319,16 @@ app.post('/api/tarot/reading', (req, res) => {
         }
 
         const result = services.tarot.performReading(question, spread || 'three');
-        logger.info('tarot', 'Гадание на Таро выполнено', { spread });
+        logger.info('tarot', 'Гадание на Таро выполнено', {
+            details:
+                {
+                    spread,
+                    result
+                }
+        });
         res.json(result);
     } catch (error) {
-        logger.error('tarot', 'Ошибка гадания на Таро', { error: error.message });
+        logger.error('tarot', 'Ошибка гадания на Таро', {error: error.message});
         res.status(500).json({
             success: false,
             error: error.message
@@ -336,7 +341,7 @@ app.post('/api/tarot/reading', (req, res) => {
  */
 app.post('/api/tarot/quick', (req, res) => {
     try {
-        const { question } = req.body;
+        const {question} = req.body;
 
         if (!question) {
             return res.status(400).json({
@@ -349,7 +354,7 @@ app.post('/api/tarot/quick', (req, res) => {
         logger.info('tarot', 'Быстрое гадание на Таро выполнено');
         res.json(result);
     } catch (error) {
-        logger.error('tarot', 'Ошибка быстрого гадания', { error: error.message });
+        logger.error('tarot', 'Ошибка быстрого гадания', {error: error.message});
         res.status(500).json({
             success: false,
             error: error.message
@@ -362,11 +367,11 @@ app.post('/api/tarot/quick', (req, res) => {
  */
 app.post('/api/calculate/:practice', (req, res) => {
     try {
-        const { practice } = req.params;
+        const {practice} = req.params;
         const data = req.body;
 
         if (!services[practice]) {
-            logger.warn('api', 'Практика не найдена', { practice });
+            logger.warn('api', 'Практика не найдена', {practice});
             return res.status(404).json({
                 success: false,
                 error: 'Практика не найдена'
@@ -375,30 +380,30 @@ app.post('/api/calculate/:practice', (req, res) => {
 
         let result;
 
-        switch(practice) {
+        switch (practice) {
             case 'rodology':
                 result = services.rodology.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             case 'iching':
                 result = services.iching.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             case 'daliuren':
                 result = services.daliuren.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             case 'hermetic':
                 result = services.hermetic.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             case 'zoar':
                 result = services.zoar.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             case 'socionics':
@@ -413,7 +418,7 @@ app.post('/api/calculate/:practice', (req, res) => {
 
             case 'runes':
                 result = services.runes.calculate(data);
-                res.json({ success: true, data: result });
+                res.json({success: true, data: result});
                 break;
 
             default:
@@ -426,7 +431,7 @@ app.post('/api/calculate/:practice', (req, res) => {
         logger.info('api', `Расчет ${practice} выполнен`);
 
     } catch (error) {
-        logger.error('api', `Ошибка расчета ${req.params.practice}`, { error: error.message });
+        logger.error('api', `Ошибка расчета ${req.params.practice}`, {error: error.message});
         res.status(500).json({
             success: false,
             error: error.message
@@ -446,17 +451,17 @@ app.get('/api/payments/module', (req, res) => {
 });
 
 app.get('/api/payments/create', makeHandlerAwareOfAsyncErrors(async (req, res) => {
-    const { id, type = 'card', tips = 0, lang = 'ru' } = req.query;
+    const {id, type = 'card', tips = 0, lang = 'ru'} = req.query;
 
     if (!id) {
-        return res.status(400).json({ success: false, error: 'Order ID is required' });
+        return res.status(400).json({success: false, error: 'Order ID is required'});
     }
 
     try {
         if (useAmeriaPay) {
             const AmeriaBankCntrl = require('./modules/AmeriaBank/Controllers/AmeriaBankCntrl');
             const controller = new AmeriaBankCntrl();
-            const result = await controller.createPayment({ id, type, tips, lang });
+            const result = await controller.createPayment({id, type, tips, lang});
             res.json(result);
         } else {
             const PaymentsCntrl = require('./modules/Payments/Controllers/PaymentsCntrl');
@@ -471,12 +476,12 @@ app.get('/api/payments/create', makeHandlerAwareOfAsyncErrors(async (req, res) =
         }
     } catch (error) {
         console.error('Error in universal payment endpoint:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 }));
 
 app.get('/api/payments/check', makeHandlerAwareOfAsyncErrors(async (req, res) => {
-    const { id, paymentId, orderId } = req.query;
+    const {id, paymentId, orderId} = req.query;
     const checkId = paymentId || id;
 
     if (!checkId && !orderId) {
@@ -500,7 +505,7 @@ app.get('/api/payments/check', makeHandlerAwareOfAsyncErrors(async (req, res) =>
                     const result = await controller.checkTransactionStatus(transactions[0].paymentId);
                     res.json(result);
                 } else {
-                    res.json({ success: false, error: 'No transactions found for order' });
+                    res.json({success: false, error: 'No transactions found for order'});
                 }
             }
         } else {
@@ -511,12 +516,12 @@ app.get('/api/payments/check', makeHandlerAwareOfAsyncErrors(async (req, res) =>
                 const result = await controller.CheckTransactionByOrder(orderId);
                 res.json(result);
             } else {
-                res.json({ success: false, error: 'Order ID required for YouPay' });
+                res.json({success: false, error: 'Order ID required for YouPay'});
             }
         }
     } catch (error) {
         console.error('Error in universal check endpoint:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({success: false, error: error.message});
     }
 }));
 
@@ -525,11 +530,11 @@ app.get('/api/payments/check', makeHandlerAwareOfAsyncErrors(async (req, res) =>
 app.post('/api/upload', upload.single('photo'), async (req, res) => {
     const fs = require('fs');
     const path = require('path');
-    const { pipeline } = require('stream/promises');
-    const { exec } = require('child_process');
+    const {pipeline} = require('stream/promises');
+    const {exec} = require('child_process');
 
     if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+        return res.status(400).json({error: 'No file uploaded'});
     }
 
     try {
@@ -604,7 +609,7 @@ async function checkModuleMigrations(modulePath, moduleName) {
         const umzug = new Umzug({
             migrations: {
                 glob: path.join(migrationsPath, '*.js').replace(/\\/g, '/'),
-                resolve: ({ name, path, context }) => {
+                resolve: ({name, path, context}) => {
                     const migration = require(path);
                     return {
                         name,
@@ -627,9 +632,14 @@ async function checkModuleMigrations(modulePath, moduleName) {
             await sequelize.query('SELECT 1 FROM "SequelizeMeta" LIMIT 1');
         } catch (error) {
             await sequelize.query(`
-                CREATE TABLE IF NOT EXISTS "SequelizeMeta" (
-                    name VARCHAR(255) PRIMARY KEY
-                )
+                CREATE TABLE IF NOT EXISTS "SequelizeMeta"
+                (
+                    name
+                    VARCHAR
+                (
+                    255
+                ) PRIMARY KEY
+                    )
             `);
         }
 
@@ -657,7 +667,7 @@ async function checkModuleMigrations(modulePath, moduleName) {
                     await sequelize.query(
                         'INSERT INTO "SequelizeMeta" (name) VALUES (:name)',
                         {
-                            replacements: { name: migrationFile },
+                            replacements: {name: migrationFile},
                             type: sequelize.QueryTypes.INSERT
                         }
                     );
@@ -716,17 +726,17 @@ async function loadModules() {
             await checkModuleMigrations(modulePath, moduleName);
 
             // Загружаем контроллер
+
             const controllerPath = path.join(modulePath, 'Controllers', `${moduleDir}View.js`);
             if (fs.existsSync(controllerPath)) {
                 const controller = require(controllerPath);
                 routes[moduleDir.toLowerCase()] = controller;
-
                 const routePath = path.join(modulePath, `${moduleDir}.route.js`);
                 if (fs.existsSync(routePath)) {
                     const route = require(routePath);
                     route(app, moduleDir.toLowerCase(), controller, makeHandlerAwareOfAsyncErrors);
-                  //  console.log(`🔥 Маршруты для ${moduleName} зарегистрированы в ${new Date().toISOString()}`);
-                   // console.log(`✅ Модуль "${moduleName}" загружен`);
+                    //  console.log(`🔥 Маршруты для ${moduleName} зарегистрированы в ${new Date().toISOString()}`);
+                    // console.log(`✅ Модуль "${moduleName}" загружен`);
 
                     loadedModules.push({
                         name: moduleName,
@@ -762,18 +772,18 @@ async function initModules(loadedModules) {
 
         if (fs.existsSync(initPath)) {
             try {
-               // console.log(`🔄 Инициализация модуля "${module.name}"...`);
+                // console.log(`🔄 Инициализация модуля "${module.name}"...`);
 
                 const initModule = require(initPath);
 
                 if (typeof initModule === 'function') {
                     await initModule();
                     results.success.push(module.name);
-                   // console.log(`✅ Модуль "${module.name}" инициализирован`);
+                    // console.log(`✅ Модуль "${module.name}" инициализирован`);
                 } else if (typeof initModule.init === 'function') {
                     await initModule.init();
                     results.success.push(module.name);
-                   // console.log(`✅ Модуль "${module.name}" инициализирован`);
+                    // console.log(`✅ Модуль "${module.name}" инициализирован`);
                 } else if (typeof initModule.initTelegramModule === 'function') {
                     await initModule.initTelegramModule();
                     results.success.push(module.name);
@@ -795,7 +805,7 @@ async function initModules(loadedModules) {
     console.log(`   ✅ Успешно: ${results.success.length}`);
     console.log(`   ⚠️  Пропущено: ${results.skipped.length}`);
     console.log(`   ❌ Ошибки: ${results.failed.length}`);
-
+   // logAllRoutes();
     return results;
 }
 

@@ -1,0 +1,174 @@
+{
+  "moduleName": "Astropsychology",
+  "version": "1.0.0",
+  "order": 8,
+  "description": "Модуль астропсихологии - психологический портрет по звездам",
+  "dependencies": ["Core", "Logs"],
+
+  "services": {
+    "freeCalculations": 1,
+    "paidCalculations": {
+      "astro_basic": 0,
+      "astro_quick": 100,
+      "astro_standard": 300,
+      "astro_full": 500,
+      "astro_premium": 1000
+    }
+  },
+
+  "serviceTypes": {
+    "astro_basic": {
+      "name": "Базовый анализ",
+      "description": "Основной психологический портрет по Солнцу, Луне и Асценденту",
+      "features": [
+        "Асцендент (восходящий знак)",
+        "Солнце (сущность, эго)",
+        "Луна (эмоции, подсознание)",
+        "Базовый психологический портрет",
+        "Ключевые сильные стороны"
+      ],
+      "price": 0,
+      "free": true
+    },
+    "astro_quick": {
+      "name": "Экспресс-анализ",
+      "description": "Быстрый анализ ключевых планет",
+      "features": [
+        "Всё из базового",
+        "Позиции Меркурия, Венеры, Марса",
+        "Краткий прогноз на неделю",
+        "Советы по саморазвитию"
+      ],
+      "price": 100
+    },
+    "astro_standard": {
+      "name": "Стандартный портрет",
+      "description": "Полный психологический портрет личности",
+      "features": [
+        "Всё из экспресс-анализа",
+        "Все 10 планет в знаках",
+        "Психологический анализ характера",
+        "Сильные стороны и зоны роста",
+        "Путь развития",
+        "Прогноз на месяц"
+      ],
+      "price": 300
+    },
+    "astro_full": {
+      "name": "Полный анализ",
+      "description": "Глубокий анализ личности и совместимость",
+      "features": [
+        "Всё из стандартного портрета",
+        "Анализ аспектов между планетами",
+        "Психологический портрет по домам",
+        "Анализ отношений (совместимость)",
+        "Годовой прогноз",
+        "Скачивание PDF-отчета"
+      ],
+      "price": 500
+    },
+    "astro_premium": {
+      "name": "Премиум-портрет",
+      "description": "Максимально полный разбор личности",
+      "features": [
+        "Всё из полного анализа",
+        "Детальный разбор всех аспектов",
+        "Проработка кармических задач",
+        "Транзитный прогноз на 3 месяца",
+        "Персональные рекомендации",
+        "Приоритетная поддержка"
+      ],
+      "price": 1000
+    }
+  },
+
+  "overview": {
+    "summary": "Модуль предоставляет психологический портрет личности на основе астрологических данных.",
+    "features": [
+      "Бесплатный базовый анализ (1 раз)",
+      "Платные расширенные расчеты",
+      "Сохранение истории расчетов",
+      "Генерация PDF отчетов",
+      "Интеграция с балансом пользователя",
+      "5 уровней глубины анализа"
+    ]
+  },
+
+  "technicalDetails": {
+    "databaseModels": {
+      "AstropsychologyProfile": {
+        "userId": "ID пользователя",
+        "fullName": "ФИО",
+        "birthDate": "Дата рождения",
+        "birthTime": "Время рождения",
+        "latitude": "Широта",
+        "longitude": "Долгота",
+        "lastCalculation": "Дата последнего расчета"
+      }
+    },
+    "services": {
+      "AstropsychologyService": "Основной сервис астропсихологических расчетов",
+      "AstropsychologyView": "Контроллер для обработки запросов"
+    }
+  },
+
+  "endpoints": {
+    "public": [
+      {
+        "method": "GET",
+        "path": "/api/astropsychology/types",
+        "description": "Получить список типов расчетов",
+        "auth": false
+      }
+    ],
+    "protected": [
+      {
+        "method": "POST",
+        "path": "/api/astropsychology/calculate/:type",
+        "description": "Расчет астропсихологического портрета",
+        "auth": true,
+        "price": "по типу"
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropsychology/history",
+        "description": "История расчетов",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropsychology/calculations/:id",
+        "description": "Получение конкретного расчета",
+        "auth": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/astropsychology/pdf/:id",
+        "description": "Скачать PDF отчета",
+        "auth": true
+      }
+    ],
+    "admin": [
+      {
+        "method": "GET",
+        "path": "/api/astropsychology/admin/stats",
+        "description": "Статистика расчетов",
+        "auth": true,
+        "role": "admin"
+      }
+    ]
+  },
+
+  "webInterface": {
+    "url": "/astropsychology",
+    "features": [
+      "Выбор типа расчета",
+      "Форма ввода данных",
+      "Визуализация результатов",
+      "Личный кабинет с историей"
+    ]
+  },
+
+  "author": "System",
+  "license": "Proprietary"
+}

@@ -1,0 +1,991 @@
+/* modules/Astropsychology/web/css/astropsychology.css */
+
+/* ========== ПЕРЕМЕННЫЕ ========== */
+:root {
+    --primary: #c9a54b;
+    --primary-dark: #b38f3f;
+    --primary-light: #e2b96b;
+    --primary-gradient: linear-gradient(135deg, #c9a54b, #e2b96b);
+    --dark: #0a0a0f;
+    --dark-light: #12121a;
+    --dark-lighter: #1a1a24;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #6a6a7a;
+    --border-color: rgba(201, 165, 75, 0.2);
+    --border-hover: rgba(201, 165, 75, 0.3);
+    --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
+    --shadow-gold: 0 10px 30px rgba(201, 165, 75, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== ХЕРО-СЕКЦИЯ ========== */
+.astropsychology-hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    animation: fadeInUp 1s ease;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+    border-radius: 40px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 25px;
+}
+
+.hero-title span {
+    background: linear-gradient(135deg, #ffffff, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-description {
+    max-width: 700px;
+    margin: 0 auto 40px;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.8;
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ========== БЛОК ДЛЯ ГОСТЕЙ ========== */
+.guest-block {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 50px 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    text-align: center;
+    animation: fadeInScale 0.6s ease;
+}
+
+.guest-content h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.guest-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 30px;
+}
+
+.guest-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ========== ТАРИФЫ ========== */
+.tariff-section {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.section-title span {
+    color: var(--primary);
+}
+
+.section-description {
+    max-width: 700px;
+    margin: 0 auto 50px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    line-height: 1.7;
+}
+
+.tariff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.tariff-card {
+    position: relative;
+    padding: 30px 25px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    transition: var(--transition);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.tariff-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-gold);
+}
+
+.tariff-card.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.tariff-card.free {
+    background: linear-gradient(135deg, var(--dark-light), rgba(201, 165, 75, 0.05));
+}
+
+.tariff-card.locked {
+    opacity: 0.85;
+    background: linear-gradient(135deg, rgba(18, 18, 26, 0.7), rgba(10, 10, 15, 0.8));
+}
+
+.tariff-card.locked .lock-overlay-small {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(201, 165, 75, 0.3);
+}
+
+.tariff-card.locked .lock-overlay-small i {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.tariff-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.tariff-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.tariff-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    min-height: 60px;
+}
+
+.tariff-price {
+    margin: 15px 0;
+}
+
+.price-current {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.price-free {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #4caf50;
+}
+
+.price-old {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-left: 8px;
+}
+
+.discount-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #4caf50;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.8rem;
+    margin: 5px 0;
+}
+
+.tariff-features {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+    text-align: left;
+}
+
+.tariff-features li {
+    padding: 6px 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tariff-features li i {
+    color: #4caf50;
+    font-size: 0.8rem;
+}
+
+.btn-select {
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    border: 2px solid var(--primary);
+    border-radius: 40px;
+    color: var(--primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 15px;
+}
+
+.btn-select:hover {
+    background: var(--primary-gradient);
+    color: var(--dark);
+    border-color: transparent;
+    transform: translateY(-2px);
+}
+
+.btn-select.locked {
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.btn-select.locked:hover {
+    background: rgba(201, 165, 75, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ========== СЕКЦИЯ ВВОДА ========== */
+.input-section {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    animation: fadeInScale 0.6s ease;
+}
+
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.input-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.input-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.price-tag {
+    padding: 10px 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+}
+
+/* ========== ФОРМА ========== */
+.astropsychology-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group label i {
+    color: var(--primary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(201, 165, 75, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.coordinate-field {
+    background: rgba(0, 0, 0, 0.2) !important;
+    cursor: default;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-small {
+    padding: 0 20px;
+    background: rgba(201, 165, 75, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-small:hover {
+    background: rgba(201, 165, 75, 0.2);
+    border-color: var(--primary);
+}
+
+.suggestions-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--dark-lighter);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.suggestion-item:hover {
+    background: rgba(201, 165, 75, 0.1);
+}
+
+.suggestion-main {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.suggestion-detail {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* ========== КНОПКА РАСЧЕТА ========== */
+.btn-calculate {
+    width: 100%;
+    padding: 16px 32px;
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 50px;
+    color: var(--dark);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-calculate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(201, 165, 75, 0.3);
+}
+
+/* ========== ЛОАДЕР ========== */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(201, 165, 75, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== РЕЗУЛЬТАТ ========== */
+.result-section {
+    max-width: 1000px;
+    margin: 40px auto;
+    animation: fadeInScale 0.6s ease;
+}
+
+.result-card {
+    padding: 40px;
+    background: linear-gradient(135deg, var(--dark-light), var(--dark));
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.result-header h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.result-badge {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(201, 165, 75, 0.2);
+    color: var(--primary);
+}
+
+.result-person-info {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    flex-wrap: wrap;
+}
+
+.person-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.person-detail .label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.person-detail .value {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Асцендент */
+.astro-section {
+    margin: 30px 0;
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+.astro-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary);
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+}
+
+.astro-sign {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.astro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin: 30px 0;
+}
+
+.astro-item {
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.astro-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.planets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.planet-item {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.planet-symbol {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.planet-name {
+    font-weight: 600;
+    margin: 5px 0;
+}
+
+/* Психология */
+.psychology-item {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border-left: 3px solid var(--primary);
+}
+
+.psychology-item h4 {
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.astro-strengths-weaknesses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin: 30px 0;
+}
+
+.strengths-box,
+.weaknesses-box {
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+.strengths-box h4 {
+    color: #4caf50;
+    margin-bottom: 15px;
+}
+
+.weaknesses-box h4 {
+    color: #ff9800;
+    margin-bottom: 15px;
+}
+
+.strengths-box ul,
+.weaknesses-box ul {
+    list-style: none;
+    padding: 0;
+}
+
+.strengths-box li,
+.weaknesses-box li {
+    padding: 8px 0;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.strengths-box li:last-child,
+.weaknesses-box li:last-child {
+    border-bottom: none;
+}
+
+/* Прогноз */
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.forecast-item {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.forecast-item strong {
+    color: var(--primary);
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Интерпретация */
+.full-interpretation {
+    margin: 30px 0;
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+}
+
+.full-interpretation h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+.interpretation-text {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    white-space: pre-line;
+}
+
+/* Кнопки действий */
+.result-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 12px 25px;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: 40px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-action:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ========== УВЕДОМЛЕНИЯ ========== */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: white;
+    z-index: 10001;
+    animation: slideIn 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.success {
+    background: rgba(76, 175, 80, 0.9);
+}
+
+.notification.error {
+    background: rgba(244, 67, 54, 0.9);
+}
+
+.notification.info {
+    background: rgba(201, 165, 75, 0.9);
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ========== АДАПТИВНОСТЬ ========== */
+@media (max-width: 992px) {
+    .astro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .astro-strengths-weaknesses {
+        grid-template-columns: 1fr;
+    }
+
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-stats {
+        gap: 30px;
+    }
+
+    .stat-item {
+        width: calc(50% - 15px);
+    }
+
+    .tariff-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .input-section {
+        padding: 25px;
+    }
+
+    .result-card {
+        padding: 25px;
+    }
+
+    .result-actions {
+        flex-direction: column;
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-stats {
+        gap: 15px;
+    }
+
+    .stat-item {
+        width: 100%;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .guest-block {
+        padding: 30px 20px;
+    }
+
+    .astro-section {
+        padding: 20px;
+    }
+
+    .planets-grid {
+        grid-template-columns: 1fr;
+    }
+}
+/* Добавьте в конец файла */
+
+/* Стили для натальной карты (canvas) */
+.natal-chart-container {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+#natalChartCanvas {
+    max-width: 100%;
+    height: auto;
+    border-radius: 50%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: rgba(10, 10, 15, 0.3);
+}
+
+/* Стили для домов */
+.houses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.house-item {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: var(--transition);
+}
+
+.house-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* Аспекты */
+.aspects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.aspect-item {
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.aspect-item.conjunction { border-left-color: #ff4d4d; }
+.aspect-item.opposition { border-left-color: #4d4dff; }
+.aspect-item.trine { border-left-color: #4dff4d; }
+.aspect-item.square { border-left-color: #ff4dff; }
+.aspect-item.sextile { border-left-color: #ffff4d; }
+
+/* Прогноз с полной шириной */
+.forecast-item.full {
+    grid-column: span 2;
+    background: rgba(201, 165, 75, 0.1);
+}
+
+@media (max-width: 768px) {
+    .forecast-item.full {
+        grid-column: span 1;
+    }
+
+    .houses-list {
+        grid-template-columns: 1fr;
+    }
+}

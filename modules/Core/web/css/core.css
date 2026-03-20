@@ -155,12 +155,11 @@ body {
 }
 
 .main-nav a.active {
-    color: #42371a;
-    background-color: #d8b566;
     font-weight: bold;
-    border-radius: 22px;
     border: none;
     text-decoration: none;
+    color: #d8b566;
+    border-bottom: 1px solid #d8b566;
 }
 
 /*.main-nav a.active::after {
@@ -6356,6 +6355,8 @@ input:-webkit-autofill:active {
     transition: all 0.3s;
     cursor: pointer;
     border: none;
+    background: #c9a54b;
+    color: #000;
 }
 /* ========== СТИЛИ ДЛЯ СТРАНИЦ АВТОРИЗАЦИИ ========== */
 .auth-container {
