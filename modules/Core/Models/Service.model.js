@@ -59,7 +59,12 @@ module.exports = (sequelize) => {
         meta: {
             type: DataTypes.JSONB,
             defaultValue: {}
-        }
+        },
+        section: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+            comment: 'Раздел услуги: numerology, astrology, astropsychology'
+        },
     }, {
         freezeTableName: true,
         tableName: 'Services',

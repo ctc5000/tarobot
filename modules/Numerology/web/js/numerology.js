@@ -156,28 +156,29 @@ class NumerologyApp {
 
         this.subscriptionInfo.style.display = 'block';
         this.subscriptionInfo.innerHTML = `
-            <div class="subscription-badge">
-                <i class="fas fa-crown"></i>
-                <span>Активная подписка</span>
+        <div class="subscription-badge">
+            <i class="fas fa-crown"></i>
+            <span>Активная подписка</span>
+        </div>
+        <div class="subscription-dates">
+            <div class="date-item">
+                <i class="fas fa-calendar-check"></i>
+                <span>Действует до: <strong>${endDate.toLocaleDateString()}</strong></span>
             </div>
-            <div class="subscription-dates">
-                <div class="date-item">
-                    <i class="fas fa-calendar-check"></i>
-                    <span>Действует до: <strong>${endDate.toLocaleDateString()}</strong></span>
-                </div>
-                <div class="date-item">
-                    <i class="fas fa-hourglass-half"></i>
-                    <span>Осталось: <strong>${daysLeft} дн.</strong></span>
-                </div>
+            <div class="date-item">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Осталось: <strong>${daysLeft} дн.</strong></span>
             </div>
-            <div class="subscription-benefits">
-                <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на день</span>
-                <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на неделю</span>
-                <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на месяц</span>
-                <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на год</span>
-                <span class="benefit-tag discount"><i class="fas fa-tag"></i> Скидка 50% на полный расчет</span>
-            </div>
-        `;
+        </div>
+        <div class="subscription-benefits">
+            <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на день</span>
+            <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на неделю</span>
+            <span class="benefit-tag"><i class="fas fa-check"></i> Прогноз на месяц</span>
+            <span class="benefit-tag discount"><i class="fas fa-tag"></i> Скидка 50% на годовой прогноз</span>
+            <span class="benefit-tag discount"><i class="fas fa-tag"></i> Скидка 50% на полный отчет</span>
+            <span class="benefit-tag discount"><i class="fas fa-tag"></i> Скидка 50% на совместимость</span>
+        </div>
+    `;
     }
 
     updateAuthUI() {
@@ -211,14 +212,7 @@ class NumerologyApp {
                 icon: 'fas fa-star',
                 name: 'Базовый расчет',
                 description: 'Основные числа судьбы, свиток судьбы и глубинный портрет',
-                features: [
-                    'Число судьбы, имени, рода',
-                    'Ахиллесова пята',
-                    'Число управления',
-                    'Социальные оклики',
-                    'Свиток судьбы',
-                    'Глубинный портрет'
-                ],
+                features: ['Число судьбы, имени, рода', 'Ахиллесова пята', 'Число управления', 'Социальные оклики', 'Свиток судьбы', 'Глубинный портрет'],
                 free: true,
                 category: 'calculations'
             },
@@ -226,113 +220,67 @@ class NumerologyApp {
                 icon: 'fas fa-sun',
                 name: 'Прогноз на день',
                 description: 'Персональный прогноз на конкретный день',
-                features: [
-                    'Число дня',
-                    'Энергетика дня',
-                    'Благоприятные направления',
-                    'Совет на день'
-                ],
+                features: ['Число дня', 'Энергетика дня', 'Благоприятные направления', 'Совет на день'],
                 category: 'calculations'
             },
             'forecast_week': {
                 icon: 'fas fa-calendar-week',
                 name: 'Прогноз на неделю',
                 description: 'Прогноз на предстоящую неделю',
-                features: [
-                    'Разбор по дням',
-                    'Ключевые события',
-                    'Благоприятные дни',
-                    'Советы на неделю'
-                ],
+                features: ['Разбор по дням', 'Ключевые события', 'Благоприятные дни', 'Советы на неделю'],
                 category: 'calculations'
             },
             'forecast_month': {
                 icon: 'fas fa-calendar-alt',
                 name: 'Прогноз на месяц',
                 description: 'Прогноз на месяц вперед',
-                features: [
-                    'Разбор по неделям',
-                    'Важные даты',
-                    'Тенденции месяца',
-                    'Стратегия на месяц'
-                ],
+                features: ['Разбор по неделям', 'Важные даты', 'Тенденции месяца', 'Стратегия на месяц'],
                 category: 'calculations'
             },
             'forecast_year': {
                 icon: 'fas fa-calendar',
                 name: 'Прогноз на год',
                 description: 'Годовой прогноз',
-                features: [
-                    'Разбор по кварталам',
-                    'Ключевые месяцы',
-                    'Годовые тенденции',
-                    'Стратегия на год'
-                ],
+                features: ['Разбор по кварталам', 'Ключевые месяцы', 'Годовые тенденции', 'Стратегия на год'],
                 category: 'calculations'
             },
             'forecast_full': {
                 icon: 'fas fa-crown',
                 name: 'Полный расчет',
                 description: 'Полный нумерологический анализ + все дополнительные разделы',
-                features: [
-                    'Все из базового расчета',
-                    'Гороскоп',
-                    'Фен-шуй',
-                    'Карты Таро',
-                    'Психологический портрет',
-                    'Паттерны личности',
-                    'Карьерный анализ',
-                    'Семейная гармония',
-                    'Любовная совместимость',
-                    'Финансовый поток',
-                    'Энергия здоровья',
-                    'Скрытые таланты'
-                ],
+                features: ['Все из базового расчета', 'Гороскоп', 'Фен-шуй', 'Карты Таро', 'Психологический портрет', 'Паттерны личности', 'Карьерный анализ', 'Семейная гармония', 'Любовная совместимость', 'Финансовый поток', 'Энергия здоровья', 'Скрытые таланты'],
                 category: 'calculations'
             },
             'compatibility': {
                 icon: 'fas fa-heart',
                 name: 'Совместимость',
                 description: 'Нумерологическая совместимость с партнером',
-                features: [
-                    'Анализ пары',
-                    'Сильные стороны союза',
-                    'Зоны роста отношений',
-                    'Общие цели'
-                ],
+                features: ['Анализ пары', 'Сильные стороны союза', 'Зоны роста отношений', 'Общие цели'],
                 category: 'calculations'
             },
             'subscription_monthly': {
                 icon: 'fas fa-gem',
                 name: 'Подписка на месяц',
                 description: 'Неограниченные прогнозы на день, неделю и месяц в течение 30 дней',
-                features: [
-                    'Все прогнозы без ограничений',
-                    'Экономия до 70%',
-                    'Новые расчеты каждый день',
-                    'Приоритетная поддержка'
-                ],
+                features: ['Все прогнозы без ограничений', 'Экономия до 70%', 'Новые расчеты каждый день', 'Приоритетная поддержка'],
                 category: 'subscriptions'
             },
             'subscription_yearly': {
                 icon: 'fas fa-crown',
                 name: 'Подписка на год',
                 description: 'Неограниченные прогнозы на день, неделю и месяц в течение 365 дней',
-                features: [
-                    'Все прогнозы без ограничений',
-                    'Максимальная выгода',
-                    'Экономия более 80%',
-                    'VIP поддержка'
-                ],
+                features: ['Все прогнозы без ограничений', 'Максимальная выгода', 'Экономия более 80%', 'VIP поддержка'],
                 category: 'subscriptions'
             }
         };
 
-        // Разделяем тарифы на категории
         const calculations = [];
         const subscriptions = [];
 
         this.tariffs.forEach(tariff => {
+            if(tariff.section != "numerology") return;
+            if (this.user && tariff.code == "forecast_basic") return;
+
             const typeInfo = forecastTypes[tariff.code] || {
                 icon: 'fas fa-calculator',
                 name: tariff.name,
@@ -341,35 +289,48 @@ class NumerologyApp {
                 category: tariff.code.includes('subscription') ? 'subscriptions' : 'calculations'
             };
 
-            // Определяем цену со скидкой для подписчиков
             let price = tariff.price;
             let oldPrice = null;
-            let discount = null;
+            let discountText = null;
+            let isFreeForSubscribers = false;
 
+            // ========== ЛОГИКА ЦЕН ДЛЯ ПОДПИСЧИКОВ ==========
             if (this.activeSubscription && tariff.code !== 'forecast_basic') {
-                if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariff.code)) {
+                // Прогнозы на день, неделю, месяц - БЕСПЛАТНО для подписчиков
+                if (['forecast_day', 'forecast_week', 'forecast_month'].includes(tariff.code)) {
                     price = 0;
-                    discount = 'По подписке';
-                } else if (tariff.code === 'forecast_full') {
+                    isFreeForSubscribers = true;
+                    discountText = 'Бесплатно по подписке';
+                }
+                // Прогноз на год - 50% скидка
+                else if (tariff.code === 'forecast_year') {
                     oldPrice = price;
                     price = Math.round(price * 0.5);
-                    discount = '50% по подписке';
+                    discountText = '50% по подписке';
+                }
+                // Полный отчет - 50% скидка
+                else if (tariff.code === 'forecast_full') {
+                    oldPrice = price;
+                    price = Math.round(price * 0.5);
+                    discountText = '50% по подписке';
+                }
+                // Совместимость - 50% скидка
+                else if (tariff.code === 'compatibility') {
+                    oldPrice = price;
+                    price = Math.round(price * 0.5);
+                    discountText = '50% по подписке';
                 }
             }
 
-            // Определяем класс карточки и обработчик клика
             let cardClass = 'tariff-card';
             let clickHandler = `numerologyApp.selectTariff('${tariff.code}')`;
             let isLocked = false;
 
             // Для неавторизованных пользователей
             if (!this.user) {
-                // Базовый расчет полностью доступен
                 if (tariff.code === 'forecast_basic') {
                     cardClass += ' free';
-                }
-                // Все остальные тарифы - с замочком
-                else {
+                } else {
                     cardClass += ' locked';
                     isLocked = true;
                     clickHandler = `numerologyApp.showAuthModal()`;
@@ -377,47 +338,65 @@ class NumerologyApp {
             }
             // Для авторизованных пользователей
             else {
-                // Базовый расчет скрываем полностью
                 if (tariff.code === 'forecast_basic') {
-                    return; // Пропускаем этот тариф
+                    return;
                 }
-
-                // Остальные тарифы доступны
-                if (this.activeSubscription && (price === 0 || discount)) {
+                if (this.activeSubscription && (price === 0 || discountText)) {
                     cardClass += ' subscription';
                 }
             }
 
             if (this.selectedTariff?.id === tariff.id) cardClass += ' selected';
 
+            // Формируем HTML для цены
+            let priceHtml = '';
+            if (price === 0 && isFreeForSubscribers) {
+                priceHtml = '<span class="price-free">Бесплатно</span> <span class="discount-badge">По подписке</span>';
+            } else if (price === 0) {
+                priceHtml = '<span class="price-free">Бесплатно</span>';
+            } else {
+                priceHtml = `<span class="price-current">${price} ₽</span>`;
+                if (oldPrice) {
+                    priceHtml += `<span class="price-old">${oldPrice} ₽</span>`;
+                }
+                // Добавляем бейдж со скидкой для платных услуг
+                if (discountText && !isFreeForSubscribers) {
+                    priceHtml += `<span class="discount-badge">${discountText}</span>`;
+                }
+            }
+
             const tariffHtml = `
-            <div class="${cardClass}" onclick="${clickHandler}" data-category="${typeInfo.category}">
-                ${tariff.code === 'forecast_full' && !this.activeSubscription && !isLocked ? '<span class="popular-badge">Популярное</span>' : ''}
-                ${isLocked ? '<div class="lock-overlay-small"><i class="fas fa-lock"></i></div>' : ''}
-                <div class="tariff-icon">
-                    <i class="${typeInfo.icon}"></i>
-                </div>
-                <h3 class="tariff-name">${typeInfo.name}</h3>
-                <p class="tariff-description">${typeInfo.description}</p>
-                
-                <div class="tariff-price">
-                    ${price === 0 ? '<span class="price-free">Бесплатно</span>' : `<span class="price-current">${price} ₽</span>`}
-                    ${oldPrice ? `<span class="price-old">${oldPrice} ₽</span>` : ''}
-                </div>
-                
-                ${discount ? `<div class="discount-badge">${discount}</div>` : ''}
-                
-                <ul class="tariff-features">
-                    ${typeInfo.features ? typeInfo.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('') : '<li>Все основные расчеты</li>'}
-                </ul>
-                
-                <button class="btn-select ${isLocked ? 'locked' : ''}">
-                    ${isLocked ? 'Войти и выбрать' : 'Выбрать'}
-                </button>
+        <div class="${cardClass}" onclick="${clickHandler}" data-category="${typeInfo.category}">
+            ${tariff.code === 'forecast_full' && !this.activeSubscription && !isLocked ? '<span class="popular-badge">Популярное</span>' : ''}
+            ${isLocked ? '<div class="lock-overlay-small"><i class="fas fa-lock"></i></div>' : ''}
+            <div class="tariff-icon">
+                <i class="${typeInfo.icon}"></i>
             </div>
+            <h3 class="tariff-name">${typeInfo.name}</h3>
+            <p class="tariff-description">${typeInfo.description}</p>
+            
+            <div class="tariff-price">
+                ${priceHtml}
+            </div>
+            
+            <button class="btn-preview" 
+                onclick="event.stopPropagation(); 
+                ${!this.user && tariff.code !== 'forecast_basic' ?
+                'numerologyApp.showAuthModal()' :
+                `numerologyApp.showPreview('${tariff.code}')`}">
+                <i class="fas fa-eye"></i> Предпросмотр
+            </button>
+            
+            <ul class="tariff-features">
+                ${typeInfo.features ? typeInfo.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('') : '<li>Все основные расчеты</li>'}
+            </ul>
+            
+            <button class="btn-select ${isLocked ? 'locked' : ''}">
+                ${isLocked ? 'Войти и выбрать' : 'Выбрать'}
+            </button>
+        </div>
         `;
 
-            // Распределяем по категориям
             if (typeInfo.category === 'subscriptions') {
                 subscriptions.push(tariffHtml);
             } else {
@@ -425,10 +404,7 @@ class NumerologyApp {
             }
         });
 
-        // Формируем итоговый HTML с разделением на категории
         let finalHtml = '';
-
-        // Секция с расчетами (если есть)
         if (calculations.length > 0) {
             finalHtml += `
         <div class="tariff-category">
@@ -437,10 +413,8 @@ class NumerologyApp {
                 ${calculations.join('')}
             </div>
         </div>
-    `;
+        `;
         }
-
-        // Секция с подписками (если есть)
         if (subscriptions.length > 0) {
             finalHtml += `
         <div class="tariff-category subscriptions-category">
@@ -449,9 +423,8 @@ class NumerologyApp {
                 ${subscriptions.join('')}
             </div>
         </div>
-    `;
+        `;
         }
-
         this.tariffGrid.innerHTML = finalHtml;
     }
 
@@ -590,23 +563,50 @@ class NumerologyApp {
     updatePriceInfo(tariff) {
         const priceInfo = document.getElementById('selectedTariffPrice');
         let price = tariff.price;
-        let html = '';
+        let oldPrice = null;
+        let discountText = '';
+        let isFreeForSubscribers = false;
 
         if (this.activeSubscription) {
-            if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(tariff.code)) {
-                html = '<span class="price-free">Бесплатно</span> <span class="discount-badge">По подписке</span>';
-            } else if (tariff.code === 'forecast_full') {
-                const discounted = Math.round(price * 0.5);
-                html = `
-                    <span class="price-current">${discounted} ₽</span>
-                    <span class="price-old">${price} ₽</span>
-                    <span class="discount-badge">-50%</span>
-                `;
-            } else {
-                html = `<span class="price-current">${price} ₽</span>`;
+            // Прогнозы на день, неделю, месяц - БЕСПЛАТНО
+            if (['forecast_day', 'forecast_week', 'forecast_month'].includes(tariff.code)) {
+                price = 0;
+                isFreeForSubscribers = true;
+                discountText = 'Бесплатно по подписке';
             }
+            // Прогноз на год - 50% скидка
+            else if (tariff.code === 'forecast_year') {
+                oldPrice = price;
+                price = Math.round(price * 0.5);
+                discountText = '-50% по подписке';
+            }
+            // Полный отчет - 50% скидка
+            else if (tariff.code === 'forecast_full') {
+                oldPrice = price;
+                price = Math.round(price * 0.5);
+                discountText = '-50% по подписке';
+            }
+            // Совместимость - 50% скидка
+            else if (tariff.code === 'compatibility') {
+                oldPrice = price;
+                price = Math.round(price * 0.5);
+                discountText = '-50% по подписке';
+            }
+        }
+
+        let html = '';
+        if (price === 0 && isFreeForSubscribers) {
+            html = '<span class="price-free">Бесплатно</span> <span class="discount-badge">По подписке</span>';
+        } else if (price === 0) {
+            html = '<span class="price-free">Бесплатно</span>';
         } else {
             html = `<span class="price-current">${price} ₽</span>`;
+            if (oldPrice) {
+                html += `<span class="price-old">${oldPrice} ₽</span>`;
+            }
+            if (discountText) {
+                html += `<span class="discount-badge">${discountText}</span>`;
+            }
         }
 
         priceInfo.innerHTML = html;
@@ -695,36 +695,31 @@ class NumerologyApp {
                     this.showLoading(false);
                     return;
                 }
-            } else if (['forecast_day', 'forecast_week', 'forecast_month', 'forecast_year'].includes(this.selectedTariff?.code)) {
+            } else if (this.selectedTariff?.code.startsWith('forecast_')) {
+                const forecastType = this.selectedTariff.code.replace('forecast_', '');
                 let targetDateValue = '';
 
-                if (this.selectedTariff.code === 'forecast_week') {
+                if (forecastType === 'week') {
                     targetDateValue = document.getElementById('selectedWeekStart')?.value;
                     if (!targetDateValue) {
                         this.showNotification('Выберите неделю', 'error');
                         this.showLoading(false);
                         return;
                     }
-                    requestData.targetDate = targetDateValue;
-
-                } else if (this.selectedTariff.code === 'forecast_month') {
+                } else if (forecastType === 'month') {
                     targetDateValue = document.getElementById('targetDate')?.value;
                     if (!targetDateValue) {
                         this.showNotification('Выберите месяц', 'error');
                         this.showLoading(false);
                         return;
                     }
-                    requestData.targetDate = targetDateValue;
-
-                } else if (this.selectedTariff.code === 'forecast_year') {
+                } else if (forecastType === 'year') {
                     targetDateValue = document.getElementById('targetDate')?.value;
                     if (!targetDateValue) {
                         this.showNotification('Выберите год', 'error');
                         this.showLoading(false);
                         return;
                     }
-                    requestData.targetDate = targetDateValue;
-
                 } else {
                     const inputDate = document.getElementById('targetDate').value.trim();
                     if (!inputDate) {
@@ -732,13 +727,13 @@ class NumerologyApp {
                         this.showLoading(false);
                         return;
                     }
-                    requestData.targetDate = this.formatDateForServer(inputDate);
+                    targetDateValue = this.formatDateForServer(inputDate);
                 }
+                requestData.targetDate = targetDateValue;
             }
 
             // Определяем эндпоинт
             let endpoint = '';
-
             if (this.selectedTariff.code === 'forecast_basic') {
                 endpoint = '/api/numerology/calculate/basic';
             } else if (this.selectedTariff.code === 'forecast_full') {
@@ -758,41 +753,24 @@ class NumerologyApp {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-
                 if (response.status === 401) {
                     this.showNotification('Необходимо авторизоваться', 'error');
                     setTimeout(() => window.location.href = '/login', 2000);
                     return;
                 }
-
                 if (response.status === 402) {
                     this.showPaymentModal(errorData);
                     this.showLoading(false);
                     return;
                 }
-
                 throw new Error(errorData.error || `Ошибка ${response.status}`);
             }
 
             const data = await response.json();
-
             if (data.success) {
                 window.currentNumerologyData = data.data;
                 window.currentCalculationId = data.calculationId;
                 this.currentCalculation = data.data;
-
-                if (this.selectedTariff.code === 'forecast_week' && data.data.forecast) {
-                    const weekStart = document.getElementById('selectedWeekStart')?.value;
-                    const weekEnd = document.getElementById('selectedWeekEnd')?.value;
-
-                    if (weekStart && weekEnd) {
-                        data.data.forecast.weekRange = {
-                            start: weekStart,
-                            end: weekEnd
-                        };
-                    }
-                }
-
                 this.displayResults(data.data);
             } else {
                 throw new Error(data.error || 'Ошибка расчета');
@@ -2848,23 +2826,32 @@ class NumerologyApp {
         const modal = document.createElement('div');
         modal.className = 'payment-modal';
 
+        let requiredAmount = errorData.required || errorData.price || 0;
+        let message = '';
+
+        // Если есть скидка
+        if (errorData.discount) {
+            message = `<p style="color: #4caf50; margin: 10px 0;">✨ Скидка ${errorData.discount}% по подписке!</p>`;
+        }
+
         modal.innerHTML = `
-            <div class="modal-content">
-                <i class="fas fa-coins modal-icon"></i>
-                <h3>Недостаточно средств</h3>
-                <p class="balance-info">
-                    Баланс: <strong>${errorData.balance || 0} ₽</strong><br>
-                    Требуется: <strong>${errorData.required || errorData.price || 0} ₽</strong>
-                </p>
-                <div class="modal-actions">
-                    <a href="/cabinet/balance" class="btn btn-primary">Пополнить баланс</a>
-                    <button class="btn btn-outline" onclick="this.closest('.payment-modal').remove()">Закрыть</button>
-                </div>
+        <div class="modal-content">
+            <i class="fas fa-coins modal-icon"></i>
+            <h3>Недостаточно средств</h3>
+            <p class="balance-info">
+                Баланс: <strong>${errorData.balance || 0} ₽</strong><br>
+                Требуется: <strong>${requiredAmount} ₽</strong>
+                ${errorData.oldPrice ? `<br><span class="price-old">Было: ${errorData.oldPrice} ₽</span>` : ''}
+            </p>
+            ${message}
+            <div class="modal-actions">
+                <a href="/cabinet/balance" class="btn btn-primary">Пополнить баланс</a>
+                <button class="btn btn-outline" onclick="this.closest('.payment-modal').remove()">Закрыть</button>
             </div>
-        `;
+        </div>
+    `;
 
         document.body.appendChild(modal);
-
         modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 modal.remove();
@@ -3269,6 +3256,143 @@ class NumerologyApp {
                 this.updateYearDisplay(year);
             });
         });
+    }
+    showPreview(tariffCode) {
+        if (!window.previewRenderer) {
+            console.error('previewRenderer не загружен');
+            this.showNotification('Ошибка загрузки демо-данных', 'error');
+            return;
+        }
+
+        // Получаем демо-данные из previewData.js
+        let demoData = null;
+        const dataMap = {
+            'forecast_basic': window.previewData?.basic,
+            'forecast_full': window.previewData?.full,
+            'forecast_day': window.previewData?.dayForecast,
+            'forecast_week': window.previewData?.weekForecast,
+            'forecast_month': window.previewData?.monthForecast,
+            'forecast_year': window.previewData?.yearForecast,
+            'compatibility': window.previewData?.compatibility
+        };
+
+        demoData = dataMap[tariffCode] || window.previewData?.basic;
+
+        if (!demoData) {
+            this.showNotification('Демо-данные для этого тарифа не найдены', 'error');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal preview-full-modal';
+        modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeInScale 0.3s ease-out;
+    `;
+
+        modal.innerHTML = `
+        <div class="preview-content full-report" style="
+            max-width: 95%;
+            width: 1200px;
+            max-height: 90vh;
+            background: linear-gradient(135deg, #12121a, #0a0a0f);
+            border: 1px solid rgba(201, 165, 75, 0.3);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        ">
+            <div class="preview-header" style="
+                padding: 20px 30px;
+                background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(0, 0, 0, 0.3));
+                border-bottom: 1px solid rgba(201, 165, 75, 0.2);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
+                <div>
+                    <h3 style="margin: 0; color: var(--primary);">${this.getTariffName(tariffCode)}</h3>
+                    <p style="margin: 5px 0 0; color: var(--text-muted);">Демонстрационный отчет | Иванов Иван Иванович | 02.07.1993</p>
+                </div>
+                <button class="preview-close" style="
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    font-size: 28px;
+                    cursor: pointer;
+                    transition: var(--transition);
+                ">&times;</button>
+            </div>
+            <div class="preview-body" style="
+                padding: 20px 30px;
+                overflow-y: auto;
+                flex: 1;
+                background: linear-gradient(135deg, #0a0a0f, #12121a);
+            ">
+                ${window.previewRenderer.generateFullReportHTML(demoData, tariffCode)}
+            </div>
+            <div class="preview-footer" style="
+                padding: 20px 30px;
+                border-top: 1px solid rgba(201, 165, 75, 0.2);
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+            ">
+                <button class="btn-select-preview" style="
+                    padding: 12px 30px;
+                    background: var(--primary-gradient);
+                    border: none;
+                    border-radius: 50px;
+                    color: var(--dark);
+                    font-weight: 600;
+                    cursor: pointer;
+                " onclick="numerologyApp.selectTariff('${tariffCode}'); document.querySelector('.preview-modal')?.remove()">
+                    <i class="fas fa-shopping-cart"></i> Выбрать этот расчет
+                </button>
+                <button class="btn-close-preview" style="
+                    padding: 12px 30px;
+                    background: transparent;
+                    border: 1px solid var(--border-color);
+                    border-radius: 50px;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                ">Закрыть</button>
+            </div>
+        </div>
+    `;
+
+        document.body.appendChild(modal);
+
+        modal.querySelector('.preview-close')?.addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-close-preview')?.addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    }
+
+    /**
+     * Получить название тарифа по коду
+     */
+    getTariffName(code) {
+        const names = {
+            'forecast_basic': '🔮 БАЗОВЫЙ НУМЕРОЛОГИЧЕСКИЙ РАСЧЕТ',
+            'forecast_full': '⭐ ПОЛНЫЙ НУМЕРОЛОГИЧЕСКИЙ ОТЧЕТ',
+            'forecast_day': '📅 ПРОГНОЗ НА ДЕНЬ',
+            'forecast_week': '📅 ПРОГНОЗ НА НЕДЕЛЮ',
+            'forecast_month': '📅 ПРОГНОЗ НА МЕСЯЦ',
+            'forecast_year': '📅 ПРОГНОЗ НА ГОД',
+            'compatibility': '💑 АНАЛИЗ СОВМЕСТИМОСТИ'
+        };
+        return names[code] || '🔮 НУМЕРОЛОГИЧЕСКИЙ РАСЧЕТ';
     }
 }
 

@@ -557,7 +557,6 @@ async function getServices(req, res) {
         if (active !== undefined) {
             where.isActive = active === 'true';
         }
-
         const services = await models.Service.findAll({
             where,
             order: [['sortOrder', 'ASC'], ['name', 'ASC']]
