@@ -128,7 +128,7 @@ app.get('/api/geocode/search', async (req, res) => {
             return res.status(400).json({error: 'Query parameter required'});
         }
 
-        console.log(`🔍 Поиск города: ${q}`);
+        //console.log(`🔍 Поиск города: ${q}`);
 
         // Добавляем User-Agent для соблюдения правил Nominatim
         const response = await fetch(

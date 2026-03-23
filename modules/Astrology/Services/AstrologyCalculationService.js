@@ -52,7 +52,7 @@ class AstrologyCalculationService {
 
     async calculate(data) {
         try {
-            console.log('Расчет натальной карты для:', data);
+            //console.log('Расчет натальной карты для:', data);
 
             if (!data || !data.birthDate || !data.birthTime) {
                 throw new Error('Отсутствуют обязательные данные: дата или время рождения');

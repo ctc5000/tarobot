@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function resetReading() {
         resultSection.style.display = 'none';
         document.getElementById('question').value = '';
-        const cardBlock = document.querySelector('.reading-button');
+        const cardBlock = document.querySelector('.tarot-reading-section');
         if (cardBlock) cardBlock.style.display = 'block';
         const container = document.getElementById('cardDeckContainer');
         const deck = document.getElementById('cardDeck');
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('🔮 Выполнение расклада...');
         isAnimating = true;
-        const cardBlock = document.querySelector('.reading-button');
+        const cardBlock = document.querySelector('.tarot-reading-section');
         if (cardBlock) cardBlock.style.display = 'none';
         if (loadingSpinner) loadingSpinner.style.display = 'block';
 
