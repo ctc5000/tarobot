@@ -1767,3 +1767,22 @@
         font-size: 0.9rem;
     }
 }
+.tarot-image-mini img
+{
+    height: 300px;
+}
+.forecast-number-large
+{
+    width: 60px;
+    height: 60px;
+    background: var(--primary-gradient);
+    color: var(--dark);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Playfair Display', serif;
+    box-shadow: 0 10px 30px rgba(201, 165, 75, 0.4);
+    text-align: center;
+}

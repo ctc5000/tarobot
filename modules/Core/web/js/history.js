@@ -260,83 +260,6 @@ class HistoryApp {
         }
     }
 
-    showFullCalculationModal(calculation) {
-        const modal = document.getElementById('calculationModal');
-        const body = document.getElementById('modalBody');
-        const result = calculation.result || {};
-
-        document.getElementById('modalTitle').textContent = this.getCalculationName(calculation);
-
-        // Определяем тип расчета
-        const isFull = calculation.calculationType === 'full' || result.numerology?.interpretations;
-
-        let html = `
-            <div class="calculation-details">
-                <div class="modal-report-header">
-                    <div class="report-badge ${calculation.calculationType}">
-                        ${this.getCalculationIcon(calculation.calculationType)} ${this.getCalculationName(calculation)}
-                    </div>
-                    ${isFull ? `
-                        <button class="btn-download-pdf" onclick="historyApp.downloadPDF('${calculation.id}')">
-                            <i class="fas fa-file-pdf"></i> Скачать PDF
-                        </button>
-                    ` : ''}
-                </div>
-                
-                <div class="person-info-grid">
-                    <div class="person-info-card">
-                        <i class="fas fa-user"></i>
-                        <div>
-                            <span class="label">Ищущий</span>
-                            <span class="value">${result.fullName || 'Не указано'}</span>
-                        </div>
-                    </div>
-                    <div class="person-info-card">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div>
-                            <span class="label">Дата рождения</span>
-                            <span class="value">${result.birthDate || this.formatDate(calculation.createdAt) || 'Не указана'}</span>
-                        </div>
-                    </div>
-                    <div class="person-info-card">
-                        <i class="fas fa-clock"></i>
-                        <div>
-                            <span class="label">Дата расчета</span>
-                            <span class="value">${new Date(calculation.createdAt).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    ${calculation.targetDate ? `
-                    <div class="person-info-card">
-                        <i class="fas fa-calendar-check"></i>
-                        <div>
-                            <span class="label">Дата прогноза</span>
-                            <span class="value">${this.formatDate(calculation.targetDate)}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    <div class="person-info-card">
-                        <i class="fas fa-coins"></i>
-                        <div>
-                            <span class="label">Стоимость</span>
-                            <span class="value">${calculation.price} ₽</span>
-                        </div>
-                    </div>
-                </div>
-        `;
-
-        // Для полного расчета показываем все данные
-        if (isFull && result.numerology) {
-            html += this.renderFullReport(result);
-        } else {
-            // Для других типов показываем базовую информацию
-            html += this.renderBasicReport(result);
-        }
-
-        html += '</div>';
-
-        body.innerHTML = html;
-        modal.style.display = 'block';
-    }
 
     renderFullReport(result) {
         const num = result.numerology;
@@ -743,12 +666,601 @@ class HistoryApp {
         `;
     }
 
-    renderBasicReport(result) {
+    renderBasicReport(calculation, result) {
+        const calcType = calculation.calculationType;
+
+        // Для прогнозов
+        if (calcType === 'day' || calcType === 'week' || calcType === 'month' || calcType === 'year') {
+            return this.renderForecastReport(calculation, result);
+        }
+
+        // Для совместимости
+        if (calcType === 'compatibility') {
+            return this.renderCompatibilityReport(calculation, result);
+        }
+
+        // Для базового расчета
+        if (calcType === 'basic') {
+            return this.renderBasicCalculationReport(result);
+        }
+
+        // Fallback - если тип не определен
+        return this.renderGenericReport(result);
+    }
+
+    renderForecastReport(calculation, result) {
+        const forecast = result.forecast || result;
+        const calcType = calculation.calculationType;
+
+        let html = `
+            <div class="report-section">
+                <div class="forecast-header">
+                    <div class="forecast-number-large">${forecast.numbers?.universal || forecast.weekNumber || forecast.monthNumber || forecast.yearNumber || '?'}</div>
+                    <div class="forecast-title">
+                        <h3>${this.getCalculationName(calculation)}</h3>
+                        ${forecast.targetDate ? `<p>Дата прогноза: ${this.formatDate(forecast.targetDate)}</p>` : ''}
+                        ${forecast.weekRange ? `<p>Неделя: ${this.formatDate(forecast.weekRange.start)} — ${this.formatDate(forecast.weekRange.end)}</p>` : ''}
+                        ${forecast.monthRange ? `<p>${forecast.monthRange.monthName} ${forecast.monthRange.year}</p>` : ''}
+                        ${forecast.year ? `<p>${forecast.year} год</p>` : ''}
+                    </div>
+                </div>
+        `;
+
+        // Универсальные числа для прогноза на день
+        if (calcType === 'day' && forecast.numbers) {
+            html += `
+                <div class="forecast-cosmic-code">
+                    <h4><i class="fas fa-star"></i> КОСМИЧЕСКИЙ КОД ДНЯ</h4>
+                    <div class="code-grid">
+                        <div class="code-item">
+                            <span class="label">Универсальное число</span>
+                            <span class="value">${forecast.numbers.universal || '?'}</span>
+                            <span class="desc">${forecast.description?.universal?.name || ''}</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="label">Личное число</span>
+                            <span class="value">${forecast.numbers.personal || '?'}</span>
+                            <span class="desc">${forecast.description?.personal?.influence || ''}</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="label">Число выражения</span>
+                            <span class="value">${forecast.numbers.expression || '?'}</span>
+                            <span class="desc">${forecast.description?.expression?.meaning || ''}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="forecast-energy">
+                    <div class="energy-badge">
+                        <span><i class="fas fa-fire"></i> Стихия: ${forecast.description?.universal?.element || ''}</span>
+                        <span><i class="fas fa-globe"></i> Планета: ${forecast.description?.universal?.planet || ''}</span>
+                        <span><i class="fas fa-moon"></i> Лунный день: ${forecast.description?.dateInfo?.lunarDay || ''}</span>
+                    </div>
+                </div>
+                
+                <div class="forecast-main">
+                    <p class="forecast-positive">${forecast.description?.universal?.positive || ''}</p>
+                    ${forecast.description?.universal?.negative ? `<p class="forecast-negative">⚠️ ${forecast.description.universal.negative}</p>` : ''}
+                </div>
+                
+                <div class="forecast-sections">
+                    <div class="forecast-section"><h4><i class="fas fa-briefcase"></i> Карьера</h4><p>${forecast.description?.universal?.career || ''}</p></div>
+                    <div class="forecast-section"><h4><i class="fas fa-heart"></i> Любовь</h4><p>${forecast.description?.universal?.love || ''}</p></div>
+                    <div class="forecast-section"><h4><i class="fas fa-leaf"></i> Здоровье</h4><p>${forecast.description?.universal?.health || ''}</p></div>
+                    <div class="forecast-section"><h4><i class="fas fa-coins"></i> Финансы</h4><p>${forecast.description?.universal?.finance || ''}</p></div>
+                </div>
+            `;
+        }
+
+        // Для недельного прогноза
+        if (calcType === 'week' && forecast.weekAnalysis) {
+            html += `
+                <div class="week-ruler-info">
+                    <span><i class="fas fa-globe"></i> Покровитель: ${forecast.weekRuler?.planet || ''} (${forecast.weekRuler?.element || ''})</span>
+                    <span><i class="fas fa-star"></i> Качество: ${forecast.weekRuler?.quality || ''}</span>
+                </div>
+                
+                <div class="week-theme">
+                    <h4>${forecast.weekAnalysis.theme || ''}</h4>
+                    <p>${forecast.weekAnalysis.description || ''}</p>
+                    <div class="personal-note">${forecast.weekAnalysis.personalNote || ''}</div>
+                </div>
+                
+                <div class="week-advice">
+                    <i class="fas fa-quote-left"></i>
+                    <p>${forecast.weekAnalysis.advice || ''}</p>
+                </div>
+                
+                <div class="week-sections">
+                    <div class="section opportunities">
+                        <h5><i class="fas fa-check-circle"></i> Возможности</h5>
+                        <ul>${(forecast.weekAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
+                    </div>
+                    <div class="section challenges">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
+                        <ul>${(forecast.weekAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                
+                <div class="life-areas-grid">
+                    <div class="life-area career"><i class="fas fa-briefcase"></i><p>${forecast.lifeAreas?.career || ''}</p></div>
+                    <div class="life-area love"><i class="fas fa-heart"></i><p>${forecast.lifeAreas?.love || ''}</p></div>
+                    <div class="life-area health"><i class="fas fa-leaf"></i><p>${forecast.lifeAreas?.health || ''}</p></div>
+                    <div class="life-area finance"><i class="fas fa-coins"></i><p>${forecast.lifeAreas?.finance || ''}</p></div>
+                </div>
+            `;
+
+            // Дневная разбивка для недели
+            if (forecast.dailyBreakdown && forecast.dailyBreakdown.length > 0) {
+                html += `
+                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> ДНЕВНАЯ РАЗБИВКА</h4>
+                    <div class="week-daily-breakdown">
+                        ${forecast.dailyBreakdown.slice(0, 7).map(day => `
+                            <div class="week-day-card">
+                                <div class="day-header">
+                                    <span class="day-name">${day.dayName}</span>
+                                    <span class="day-date">${day.date}</span>
+                                </div>
+                                <div class="day-numbers">
+                                    <span class="day-number-large">${day.universalNumber}</span>
+                                    <span class="day-personal">личн. ${day.personalNumber}</span>
+                                </div>
+                                <div class="day-energy">${day.energy}</div>
+                                <div class="day-focus">${day.focus}</div>
+                                <div class="day-advice">💫 ${day.advice}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Для месячного прогноза
+        if (calcType === 'month' && forecast.monthAnalysis) {
+            html += `
+                <div class="month-ruler-info">
+                    <span><i class="fas fa-globe"></i> Покровитель: ${forecast.monthRuler?.planet || ''} (${forecast.monthRuler?.element || ''})</span>
+                    <span><i class="fas fa-star"></i> Качество: ${forecast.monthRuler?.quality || ''}</span>
+                    <span><i class="fas fa-wind"></i> Стихия: ${forecast.monthElement || ''}</span>
+                </div>
+                
+                <div class="month-theme">
+                    <h4>${forecast.monthAnalysis.theme || ''}</h4>
+                    <p>${forecast.monthAnalysis.description || ''}</p>
+                    <div class="personal-note">${forecast.monthAnalysis.personalNote || ''}</div>
+                </div>
+                
+                <div class="month-advice">
+                    <i class="fas fa-quote-left"></i>
+                    <p>${forecast.monthAnalysis.advice || ''}</p>
+                </div>
+                
+                <div class="month-sections">
+                    <div class="section opportunities">
+                        <h5><i class="fas fa-check-circle"></i> Возможности месяца</h5>
+                        <ul>${(forecast.monthAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
+                    </div>
+                    <div class="section challenges">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы месяца</h5>
+                        <ul>${(forecast.monthAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                
+                <div class="life-areas-grid">
+                    <div class="life-area career"><i class="fas fa-briefcase"></i><p>${forecast.lifeAreas?.career || ''}</p></div>
+                    <div class="life-area love"><i class="fas fa-heart"></i><p>${forecast.lifeAreas?.love || ''}</p></div>
+                    <div class="life-area health"><i class="fas fa-leaf"></i><p>${forecast.lifeAreas?.health || ''}</p></div>
+                    <div class="life-area finance"><i class="fas fa-coins"></i><p>${forecast.lifeAreas?.finance || ''}</p></div>
+                </div>
+            `;
+
+            // Недельная разбивка для месяца
+            if (forecast.weeklyBreakdown && forecast.weeklyBreakdown.length > 0) {
+                html += `
+                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> НЕДЕЛЬНАЯ РАЗБИВКА</h4>
+                    <div class="month-weekly-breakdown">
+                        ${forecast.weeklyBreakdown.map(week => `
+                            <div class="month-week-card">
+                                <div class="week-header">
+                                    <span class="week-number">Неделя ${week.weekNumber}</span>
+                                    <span class="week-dates">${week.startDate} — ${week.endDate}</span>
+                                    <span class="week-energy">${week.energy}</span>
+                                </div>
+                                <div class="week-number-value">Число недели: <strong>${week.weekNumberValue}</strong></div>
+                                <div class="week-focus">${week.focus}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Для годового прогноза
+        if (calcType === 'year' && forecast.yearAnalysis) {
+            html += `
+                <div class="year-cycle">
+                    <div class="cycle-name">${forecast.yearCycle?.name || ''}</div>
+                    <div class="cycle-desc">${forecast.yearCycle?.description || ''}</div>
+                    <div class="cycle-energy">${forecast.yearCycle?.energy || ''}</div>
+                </div>
+                
+                <div class="chinese-zodiac">
+                    <div class="zodiac-animal">🐉 ${forecast.yearInfo?.chineseZodiac?.animal || ''} (${forecast.yearInfo?.chineseZodiac?.element || ''})</div>
+                    <div class="zodiac-desc">${forecast.yearInfo?.chineseZodiac?.description || ''}</div>
+                </div>
+                
+                <div class="year-theme">
+                    <h4>${forecast.yearAnalysis.theme || ''}</h4>
+                    <p>${forecast.yearAnalysis.description || ''}</p>
+                    <div class="personal-note">${forecast.yearAnalysis.personalNote || ''}</div>
+                </div>
+                
+                <div class="year-advice">
+                    <i class="fas fa-quote-left"></i>
+                    <p>${forecast.yearAnalysis.advice || ''}</p>
+                </div>
+                
+                <div class="year-sections">
+                    <div class="section opportunities">
+                        <h5><i class="fas fa-check-circle"></i> Возможности</h5>
+                        <ul>${(forecast.yearAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
+                    </div>
+                    <div class="section challenges">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
+                        <ul>${(forecast.yearAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
+                    </div>
+                </div>
+            `;
+
+            // Квартальная разбивка для года
+            if (forecast.quarterlyBreakdown && forecast.quarterlyBreakdown.length > 0) {
+                html += `
+                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> КВАРТАЛЬНАЯ РАЗБИВКА</h4>
+                    <div class="year-quarterly-breakdown">
+                        ${forecast.quarterlyBreakdown.map(quarter => `
+                            <div class="year-quarter-card">
+                                <div class="quarter-header">
+                                    <span class="quarter-name">${quarter.season}</span>
+                                    <span class="quarter-number">${quarter.number}</span>
+                                </div>
+                                <div class="quarter-months">${quarter.months?.join(' • ') || ''}</div>
+                                <div class="quarter-energy">${quarter.energy}</div>
+                                <div class="quarter-focus">${quarter.focus}</div>
+                                <div class="quarter-advice">💫 ${quarter.advice}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Карта Таро
+        if (forecast.tarot) {
+            html += `
+                <div class="forecast-tarot">
+                    <h4><i class="fas fa-crown"></i> КАРТА ТАРО: ${forecast.tarot.name || ''}</h4>
+                    <div class="tarot-mini">
+                        <div class="tarot-image-mini">
+                            <img src="${forecast.tarot.image || '/images/tarot/back.jpg'}" alt="${forecast.tarot.name}" onerror="this.src='/images/tarot/back.jpg'">
+                        </div>
+                        <div class="tarot-desc-mini">
+                            <p>${forecast.tarot.description || ''}</p>
+                            <p class="tarot-advice"><strong>Совет:</strong> ${forecast.tarot.advice || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Цвета, камни, ароматы
+        if (forecast.colors || forecast.crystals || forecast.scents || forecast.fengShui) {
+            html += `
+                <div class="forecast-details-grid">
+                    ${forecast.colors ? `
+                        <div class="detail-block">
+                            <h5><i class="fas fa-paint-brush"></i> Цвета</h5>
+                            <p>${Array.isArray(forecast.colors) ? forecast.colors.join(', ') : forecast.colors}</p>
+                        </div>
+                    ` : ''}
+                    ${forecast.crystals ? `
+                        <div class="detail-block">
+                            <h5><i class="fas fa-gem"></i> Камни-талисманы</h5>
+                            <p>${Array.isArray(forecast.crystals) ? forecast.crystals.join(', ') : forecast.crystals}</p>
+                        </div>
+                    ` : ''}
+                    ${forecast.scents ? `
+                        <div class="detail-block">
+                            <h5><i class="fas fa-leaf"></i> Ароматы</h5>
+                            <p>${Array.isArray(forecast.scents) ? forecast.scents.join(', ') : forecast.scents}</p>
+                        </div>
+                    ` : ''}
+                    ${forecast.favorableHours ? `
+                        <div class="detail-block">
+                            <h5><i class="fas fa-clock"></i> Благоприятные часы</h5>
+                            <p>${Array.isArray(forecast.favorableHours) ? forecast.favorableHours.join(', ') : forecast.favorableHours}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Аффирмация
+        if (forecast.affirmation) {
+            html += `
+                <div class="forecast-affirmation">
+                    <i class="fas fa-quote-left"></i>
+                    <p>${forecast.affirmation}</p>
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+
+        // Свиток судьбы
+        if (result.interpretation) {
+            html += `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
+                    <div class="scroll-text">
+                        ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Глубинный портрет
+        if (result.deepPortrait) {
+            html += `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
+                    <div class="portrait-text">
+                        ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        return html;
+    }
+
+    renderCompatibilityReport(calculation, result) {
+        const compatibility = result.compatibility || {};
+        const person1 = result.person1 || {};
+        const person2 = result.person2 || {};
+
+        return `
+            <div class="report-section">
+                <div class="compatibility-header">
+                    <h3><i class="fas fa-heart"></i> АНАЛИЗ СОВМЕСТИМОСТИ</h3>
+                </div>
+                
+                <div class="compatibility-persons">
+                    <div class="person-card">
+                        <h4>${person1.fullName || 'Партнер 1'}</h4>
+                        <p>Число судьбы: <strong>${person1.numerology?.fate || '?'}</strong></p>
+                        <p>Дата рождения: ${person1.birthDate || '—'}</p>
+                    </div>
+                    <div class="person-card">
+                        <h4>${person2.fullName || 'Партнер 2'}</h4>
+                        <p>Число судьбы: <strong>${person2.numerology?.fate || '?'}</strong></p>
+                        <p>Дата рождения: ${person2.birthDate || '—'}</p>
+                    </div>
+                </div>
+                
+                <div class="compatibility-score">
+                    <div class="score-value">${compatibility.score || 0}%</div>
+                    <div class="score-level">${compatibility.level || 'Совместимость'}</div>
+                    <div class="compatibility-bar">
+                        <div class="compatibility-progress" style="width: ${compatibility.score || 0}%"></div>
+                    </div>
+                </div>
+                
+                <div class="strengths-section">
+                    <h4><i class="fas fa-check-circle"></i> Сильные стороны союза</h4>
+                    <ul>
+                        ${(compatibility.strengths || []).map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="challenges-section">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Зоны роста</h4>
+                    <ul>
+                        ${(compatibility.challenges || []).map(c => `<li>${c}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="advice-section">
+                    <h4><i class="fas fa-lightbulb"></i> Совет по совместимости</h4>
+                    <p>${compatibility.advice || ''}</p>
+                </div>
+            </div>
+            
+            ${result.interpretation ? `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
+                    <div class="scroll-text">
+                        ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${result.deepPortrait ? `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
+                    <div class="portrait-text">
+                        ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    renderBasicCalculationReport(result) {
+        const numerology = result.numerology || {};
+        const base = numerology.base || {};
+        const achilles = numerology.achilles || {};
+        const control = numerology.control || {};
+        const calls = numerology.calls || {};
+
+        return `
+            <div class="report-section">
+                <div class="numbers-grid">
+                    <div class="number-card">
+                        <div class="number-large">${base.fate || '?'}</div>
+                        <div class="number-label">Судьба</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-large">${base.name || '?'}</div>
+                        <div class="number-label">Имя</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-large">${base.surname || '?'}</div>
+                        <div class="number-label">Род</div>
+                    </div>
+                    <div class="number-card">
+                        <div class="number-large">${base.patronymic || '?'}</div>
+                        <div class="number-label">Предки</div>
+                    </div>
+                </div>
+                
+                <div class="special-numbers">
+                    <div class="special-card">
+                        <div class="special-value">${achilles.number || '?'}</div>
+                        <div class="special-label">Ахиллесова пята</div>
+                        <p class="special-description">${achilles.description || ''}</p>
+                    </div>
+                    <div class="special-card">
+                        <div class="special-value">${control.number || '?'}</div>
+                        <div class="special-label">Число управления</div>
+                        <p class="special-description">${control.description || ''}</p>
+                    </div>
+                </div>
+                
+                <h4 class="subsection-title">Социальные оклики</h4>
+                <div class="calls-grid">
+                    <div class="call-card">
+                        <div class="call-number">${calls.close || '?'}</div>
+                        <div class="call-label">Близкий круг</div>
+                        <p class="call-description">${calls.descriptions?.close || ''}</p>
+                    </div>
+                    <div class="call-card">
+                        <div class="call-number">${calls.social || '?'}</div>
+                        <div class="call-label">Социум</div>
+                        <p class="call-description">${calls.descriptions?.social || ''}</p>
+                    </div>
+                    <div class="call-card">
+                        <div class="call-number">${calls.world || '?'}</div>
+                        <div class="call-label">Дальний круг</div>
+                        <p class="call-description">${calls.descriptions?.world || ''}</p>
+                    </div>
+                </div>
+            </div>
+            
+            ${result.interpretation ? `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
+                    <div class="scroll-text">
+                        ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${result.deepPortrait ? `
+                <div class="report-section">
+                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
+                    <div class="portrait-text">
+                        ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    renderGenericReport(result) {
         return `
             <div class="report-section">
                 <pre class="result-content">${JSON.stringify(result, null, 2)}</pre>
             </div>
         `;
+    }
+
+    // Обновите метод showFullCalculationModal
+    showFullCalculationModal(calculation) {
+        const modal = document.getElementById('calculationModal');
+        const body = document.getElementById('modalBody');
+        const result = calculation.result || {};
+
+        document.getElementById('modalTitle').textContent = this.getCalculationName(calculation);
+
+        // Определяем тип расчета
+        const isFull = calculation.calculationType === 'full' || result.numerology?.interpretations;
+
+        let html = `
+            <div class="calculation-details">
+                <div class="modal-report-header">
+                    <div class="report-badge ${calculation.calculationType}">
+                        ${this.getCalculationIcon(calculation.calculationType)} ${this.getCalculationName(calculation)}
+                    </div>
+                    ${isFull ? `
+                        <button class="btn-download-pdf" onclick="historyApp.downloadPDF('${calculation.id}')">
+                            <i class="fas fa-file-pdf"></i> Скачать PDF
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <div class="person-info-grid">
+                    <div class="person-info-card">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <span class="label">Ищущий</span>
+                            <span class="value">${result.fullName || 'Не указано'}</span>
+                        </div>
+                    </div>
+                    <div class="person-info-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <span class="label">Дата рождения</span>
+                            <span class="value">${result.birthDate || this.formatDate(calculation.createdAt) || 'Не указана'}</span>
+                        </div>
+                    </div>
+                    <div class="person-info-card">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <span class="label">Дата расчета</span>
+                            <span class="value">${new Date(calculation.createdAt).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    ${calculation.targetDate ? `
+                    <div class="person-info-card">
+                        <i class="fas fa-calendar-check"></i>
+                        <div>
+                            <span class="label">Дата прогноза</span>
+                            <span class="value">${this.formatDate(calculation.targetDate)}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="person-info-card">
+                        <i class="fas fa-coins"></i>
+                        <div>
+                            <span class="label">Стоимость</span>
+                            <span class="value">${calculation.price} ₽</span>
+                        </div>
+                    </div>
+                </div>
+        `;
+
+        // Для полного расчета показываем все данные
+        if (isFull && result.numerology) {
+            html += this.renderFullReport(result);
+        } else {
+            // Для других типов показываем нормальный формат
+            html += this.renderBasicReport(calculation, result);
+        }
+
+        html += '</div>';
+
+        body.innerHTML = html;
+        modal.style.display = 'block';
     }
 
     getZodiacSymbol(signName) {
