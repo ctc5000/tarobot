@@ -3,8 +3,7 @@
     { "name": "Нумерология", "url": "/numerology", "icon": "" },
     { "name": "Натальная карта", "url": "/astrology", "icon": "" },
     { "name": "Астропсихология", "url": "/astropsychology", "icon": "" },
-    { "name": "Таро", "url": "/tarot", "icon": "" },
-    { "name": "Соционика", "url": "/socionics", "icon": "" }
+    { "name": "Таро", "url": "/tarot", "icon": "" }
   ],
   "cabinetNav": [
     { "name": "Обзор", "url": "/cabinet", "icon": "fas fa-chart-pie" },
