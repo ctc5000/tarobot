@@ -1,5 +1,5 @@
 // modules/Astropsychology/Services/AstropsychologyService.js
-const NatalChartSimpleService = require('../../../services/NatalChartSimpleService');
+const NatalChartSimpleService = require('../../Numerology/Services/NatalChartSimpleService');
 const { models } = require('../../../sequelize');
 
 class AstropsychologyService {
