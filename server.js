@@ -684,7 +684,6 @@ async function checkModuleMigrations(modulePath, moduleName) {
     }
 }
 
-// Функция загрузки модулей
 // Функция загрузки модулей с учетом зависимостей
 async function loadModules() {
     const modulesPath = path.join(__dirname, 'modules');
@@ -738,27 +737,18 @@ async function loadModules() {
         }
     }
 
-    // Сортируем модули по order (простая сортировка)
+    // Сортируем модули по order
     modulesInfo.sort((a, b) => a.order - b.order);
 
-    // Дополнительная сортировка с учетом зависимостей (топологическая сортировка)
-    const sortedModules = topologicalSort(modulesInfo);
-
     console.log('\n🔄 ПОСЛЕДОВАТЕЛЬНАЯ ЗАГРУЗКА МОДУЛЕЙ:');
-    sortedModules.forEach((module, index) => {
+    modulesInfo.forEach((module, index) => {
         console.log(`   ${index + 1}. ${module.name} (order: ${module.order}, deps: ${module.dependencies.join(', ') || 'none'})`);
     });
     console.log('');
 
     // Теперь последовательно обрабатываем каждый модуль
-    for (const moduleInfo of sortedModules) {
+    for (const moduleInfo of modulesInfo) {
         console.log(`\n📦 Обработка модуля "${moduleInfo.name}"...`);
-
-        // Пропускаем, если это системный модуль, который обрабатывается отдельно
-        if (moduleInfo.dir === 'Auth' || moduleInfo.dir === 'Users') {
-            console.log(`⚠️ Модуль "${moduleInfo.name}" будет обработан отдельно`);
-            continue;
-        }
 
         // 1. Выполняем миграции модуля
         try {
@@ -766,14 +756,20 @@ async function loadModules() {
             console.log(`✅ Миграции модуля "${moduleInfo.name}" выполнены`);
         } catch (error) {
             console.error(`❌ Ошибка миграций модуля "${moduleInfo.name}":`, error.message);
-            console.log(`⚠️ Продолжаем загрузку без миграций модуля "${moduleInfo.name}"`);
-            // Не прерываем загрузку, но модуль может не работать корректно
+            // Продолжаем, но модуль может не работать
         }
 
         // 2. Загружаем контроллер и маршруты
         const controllerPath = path.join(moduleInfo.path, 'Controllers', `${moduleInfo.dir}View.js`);
         if (fs.existsSync(controllerPath)) {
             try {
+                // Проверяем зависимости модуля перед загрузкой
+                const depsOk = await checkModuleDependencies(moduleInfo);
+                if (!depsOk) {
+                    console.log(`⚠️ Модуль "${moduleInfo.name}" пропущен из-за отсутствия зависимостей`);
+                    continue;
+                }
+
                 const controller = require(controllerPath);
                 routes[moduleInfo.dir.toLowerCase()] = controller;
 
@@ -797,14 +793,48 @@ async function loadModules() {
                 }
             } catch (error) {
                 console.error(`❌ Ошибка загрузки модуля "${moduleInfo.name}":`, error.message);
+                if (error.stack) {
+                    console.error('Stack trace:', error.stack.split('\n').slice(0, 3).join('\n'));
+                }
+                // Продолжаем загрузку остальных модулей
             }
         } else {
-            console.log(`⚠️ Модуль "${moduleInfo.name}" не содержит контроллер`);
+            console.log(`⚠️ Модуль "${moduleInfo.name}" не содержит контроллер по пути: ${controllerPath}`);
         }
     }
 
     console.log(`\n✅ Загружено ${loadedModules.length} модулей из ${modulesInfo.length}`);
     return loadedModules;
+}
+
+// Функция проверки зависимостей модуля
+async function checkModuleDependencies(moduleInfo) {
+    if (!moduleInfo.dependencies || moduleInfo.dependencies.length === 0) {
+        return true;
+    }
+
+    // Проверяем существование необходимых таблиц в БД
+    for (const dep of moduleInfo.dependencies) {
+        try {
+            // Проверяем существование таблицы
+            const [exists] = await sequelize.query(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = '${dep}'
+                );
+            `);
+
+            if (!exists[0].exists) {
+                console.log(`⚠️ Модуль "${moduleInfo.name}" требует таблицу "${dep}", которая не существует`);
+                return false;
+            }
+        } catch (error) {
+            console.log(`⚠️ Ошибка проверки зависимости "${dep}" для модуля "${moduleInfo.name}":`, error.message);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // Функция топологической сортировки с учетом зависимостей
