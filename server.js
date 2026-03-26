@@ -128,7 +128,7 @@ app.get('/api/geocode/search', async (req, res) => {
             return res.status(400).json({error: 'Query parameter required'});
         }
 
-        //console.log(`🔍 Поиск города: ${q}`);
+        console.log(`🔍 Поиск города: ${q}`);
 
         // Добавляем User-Agent для соблюдения правил Nominatim
         const response = await fetch(
@@ -685,7 +685,6 @@ async function checkModuleMigrations(modulePath, moduleName) {
 }
 
 // Функция загрузки модулей
-// Функция загрузки модулей с учетом зависимостей
 async function loadModules() {
     const modulesPath = path.join(__dirname, 'modules');
     const loadedModules = [];
@@ -698,9 +697,6 @@ async function loadModules() {
         console.log('⚠️ Папка modules не найдена');
         return loadedModules;
     }
-
-    // Сначала собираем информацию о всех модулях
-    const modulesInfo = [];
 
     for (const moduleDir of fs.readdirSync(modulesPath)) {
         const modulePath = path.join(modulesPath, moduleDir);
@@ -715,156 +711,50 @@ async function loadModules() {
             const descriptionPath = path.join(modulePath, 'description.json');
             let moduleName = moduleDir;
             let moduleOrder = 999;
-            let dependencies = [];
 
             if (fs.existsSync(descriptionPath)) {
                 try {
                     const description = require(descriptionPath);
                     if (description.moduleName) moduleName = description.moduleName;
                     if (description.order !== undefined) moduleOrder = description.order;
-                    if (description.dependencies) dependencies = description.dependencies;
                 } catch (e) {
                     console.error(`❌ Ошибка чтения description.json в модуле ${moduleDir}:`, e.message);
                 }
             }
 
-            modulesInfo.push({
-                dir: moduleDir,
-                path: modulePath,
-                name: moduleName,
-                order: moduleOrder,
-                dependencies: dependencies
-            });
-        }
-    }
+            // Выполняем миграции модуля
+            await checkModuleMigrations(modulePath, moduleName);
 
-    // Сортируем модули по order (простая сортировка)
-    modulesInfo.sort((a, b) => a.order - b.order);
+            // Загружаем контроллер
 
-    // Дополнительная сортировка с учетом зависимостей (топологическая сортировка)
-    const sortedModules = topologicalSort(modulesInfo);
-
-    console.log('\n🔄 ПОСЛЕДОВАТЕЛЬНАЯ ЗАГРУЗКА МОДУЛЕЙ:');
-    sortedModules.forEach((module, index) => {
-        console.log(`   ${index + 1}. ${module.name} (order: ${module.order}, deps: ${module.dependencies.join(', ') || 'none'})`);
-    });
-    console.log('');
-
-    // Теперь последовательно обрабатываем каждый модуль
-    for (const moduleInfo of sortedModules) {
-        console.log(`\n📦 Обработка модуля "${moduleInfo.name}"...`);
-
-        // Пропускаем, если это системный модуль, который обрабатывается отдельно
-        if (moduleInfo.dir === 'Auth' || moduleInfo.dir === 'Users') {
-            console.log(`⚠️ Модуль "${moduleInfo.name}" будет обработан отдельно`);
-            continue;
-        }
-
-        // 1. Выполняем миграции модуля
-        try {
-            await checkModuleMigrations(moduleInfo.path, moduleInfo.name, moduleInfo.order);
-            console.log(`✅ Миграции модуля "${moduleInfo.name}" выполнены`);
-        } catch (error) {
-            console.error(`❌ Ошибка миграций модуля "${moduleInfo.name}":`, error.message);
-            console.log(`⚠️ Продолжаем загрузку без миграций модуля "${moduleInfo.name}"`);
-            // Не прерываем загрузку, но модуль может не работать корректно
-        }
-
-        // 2. Загружаем контроллер и маршруты
-        const controllerPath = path.join(moduleInfo.path, 'Controllers', `${moduleInfo.dir}View.js`);
-        if (fs.existsSync(controllerPath)) {
-            try {
+            const controllerPath = path.join(modulePath, 'Controllers', `${moduleDir}View.js`);
+            if (fs.existsSync(controllerPath)) {
                 const controller = require(controllerPath);
-                routes[moduleInfo.dir.toLowerCase()] = controller;
-
-                const routePath = path.join(moduleInfo.path, `${moduleInfo.dir}.route.js`);
+                routes[moduleDir.toLowerCase()] = controller;
+                const routePath = path.join(modulePath, `${moduleDir}.route.js`);
                 if (fs.existsSync(routePath)) {
                     const route = require(routePath);
-                    route(app, moduleInfo.dir.toLowerCase(), controller, makeHandlerAwareOfAsyncErrors);
+                    route(app, moduleDir.toLowerCase(), controller, makeHandlerAwareOfAsyncErrors);
+                    //  console.log(`🔥 Маршруты для ${moduleName} зарегистрированы в ${new Date().toISOString()}`);
+                    // console.log(`✅ Модуль "${moduleName}" загружен`);
 
                     loadedModules.push({
-                        name: moduleInfo.name,
-                        dir: moduleInfo.dir,
-                        path: moduleInfo.path,
+                        name: moduleName,
+                        dir: moduleDir,
+                        path: modulePath,
                         controller,
-                        order: moduleInfo.order,
-                        dependencies: moduleInfo.dependencies
+                        order: moduleOrder
                     });
-
-                    console.log(`✅ Модуль "${moduleInfo.name}" загружен`);
-                } else {
-                    console.log(`⚠️ Модуль "${moduleInfo.name}" не содержит файл маршрутов`);
                 }
-            } catch (error) {
-                console.error(`❌ Ошибка загрузки модуля "${moduleInfo.name}":`, error.message);
             }
-        } else {
-            console.log(`⚠️ Модуль "${moduleInfo.name}" не содержит контроллер`);
         }
     }
 
-    console.log(`\n✅ Загружено ${loadedModules.length} модулей из ${modulesInfo.length}`);
+    // Сортируем модули по order
+    loadedModules.sort((a, b) => a.order - b.order);
+
+    //console.log(`✅ Загружено ${loadedModules.length} модулей`);
     return loadedModules;
-}
-
-// Функция топологической сортировки с учетом зависимостей
-function topologicalSort(modules) {
-    const graph = new Map();
-    const inDegree = new Map();
-    const moduleMap = new Map();
-
-    // Инициализация
-    modules.forEach(module => {
-        graph.set(module.name, []);
-        inDegree.set(module.name, 0);
-        moduleMap.set(module.name, module);
-    });
-
-    // Построение графа зависимостей
-    modules.forEach(module => {
-        module.dependencies.forEach(dep => {
-            if (moduleMap.has(dep)) {
-                graph.get(dep).push(module.name);
-                inDegree.set(module.name, inDegree.get(module.name) + 1);
-            } else {
-                console.log(`⚠️ Модуль "${module.name}" зависит от отсутствующего модуля "${dep}"`);
-            }
-        });
-    });
-
-    // Топологическая сортировка (алгоритм Кана)
-    const queue = [];
-    const result = [];
-
-    // Находим узлы с нулевой степенью входа
-    for (const [name, degree] of inDegree) {
-        if (degree === 0) {
-            queue.push(name);
-        }
-    }
-
-    while (queue.length > 0) {
-        const current = queue.shift();
-        result.push(moduleMap.get(current));
-
-        for (const neighbor of graph.get(current)) {
-            inDegree.set(neighbor, inDegree.get(neighbor) - 1);
-            if (inDegree.get(neighbor) === 0) {
-                queue.push(neighbor);
-            }
-        }
-    }
-
-    // Проверка на циклические зависимости
-    if (result.length !== modules.length) {
-        console.error('❌ Обнаружены циклические зависимости между модулями!');
-        const remaining = modules.filter(m => !result.includes(m));
-        console.error('Модули с циклическими зависимостями:', remaining.map(m => m.name).join(', '));
-        // Возвращаем просто отсортированные по order в случае циклических зависимостей
-        return modules.sort((a, b) => a.order - b.order);
-    }
-
-    return result;
 }
 
 // Функция инициализации модулей
@@ -915,7 +805,7 @@ async function initModules(loadedModules) {
     console.log(`   ✅ Успешно: ${results.success.length}`);
     console.log(`   ⚠️  Пропущено: ${results.skipped.length}`);
     console.log(`   ❌ Ошибки: ${results.failed.length}`);
-   // logAllRoutes();
+    // logAllRoutes();
     return results;
 }
 
