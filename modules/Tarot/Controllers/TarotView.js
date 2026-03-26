@@ -1,5 +1,5 @@
 // modules/Tarot/Controllers/TarotView.js
-const TarotService = require('../Services/TarotService');
+const TarotService = require('../Services/tarotService');
 const { models } = require('../../../sequelize');
 
 class TarotView {

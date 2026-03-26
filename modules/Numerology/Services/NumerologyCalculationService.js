@@ -6,7 +6,7 @@ const ZodiacService = require('../../../services/zodiacService');
 const FengShuiService = require('../../../services/fengShuiService');
 const TarotService = require('../../../services/tarotService');
 const ForecastService = require('./ForecastService');
-const WeekForecastService = require('./WeekForecastService');
+const WeekForecastService = require('./weekForecastService');
 const MothForecastService = require('./MonthForecastService');
 const YearForecastService = require('../Services/YearForecastService');
 

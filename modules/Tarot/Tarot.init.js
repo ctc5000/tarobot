@@ -1,6 +1,6 @@
 // modules/Tarot/Tarot.init.js
 const { models } = require('../../sequelize');
-const TarotService = require('./Services/TarotService');
+const TarotService = require('./Services/tarotService');
 
 module.exports = {
     init: async () => {
