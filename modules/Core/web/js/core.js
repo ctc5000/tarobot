@@ -281,6 +281,7 @@ class CoreApp {
         const noscript = document.createElement('noscript');
         noscript.innerHTML = `<div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div>`;
         document.body.appendChild(noscript);
+        console.log("metrika inited");
     }
 }
 
