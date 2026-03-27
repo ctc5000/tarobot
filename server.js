@@ -108,12 +108,12 @@ app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://mc.yandex.ru https://yandex.ru; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://mc.yandex.ru https://yandex.ru https://yastatic.net https://yastatic.net; " +
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
         "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
         "img-src 'self' data: https:; " +
-        "connect-src 'self' ws: wss: https://mc.yandex.ru https://nominatim.openstreetmap.org; " +  // <- ДОБАВЛЕНО
-        "frame-src 'self' https://yandex.ru;"  // <- для Яндекс.Метрики
+        "connect-src 'self' ws: wss: https://mc.yandex.ru https://nominatim.openstreetmap.org https://yastatic.net; " +
+        "frame-src 'self' https://yandex.ru;"
     );
     next();
 });
