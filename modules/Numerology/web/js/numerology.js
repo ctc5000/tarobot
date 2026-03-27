@@ -42,7 +42,18 @@ class NumerologyApp {
             console.error('❌ Форма не найдена');
             return;
         }
+        if (window.StatsCounter) {
+            // Обновляем все элементы с классом или id statsCounter
+            const counterElements = document.querySelectorAll('#statsCounter, #statsCounterDesc');
+            counterElements.forEach(el => {
+                const currentCount = window.StatsCounter.calculateCurrentCount();
+                el.textContent = window.StatsCounter.formatNumber(currentCount) + '+';
+            });
 
+            // Автообновление каждый час
+            window.StatsCounter.startAutoUpdate('statsCounter', 60);
+            window.StatsCounter.startAutoUpdate('statsCounterDesc', 60);
+        }
         await this.loadData();
         this.initDatePickers();
         this.updateUI();

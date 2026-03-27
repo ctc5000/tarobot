@@ -76,7 +76,7 @@ app.use(cors());
 
 // ==================== СТАТИЧЕСКИЕ ФАЙЛЫ ====================
 // Это должно быть ПЕРЕД маршрутами, но ПОСЛЕ middleware
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
 //app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // ==================== МИДЛВАРЫ ====================
 
@@ -895,6 +895,7 @@ async function startServer() {
         // 1. СНАЧАЛА загружаем модули (API маршруты)
         const loadedModules = await loadModules();
         await initModules(loadedModules);
+        app.use(express.static(path.join(__dirname, 'public')));
 
         // 2. ПОТОМ добавляем статические файлы для других модулей
         app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
@@ -932,7 +933,6 @@ async function startServer() {
                 res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
             }
         });
-
         // Запускаем сервер
         const PORT = process.env.PORT || 3000;
         server.listen(PORT, () => {

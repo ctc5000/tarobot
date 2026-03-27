@@ -76,9 +76,9 @@
                     <h3 class="tariff-name">${typeInfo.name}</h3>
                     <p class="tariff-description">${typeInfo.description}</p>
                     <div class="tariff-price">${priceHtml}</div>
-                    <button class="btn-preview" onclick="event.stopPropagation(); ${!user && tariff.code !== 'forecast_basic' ? 'numerologyApp.showAuthModal()' : `numerologyApp.showPreview('${tariff.code}')`}">
-                        <i class="fas fa-eye"></i> Предпросмотр
-                    </button>
+                  <button class="btn-preview" onclick="event.stopPropagation(); numerologyApp.showPreview('${tariff.code}')">
+    <i class="fas fa-eye"></i> Предпросмотр
+</button>
                     <ul class="tariff-features">
                         ${typeInfo.features ? typeInfo.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('') : '<li>Все основные расчеты</li>'}
                     </ul>

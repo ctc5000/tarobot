@@ -19,9 +19,9 @@
     },
     "description": "Система автоматических расчетов на основе древних практик и современной науки",
     "links": [
-      { "name": "О проекте", "url": "/about" },
-      { "name": "Конфиденциальность", "url": "/privacy" },
-      { "name": "Контакты", "url": "/contacts" }
+      { "name": "О проекте", "url": "/pages/about.html" },
+      { "name": "Конфиденциальность", "url": "/pages/privacy.html" },
+      { "name": "Контакты", "url": "/pages/contacts.html" }
     ],
     "social": [
       { "name": "Telegram", "url": "https://t.me/algoritmsudby", "icon": "fab fa-telegram" },
