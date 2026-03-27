@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Натальная карта | АЛГОРИТМ СУДЬБЫ</title>
+    <meta name="description" content="Построение натальной карты онлайн с полной интерпретацией. Астрологический портрет личности: положение планет в знаках и домах, аспекты, психологический анализ.">
 
     <!-- Шрифты -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,28 +23,21 @@
     <!-- IMask -->
     <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js"></script>
 
-    <!-- html2pdf для сохранения в PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=107722589', 'ym');
 
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-    (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=107722589', 'ym');
-
-    ym(107722589, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-<!-- /Yandex.Metrika counter -->
+        ym(107722589, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 </head>
 
-
 <body>
-<div id="menu-placeholder"></div>
-
 <header class="site-header">
     <div class="container">
         <div class="header-content">
@@ -109,14 +103,26 @@
             </div>
         </section>
 
+        <!-- СЕКЦИЯ ТАРИФОВ -->
+        <section class="tariff-section" id="tariffSection" style="display: none;">
+            <h2 class="section-title">Выберите <span>глубину анализа</span></h2>
+            <p class="section-description">
+                Каждый уровень раскрывает новые грани вашей астрологической карты.
+                Начните с базового или выберите полный портрет.
+            </p>
+            <div class="tariff-grid" id="tariffGrid">
+                <div class="loading">Загрузка тарифов...</div>
+            </div>
+        </section>
+
         <!-- СЕКЦИЯ ВВОДА -->
         <section class="input-section" id="inputSection" style="display: none;">
             <div class="input-header">
                 <div>
-                    <h2 class="input-title">Натальная карта</h2>
-                    <p class="input-subtitle">Введите данные для построения карты</p>
+                    <h2 class="input-title" id="selectedTariffTitle">Натальная карта</h2>
+                    <p class="input-subtitle" id="selectedTariffDescription">Введите данные для построения карты</p>
                 </div>
-                <div class="price-tag" id="priceTag">
+                <div class="price-tag" id="selectedTariffPrice">
                     <span class="price-current">500 ₽</span>
                 </div>
             </div>
@@ -223,18 +229,21 @@
         <!-- СЕКЦИЯ РЕЗУЛЬТАТА -->
         <section class="result-section" id="resultSection" style="display: none;">
             <div class="glass-card result-card">
-                <h2>🔮 ВАША НАТАЛЬНАЯ КАРТА</h2>
-
                 <div class="result-header">
-                    <div class="person-info">
+                    <h2 id="resultType">🔮 ВАША НАТАЛЬНАЯ КАРТА</h2>
+                    <div id="resultBadge"></div>
+                </div>
+
+                <div class="result-person-info">
+                    <div class="person-detail">
                         <span class="label">Имя:</span>
                         <span class="value" id="resultName"></span>
                     </div>
-                    <div class="person-info">
+                    <div class="person-detail">
                         <span class="label">Дата:</span>
                         <span class="value" id="resultDate"></span>
                     </div>
-                    <div class="person-info">
+                    <div class="person-detail">
                         <span class="label">Время:</span>
                         <span class="value" id="resultTime"></span>
                     </div>
@@ -275,14 +284,16 @@
                 <div id="expandedReport" class="expanded-report-container"></div>
 
                 <!-- Кнопки действий -->
-                <button class="mystic-button small" id="newCalculationBtn">
-                    <span class="button-text">Новый расчет</span>
-                </button>
-            </div>
-            <div class="pdf-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-                <button class="mystic-button small" id="savePdfBtn">
-                    <span class="button-text">📄 Сохранить в PDF</span>
-                </button>
+                <div class="result-actions">
+                    <button class="btn-action" id="downloadPdfBtn" style="display: none;">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Скачать PDF</span>
+                    </button>
+                    <button class="btn-action" id="newCalculationBtn">
+                        <i class="fas fa-redo-alt"></i>
+                        <span>Новый расчет</span>
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -314,6 +325,9 @@
 <!-- Скрипты -->
 <script src="/core/js/core.js"></script>
 <script src="/core/js/auth.js"></script>
+<script src="/astrology/js/constants/astroTypes.js"></script>
+<script src="/astrology/js/previewData.js"></script>
+<script src="/astrology/js/previewRenderer.js"></script>
 <script src="/astrology/js/natal-chart-draw.js"></script>
 <script src="/astrology/js/astrology.js"></script>
 </body>

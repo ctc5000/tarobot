@@ -1,4 +1,4 @@
-// modules/astrology/astrology.route.js
+// modules/Astrology/Astrology.route.js
 const path = require('path');
 const express = require("express");
 
@@ -11,12 +11,22 @@ const AstrologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsync
         res.sendFile(path.join(__dirname, 'web', 'index.html'));
     });
 
-    // ========== ЗАЩИЩЕННЫЕ API (ТРЕБУЕТСЯ АВТОРИЗАЦИЯ) ==========
+    // ========== ПУБЛИЧНЫЕ API ==========
 
-    // Расчет натальной карты
+    // Получить список тарифов
+    if (routeController.getTariffs) {
+        app.get(
+            '/api/astrology/tariffs',
+            makeHandlerAwareOfAsyncErrors(routeController.getTariffs)
+        );
+    }
+
+    // ========== ЗАЩИЩЕННЫЕ API ==========
+
+    // Расчет натальной карты с выбором тарифа
     if (routeController.calculateNatalChart) {
         app.post(
-            '/api/astrology/natal-chart',
+            '/api/astrology/calculate',
             (req, res, next) => {
                 const tokenService = new (require('../Core/Services/TokenService'))();
                 return tokenService.authMiddleware()(req, res, next);

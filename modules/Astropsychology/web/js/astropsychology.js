@@ -65,16 +65,16 @@ class AstropsychologyApp {
     renderTariffs() {
         if (!this.tariffGrid) return;
         let html = '';
-        const tariffTypes = {
-            'astro_basic': { icon: 'fas fa-star', color: '#c9a54b', desc: 'Основной портрет' },
-            'astro_quick': { icon: 'fas fa-bolt', color: '#ff9800', desc: 'Экспресс-анализ' },
-            'astro_standard': { icon: 'fas fa-chart-line', color: '#2196f3', desc: 'Полный портрет' },
-            'astro_full': { icon: 'fas fa-chart-pie', color: '#4caf50', desc: 'Глубокий анализ + карта' },
-            'astro_premium': { icon: 'fas fa-gem', color: '#9c27b0', desc: 'Максимальный разбор + карта' }
-        };
 
         this.tariffs.forEach(tariff => {
-            const typeInfo = tariffTypes[tariff.code] || { icon: 'fas fa-calculator', color: '#6a6a7a', desc: '' };
+            const typeInfo = window.AstropsychologyTypes?.[tariff.code] || {
+                icon: 'fas fa-calculator',
+                name: tariff.name,
+                description: tariff.description,
+                features: ['Все основные расчеты'],
+                category: 'calculations'
+            };
+
             let cardClass = 'tariff-card';
             let isLocked = false;
             let clickHandler = `astropsychologyApp.selectTariff('${tariff.code}')`;
@@ -88,16 +88,19 @@ class AstropsychologyApp {
             if (this.selectedTariff?.code === tariff.code) cardClass += ' selected';
 
             html += `
-                <div class="${cardClass}" onclick="${clickHandler}">
-                    ${isLocked ? '<div class="lock-overlay-small"><i class="fas fa-lock"></i></div>' : ''}
-                    <div class="tariff-icon"><i class="${typeInfo.icon}" style="color: ${typeInfo.color}"></i></div>
-                    <h3 class="tariff-name">${tariff.name}</h3>
-                    <p class="tariff-description">${tariff.description}</p>
-                    <div class="tariff-price">${tariff.price === 0 ? '<span class="price-free">Бесплатно</span>' : `<span class="price-current">${tariff.price} ₽</span>`}</div>
-                    <ul class="tariff-features">${this.getTariffFeatures(tariff.code).map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}</ul>
-                    <button class="btn-select ${isLocked ? 'locked' : ''}">${isLocked ? 'Войти и выбрать' : 'Выбрать'}</button>
-                </div>
-            `;
+            <div class="${cardClass}" onclick="${clickHandler}" data-category="${typeInfo.category}">
+                ${isLocked ? '<div class="lock-overlay-small"><i class="fas fa-lock"></i></div>' : ''}
+                <div class="tariff-icon"><i class="${typeInfo.icon}"></i></div>
+                <h3 class="tariff-name">${typeInfo.name}</h3>
+                <p class="tariff-description">${typeInfo.description}</p>
+                <div class="tariff-price">${tariff.price === 0 ? '<span class="price-free">Бесплатно</span>' : `<span class="price-current">${tariff.price} ₽</span>`}</div>
+                <button class="btn-preview" onclick="event.stopPropagation(); astropsychologyApp.showPreview('${tariff.code}')">
+                    <i class="fas fa-eye"></i> Предпросмотр
+                </button>
+                <ul class="tariff-features">${typeInfo.features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}</ul>
+                <button class="btn-select ${isLocked ? 'locked' : ''}">${isLocked ? 'Войти и выбрать' : 'Выбрать'}</button>
+            </div>
+        `;
         });
         this.tariffGrid.innerHTML = html;
     }
@@ -674,6 +677,66 @@ class AstropsychologyApp {
     escapeHtml(str) {
         if (!str) return '';
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    showPreview(tariffCode) {
+        if (!window.astropsychologyPreviewRenderer || !window.astropsychologyPreviewData) {
+            console.error('Preview renderer or data not loaded');
+            return;
+        }
+
+        let demoData = null;
+        const dataMap = {
+            'astro_basic': window.astropsychologyPreviewData?.basic,
+            'astro_quick': window.astropsychologyPreviewData?.quick,
+            'astro_standard': window.astropsychologyPreviewData?.standard,
+            'astro_full': window.astropsychologyPreviewData?.full,
+            'astro_premium': window.astropsychologyPreviewData?.premium
+        };
+        demoData = dataMap[tariffCode] || window.astropsychologyPreviewData?.basic;
+
+        if (!demoData) {
+            this.showNotification('Демо-данные для этого тарифа не найдены', 'error');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal preview-full-modal';
+        modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 10000; display: flex; align-items: center; justify-content: center;`;
+
+        const tariffName = window.astropsychologyPreviewRenderer.getTariffName(tariffCode);
+
+        modal.innerHTML = `
+        <div class="preview-content full-report" style="max-width:95%; width:1000px; max-height:90vh; background:linear-gradient(135deg,#12121a,#0a0a0f); border:1px solid rgba(201,165,75,0.3); border-radius:30px; overflow:hidden; display:flex; flex-direction:column;">
+            <div class="preview-header" style="padding:20px 30px; background:linear-gradient(135deg,rgba(201,165,75,0.1),rgba(0,0,0,0.3)); border-bottom:1px solid rgba(201,165,75,0.2); display:flex; justify-content:space-between; align-items:center;">
+                <div><h3 style="margin:0; color:var(--primary);">${tariffName}</h3><p style="margin:5px 0 0; color:var(--text-muted);">Демонстрационный отчет | ${this.user?.fullName || 'Иванов Иван Иванович'} | 02.07.1993 12:00</p></div>
+                <button class="preview-close" style="background:none; border:none; color:var(--text-muted); font-size:28px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="preview-body" style="padding:20px 30px; overflow-y:auto; flex:1; background:linear-gradient(135deg,#0a0a0f,#12121a);">
+                ${window.astropsychologyPreviewRenderer.generateFullReportHTML(demoData, tariffCode)}
+            </div>
+            <div class="preview-footer" style="padding:20px 30px; border-top:1px solid rgba(201,165,75,0.2); display:flex; justify-content:center; gap:15px;">
+                <button class="btn-select-preview" style="padding:12px 30px; background:var(--primary-gradient); border:none; border-radius:50px; color:var(--dark); font-weight:600; cursor:pointer;" onclick="astropsychologyApp.selectTariff('${tariffCode}'); document.querySelector('.preview-modal')?.remove()"><i class="fas fa-shopping-cart"></i> Выбрать этот расчет</button>
+                <button class="btn-close-preview" style="padding:12px 30px; background:transparent; border:1px solid var(--border-color); border-radius:50px; color:var(--text-secondary); cursor:pointer;">Закрыть</button>
+            </div>
+        </div>
+    `;
+
+        document.body.appendChild(modal);
+        setTimeout(() => {
+            const canvas = modal.querySelector('#previewNatalChartCanvas');
+            if (canvas && demoData.data?.chartDrawData) {
+                try {
+                    // Используем NatalChartDraw для отрисовки
+                    const previewDraw = new NatalChartDraw('previewNatalChartCanvas');
+                    previewDraw.draw(demoData.data.chartDrawData);
+                } catch (error) {
+                    console.error('Ошибка отрисовки натальной карты в превью:', error);
+                }
+            }
+        }, 100);
+        modal.querySelector('.preview-close')?.addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-close-preview')?.addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     }
 }
 

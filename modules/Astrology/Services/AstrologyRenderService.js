@@ -7,10 +7,105 @@ class AstrologyRenderService {
     /**
      * Рендеринг блока "Значение планет"
      */
-    renderEnrichedPlanetsInfo(planets) {
-        if (!planets || Object.keys(planets).length === 0) {
+    renderEnrichedPlanetsInfo(planets, tariffCode) {
+        // Для базового тарифа — только Солнце, Луна и Меркурий
+        if (tariffCode === 'natal_basic') {
+            const basicPlanets = ['sun', 'moon', 'mercury'];
+            const filteredPlanets = {};
+            for (const key of basicPlanets) {
+                if (planets[key]) filteredPlanets[key] = planets[key];
+            }
+            return this.renderPlanetsInfo(filteredPlanets);
+        }
+
+        // Для остальных тарифов — все планеты
+        return this.renderPlanetsInfo(planets);
+    }
+
+    /**
+     * Рендеринг блока "Значение домов"
+     */
+    renderEnrichedHousesInfo(houses, tariffCode) {
+        // Для базового тарифа — дома не показываем
+        if (tariffCode === 'natal_basic') {
             return '';
         }
+
+        // Для стандартного — показываем только номера домов
+        if (tariffCode === 'natal_standard') {
+            return this.renderHousesSimple(houses);
+        }
+
+        // Для полного и премиум — полная информация
+        return this.renderHousesFull(houses);
+    }
+    renderHousesSimple(houses) {
+        if (!houses || houses.length === 0) return '';
+
+        let html = `
+    <h3>🏠 ДОМА (основные сферы)</h3>
+    <div class="enriched-houses-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+    `;
+
+        houses.forEach(house => {
+            if (!house) return;
+            html += `
+        <div class="enriched-house-card" style="padding: 10px;">
+            <div class="enriched-house-header">
+                <span class="enriched-house-number">${house.number} дом</span>
+                <span class="enriched-house-cusp">${house.sign}</span>
+            </div>
+            <div class="enriched-house-desc">
+                ${house.houseDescription?.substring(0, 100)}...
+            </div>
+        </div>
+        `;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    renderHousesFull(houses) {
+        if (!houses || houses.length === 0) return '';
+
+        let html = `
+    <h3>🏠 ЗНАЧЕНИЕ ДОМОВ</h3>
+    <div class="enriched-houses-grid">
+    `;
+
+        houses.forEach(house => {
+            const planetsList = house.planets && house.planets.length > 0
+                ? house.planets.join(', ')
+                : 'нет планет';
+
+            html += `
+        <div class="enriched-house-card">
+            <div class="enriched-house-header">
+                <span class="enriched-house-number">${house.number} дом</span>
+                <span class="enriched-house-cusp">Куспид в ${this.escapeHtml(house.sign)}</span>
+            </div>
+            <div class="enriched-house-desc">
+                <strong>Значение:</strong> ${this.escapeHtml(house.houseDescription || '—')}
+            </div>
+            <div class="enriched-house-sign-desc">
+                <strong>Куспид в ${this.escapeHtml(house.sign)}:</strong> ${this.escapeHtml(house.signDescription || '—')}
+            </div>
+            <div class="enriched-house-planets">
+                <strong>Планеты:</strong> ${this.escapeHtml(planetsList)}
+            </div>
+        </div>
+        `;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+
+
+    renderPlanetsInfo(planets) {
+        if (!planets || Object.keys(planets).length === 0) return '';
 
         const symbols = {
             sun: '☉', moon: '☽', mercury: '☿', venus: '♀',
@@ -27,73 +122,32 @@ class AstrologyRenderService {
         const planetOrder = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
 
         let html = `
-        <h3>🪐 ЗНАЧЕНИЕ ПЛАНЕТ</h3>
-        <div class="enriched-planets-grid">
-        `;
+    <h3>🪐 ЗНАЧЕНИЕ ПЛАНЕТ</h3>
+    <div class="enriched-planets-grid">
+    `;
 
         for (const key of planetOrder) {
             const planet = planets[key];
             if (!planet) continue;
 
             html += `
-            <div class="enriched-planet-card">
-                <div class="enriched-planet-header">
-                    <span class="enriched-planet-symbol">${this.escapeHtml(symbols[key])}</span>
-                    <span class="enriched-planet-name">${this.escapeHtml(names[key])}</span>
-                </div>
-                <div class="enriched-planet-position">
-                    <span class="enriched-planet-sign">${this.escapeHtml(planet.sign)}</span>
-                    <span class="enriched-planet-degree">${this.escapeHtml(planet.degreeInSign)}°</span>
-                </div>
-                <div class="enriched-planet-meaning">
-                    <strong>Значение:</strong> ${this.escapeHtml(planet.planetMeaning || '—')}
-                </div>
-                <div class="enriched-planet-sign-desc">
-                    <strong>В знаке ${this.escapeHtml(planet.sign)}:</strong> ${this.escapeHtml(planet.signDescription || '—')}
-                </div>
+        <div class="enriched-planet-card">
+            <div class="enriched-planet-header">
+                <span class="enriched-planet-symbol">${this.escapeHtml(symbols[key])}</span>
+                <span class="enriched-planet-name">${this.escapeHtml(names[key])}</span>
             </div>
-            `;
-        }
-
-        html += `</div>`;
-        return html;
-    }
-
-    /**
-     * Рендеринг блока "Значение домов"
-     */
-    renderEnrichedHousesInfo(houses) {
-        if (!houses || houses.length === 0) {
-            return '';
-        }
-
-        let html = `
-        <h3>🏠 ЗНАЧЕНИЕ ДОМОВ</h3>
-        <div class="enriched-houses-grid">
+            <div class="enriched-planet-position">
+                <span class="enriched-planet-sign">${this.escapeHtml(planet.sign)}</span>
+                <span class="enriched-planet-degree">${this.escapeHtml(planet.degreeInSign)}°</span>
+            </div>
+            <div class="enriched-planet-meaning">
+                <strong>Значение:</strong> ${this.escapeHtml(planet.planetMeaning || '—')}
+            </div>
+            <div class="enriched-planet-sign-desc">
+                <strong>В знаке ${this.escapeHtml(planet.sign)}:</strong> ${this.escapeHtml(planet.signDescription || '—')}
+            </div>
+        </div>
         `;
-
-        for (const house of houses) {
-            const planetsList = house.planets && house.planets.length > 0
-                ? house.planets.join(', ')
-                : 'нет планет';
-
-            html += `
-            <div class="enriched-house-card">
-                <div class="enriched-house-header">
-                    <span class="enriched-house-number">${house.number} дом</span>
-                    <span class="enriched-house-cusp">Куспид в ${this.escapeHtml(house.sign)}</span>
-                </div>
-                <div class="enriched-house-desc">
-                    <strong>Значение:</strong> ${this.escapeHtml(house.houseDescription || '—')}
-                </div>
-                <div class="enriched-house-sign-desc">
-                    <strong>Куспид в ${this.escapeHtml(house.sign)}:</strong> ${this.escapeHtml(house.signDescription || '—')}
-                </div>
-                <div class="enriched-house-planets">
-                    <strong>Планеты:</strong> ${this.escapeHtml(planetsList)}
-                </div>
-            </div>
-            `;
         }
 
         html += `</div>`;
@@ -103,10 +157,35 @@ class AstrologyRenderService {
     /**
      * Рендеринг блока "Ключевые аспекты"
      */
-    renderEnrichedAspectsInfo(aspects) {
-        if (!aspects || aspects.length === 0) {
+    renderEnrichedAspectsInfo(aspects, tariffCode) {
+        // Для базового тарифа — аспекты не показываем
+        if (tariffCode === 'natal_basic') {
             return '';
         }
+
+        // Для стандартного — только основные аспекты (первые 3)
+        if (tariffCode === 'natal_standard') {
+            if (!aspects || aspects.length === 0) return '';
+
+            let html = `
+        <h3>⚡ ОСНОВНЫЕ АСПЕКТЫ</h3>
+        <div class="enriched-aspects-grid">
+        `;
+
+            aspects.slice(0, 3).forEach(aspect => {
+                html += `
+            <div class="aspect-item ${aspect.type}" style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                ${aspect.planet1} — ${aspect.planet2}: ${aspect.description}
+            </div>
+            `;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+        // Для полного и премиум — все аспекты
+        if (!aspects || aspects.length === 0) return '';
 
         const aspectColors = {
             conjunction: '#ff4d4d',
@@ -117,29 +196,29 @@ class AstrologyRenderService {
         };
 
         let html = `
-        <h3>⚡ КЛЮЧЕВЫЕ АСПЕКТЫ</h3>
-        <div class="enriched-aspects-grid">
-        `;
+    <h3>⚡ ВСЕ АСПЕКТЫ</h3>
+    <div class="enriched-aspects-grid">
+    `;
 
-        for (const aspect of aspects) {
+        aspects.forEach(aspect => {
             const color = aspectColors[aspect.type] || '#c9a54b';
             html += `
-            <div class="enriched-aspect-card" style="border-left-color: ${color}">
-                <div class="enriched-aspect-header">
-                    <span class="enriched-aspect-name">${this.escapeHtml(aspect.name)}</span>
-                    <span class="enriched-aspect-orb">Орб: ${this.escapeHtml(aspect.orb)}°</span>
-                </div>
-                <div class="enriched-aspect-planets">
-                    <span class="enriched-aspect-planet">${this.escapeHtml(aspect.planet1)}</span>
-                    <span class="enriched-aspect-symbol">↔</span>
-                    <span class="enriched-aspect-planet">${this.escapeHtml(aspect.planet2)}</span>
-                </div>
-                <div class="enriched-aspect-desc">
-                    ${this.escapeHtml(aspect.description)}
-                </div>
+        <div class="enriched-aspect-card" style="border-left-color: ${color}">
+            <div class="enriched-aspect-header">
+                <span class="enriched-aspect-name">${this.escapeHtml(aspect.name)}</span>
+                <span class="enriched-aspect-orb">Орб: ${this.escapeHtml(aspect.orb)}°</span>
             </div>
-            `;
-        }
+            <div class="enriched-aspect-planets">
+                <span class="enriched-aspect-planet">${this.escapeHtml(aspect.planet1)}</span>
+                <span class="enriched-aspect-symbol">↔</span>
+                <span class="enriched-aspect-planet">${this.escapeHtml(aspect.planet2)}</span>
+            </div>
+            <div class="enriched-aspect-desc">
+                ${this.escapeHtml(aspect.description)}
+            </div>
+        </div>
+        `;
+        });
 
         html += `</div>`;
         return html;
@@ -273,12 +352,152 @@ class AstrologyRenderService {
     /**
      * Рендеринг полной интерпретации
      */
-    renderInterpretation(data) {
+    renderInterpretation(data, tariffCode) {
         const ascendant = data.ascendant || {};
         const sun = data.planets?.sun;
         const moon = data.planets?.moon;
         const aspects = data.aspects || [];
         const planets = data.planets || {};
+
+        const birthDate = data.birthDate || '';
+        const birthTime = data.birthTime || '';
+
+        const ascSign = ascendant.sign || 'Неизвестно';
+        const ascDegree = ascendant.degreeInSign || '0';
+        const ascDesc = ascendant.description || '';
+
+        const sunSign = sun?.sign || 'Неизвестно';
+        const sunDegree = sun?.degreeInSign || '0';
+        const sunDesc = sun?.signDescription || '';
+
+        const moonSign = moon?.sign || 'Неизвестно';
+        const moonDegree = moon?.degreeInSign || '0';
+        const moonDesc = moon?.signDescription || '';
+
+        // Для базового тарифа — только основная информация
+        if (tariffCode === 'natal_basic') {
+            return `
+        <div class="interpretation-container">
+            <div class="interpretation-section intro-section">
+                <h4>🌟 ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ (БАЗОВЫЙ)</h4>
+                <p class="section-content">
+                    В момент вашего рождения, ${this.escapeHtml(birthDate)} в ${this.escapeHtml(birthTime)}, 
+                    небесные тела выстроились в уникальную конфигурацию.
+                </p>
+            </div>
+            
+            <div class="interpretation-section ascendant-section">
+                <h4>🌅 АСЦЕНДЕНТ — ${this.escapeHtml(ascSign)} ${this.escapeHtml(ascDegree)}°</h4>
+                <p class="section-content">${this.getAscendantShortDescription(ascSign)}</p>
+                <p class="section-detail">${ascDesc}</p>
+            </div>
+            
+            <div class="interpretation-section sun-section">
+                <h4>☀️ СОЛНЦЕ — ${this.escapeHtml(sunSign)} ${this.escapeHtml(sunDegree)}°</h4>
+                <p class="section-content">${this.getSunDescription(sunSign)}</p>
+                <p class="section-detail">${sunDesc}</p>
+            </div>
+            
+            <div class="interpretation-section moon-section">
+                <h4>🌙 ЛУНА — ${this.escapeHtml(moonSign)} ${this.escapeHtml(moonDegree)}°</h4>
+                <p class="section-content">${this.getMoonDescription(moonSign)}</p>
+                <p class="section-detail">${moonDesc}</p>
+            </div>
+            
+            <div class="interpretation-section summary-section">
+                <h4>💫 КЛЮЧЕВЫЕ ВЫВОДЫ</h4>
+                <p class="summary-text">
+                    Ваша личность сочетает ${this.getSunDescription(sunSign).toLowerCase()} 
+                    с ${this.getMoonDescription(moonSign).toLowerCase()}. 
+                    Вы производите впечатление ${this.getAscendantShortDescription(ascSign).toLowerCase()}.
+                </p>
+                <p class="section-detail" style="margin-top: 20px; font-style: italic;">
+                    "Познай самого себя, и ты познаешь Вселенную" — Пифагор
+                </p>
+            </div>
+        </div>
+        `;
+        }
+
+        // Для стандартного тарифа — добавляем аспекты и анализ домов
+        if (tariffCode === 'natal_standard') {
+            const analysis = this.analyzeElementBalance(planets);
+
+            return `
+        <div class="interpretation-container">
+            <!-- Вступление -->
+            <div class="interpretation-section intro-section">
+                <h4>🌟 ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ</h4>
+                <p class="section-content">
+                    В момент вашего рождения, ${this.escapeHtml(birthDate)} в ${this.escapeHtml(birthTime)}, 
+                    небесные тела выстроились в уникальную конфигурацию, которая сформировала ваш характер, 
+                    таланты и жизненный путь.
+                </p>
+            </div>
+            
+            <!-- Асцендент -->
+            <div class="interpretation-section ascendant-section">
+                <h4>🌅 АСЦЕНДЕНТ — ${this.escapeHtml(ascSign)} ${this.escapeHtml(ascDegree)}°</h4>
+                <p class="section-content">${this.getAscendantShortDescription(ascSign)}</p>
+                <p class="section-detail">${ascDesc}</p>
+                <p class="section-detail"><em>Рекомендация:</em> ${this.getAscendantAdvice(ascSign)}</p>
+            </div>
+            
+            <!-- Солнце -->
+            <div class="interpretation-section sun-section">
+                <h4>☀️ СОЛНЦЕ — ${this.escapeHtml(sunSign)} ${this.escapeHtml(sunDegree)}°</h4>
+                <p class="section-content">${this.getSunDescription(sunSign)}</p>
+                <p class="section-detail">${sunDesc}</p>
+                <p class="section-detail"><em>Совет для самореализации:</em> ${this.getSunAdvice(sunSign, Math.floor(sun?.longitude / 30) + 1 || 1)}</p>
+            </div>
+            
+            <!-- Луна -->
+            <div class="interpretation-section moon-section">
+                <h4>🌙 ЛУНА — ${this.escapeHtml(moonSign)} ${this.escapeHtml(moonDegree)}°</h4>
+                <p class="section-content">${this.getMoonDescription(moonSign)}</p>
+                <p class="section-detail">${moonDesc}</p>
+                <p class="section-detail"><em>Как обрести эмоциональный комфорт:</em> ${this.getMoonAdvice(moonSign, Math.floor(moon?.longitude / 30) + 1 || 1)}</p>
+            </div>
+            
+            <!-- Баланс стихий -->
+            <div class="interpretation-section elements-section">
+                <h4>🔥💧🌍💨 БАЛАНС СТИХИЙ</h4>
+                <p class="section-detail">${analysis}</p>
+            </div>
+            
+            <!-- Ключевые аспекты (первые 3) -->
+            ${aspects && aspects.length > 0 ? `
+            <div class="interpretation-section aspects-section">
+                <h4>⚡ КЛЮЧЕВЫЕ АСПЕКТЫ</h4>
+                ${aspects.slice(0, 5).map(a => `<p class="section-detail">• ${a.planet1} — ${a.planet2}: ${a.description}</p>`).join('')}
+            </div>
+            ` : ''}
+            
+            <!-- Общий портрет -->
+            <div class="interpretation-section summary-section">
+                <h4>🌟 СИНТЕЗ: ВАША УНИКАЛЬНАЯ ЛИЧНОСТЬ</h4>
+                <p class="summary-text">
+                    ${this.renderOverallPortrait(ascSign, sunSign, moonSign, planets, aspects)}
+                </p>
+                <p class="section-detail" style="margin-top: 20px; font-style: italic;">
+                    "Познай самого себя, и ты познаешь Вселенную и богов" — Гермес Трисмегист
+                </p>
+            </div>
+        </div>
+        `;
+        }
+
+        // Для полного и премиум тарифов — полная версия с домами и всеми аспектами
+        return this.renderFullInterpretation(data, tariffCode);
+    }
+
+    renderFullInterpretation(data, tariffCode) {
+        const ascendant = data.ascendant || {};
+        const sun = data.planets?.sun;
+        const moon = data.planets?.moon;
+        const aspects = data.aspects || [];
+        const planets = data.planets || {};
+        const houses = data.houses || [];
 
         const birthDate = data.birthDate || '';
         const birthTime = data.birthTime || '';
@@ -300,158 +519,91 @@ class AstrologyRenderService {
         const analysis = this.analyzeElementBalance(planets);
 
         return `
-        <div class="interpretation-container">
-            <!-- ВСТУПЛЕНИЕ -->
-            <div class="interpretation-section intro-section">
-                <h4>🌟 ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ</h4>
-                <p class="section-content">
-                    В момент вашего рождения, ${this.escapeHtml(birthDate)} в ${this.escapeHtml(birthTime)}, небесные тела выстроились в уникальную конфигурацию, которая сформировала ваш характер, таланты и жизненный путь. Анализ вашей натальной карты позволяет заглянуть в самые глубокие слои вашей личности и понять, какие энергии определяют вашу судьбу.
-                </p>
-                <p class="section-content">
-                    В этом астрологическом портрете мы рассмотрим положение планет в знаках и домах, их взаимодействие друг с другом, а также ключевые точки вашей карты, которые оказывают наибольшее влияние на вашу жизнь.
-                </p>
-            </div>
-            
-            <!-- РАЗДЕЛ 1: АСЦЕНДЕНТ -->
-            <div class="interpretation-section ascendant-section">
-                <h4>🌅 АСЦЕНДЕНТ (Восходящий знак) — ${this.escapeHtml(ascSign)} ${this.escapeHtml(ascDegree)}°</h4>
-                <p class="section-content">
-                    <strong>${this.getAscendantShortDescription(ascSign)}</strong>
-                </p>
-                <p class="section-detail">
-                    ${this.getAscendantDetailed(ascSign)} Асцендент — это ваша внешняя маска, то, как вы проявляетесь в мире, как вас воспринимают окружающие при первой встрече. Он определяет вашу внешность, манеру поведения и первый импульс в любой ситуации.
-                </p>
-                <p class="section-detail">
-                    Ваш асцендент находится в знаке ${this.escapeHtml(ascSign)}, что делает вас ${this.getAscendantNature(ascSign)}. Управитель вашего асцендента — ${this.getRulerOfSign(ascSign)}, который играет особую роль в вашей жизни, указывая на сферу, где вы можете проявить себя наиболее ярко.
-                </p>
-                <p class="section-detail">
-                    <em>Рекомендация:</em> ${this.getAscendantAdvice(ascSign)}
-                </p>
-            </div>
-            
-            <!-- РАЗДЕЛ 2: СОЛНЦЕ -->
-            <div class="interpretation-section sun-section">
-                <h4>☀️ СОЛНЦЕ (Сущность, эго, жизненная сила) — ${this.escapeHtml(sunSign)} ${this.escapeHtml(sunDegree)}° в ${sunHouse} доме</h4>
-                <p class="section-content">
-                    <strong>${this.getSunDescription(sunSign)}</strong>
-                </p>
-                <p class="section-detail">
-                    Солнце — это ваше истинное "Я", ваша жизненная цель и источник энергии. Оно показывает, кем вы становитесь, когда раскрываете свой потенциал, и что приносит вам наибольшее удовлетворение.
-                </p>
-                <p class="section-detail">
-                    ${this.getSunInHouseDescription(sunSign, sunHouse)} В ${sunHouse} доме Солнце проявляется особенно ярко, указывая на сферу жизни, где вы можете реализовать свои лидерские качества и получить признание.
-                </p>
-                <p class="section-detail">
-                    Ваше Солнце в стихии ${this.getElement(sunSign)} дает вам ${this.getElementQuality(sunSign)}. Это означает, что в достижении целей вы полагаетесь на ${this.getElementApproach(sunSign)}.
-                </p>
-                <p class="section-detail">
-                    <em>Совет для самореализации:</em> ${this.getSunAdvice(sunSign, sunHouse)}
-                </p>
-            </div>
-            
-            <!-- РАЗДЕЛ 3: ЛУНА -->
-            <div class="interpretation-section moon-section">
-                <h4>🌙 ЛУНА (Душа, эмоции, подсознание) — ${this.escapeHtml(moonSign)} ${this.escapeHtml(moonDegree)}° в ${moonHouse} доме</h4>
-                <p class="section-content">
-                    <strong>${this.getMoonDescription(moonSign)}</strong>
-                </p>
-                <p class="section-detail">
-                    Луна отражает вашу эмоциональную природу, то, как вы реагируете на мир, что дает вам чувство безопасности и комфорта. Это ваша душа, ваши привычки и инстинкты.
-                </p>
-                <p class="section-detail">
-                    ${this.getMoonInHouseDescription(moonSign, moonHouse)} Положение Луны в ${moonHouse} доме показывает, где вы ищете эмоциональную защиту и в какой сфере жизни ваши чувства проявляются наиболее интенсивно.
-                </p>
-                <p class="section-detail">
-                    Ваша Луна в стихии ${this.getElement(moonSign)} делает ваши эмоции ${this.getEmotionalQuality(moonSign)}. В стрессовых ситуациях вы склонны ${this.getEmotionalReaction(moonSign)}.
-                </p>
-                <p class="section-detail">
-                    <em>Как обрести эмоциональный комфорт:</em> ${this.getMoonAdvice(moonSign, moonHouse)}
-                </p>
-            </div>
-            
-            <!-- РАЗДЕЛ 4: БАЛАНС СТИХИЙ -->
-            <div class="interpretation-section elements-section">
-                <h4>🔥💧🌍💨 БАЛАНС СТИХИЙ В ВАШЕЙ КАРТЕ</h4>
-                <p class="section-detail">
-                    ${analysis}
-                </p>
-                 <div class="elements-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;">
-                     <div style="text-align: center; padding: 10px; background: rgba(255, 77, 77, 0.1); border-radius: 8px;">
-                        <span style="font-size: 24px;">🔥</span>
-                        <div><strong>Огонь</strong></div>
-                        <div>${this.countElement('fire', planets)}%</div>
-                    </div>
-                    <div style="text-align: center; padding: 10px; background: rgba(77, 255, 77, 0.1); border-radius: 8px;">
-                        <span style="font-size: 24px;">🌍</span>
-                        <div><strong>Земля</strong></div>
-                        <div>${this.countElement('earth', planets)}%</div>
-                    </div>
-                    <div style="text-align: center; padding: 10px; background: rgba(77, 77, 255, 0.1); border-radius: 8px;">
-                        <span style="font-size: 24px;">💨</span>
-                        <div><strong>Воздух</strong></div>
-                        <div>${this.countElement('air', planets)}%</div>
-                    </div>
-                    <div style="text-align: center; padding: 10px; background: rgba(77, 255, 255, 0.1); border-radius: 8px;">
-                        <span style="font-size: 24px;">💧</span>
-                        <div><strong>Вода</strong></div>
-                        <div>${this.countElement('water', planets)}%</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- РАЗДЕЛ 5: ПЛАНЕТЫ В ДОМАХ -->
-            <div class="interpretation-section planets-houses-section">
-                <h4>📊 ПЛАНЕТЫ В ДОМАХ: СФЕРЫ ЖИЗНИ</h4>
-                <p class="section-detail">
-                    Дома в астрологии показывают конкретные сферы жизни, где планеты проявляют свое влияние. Анализ распределения планет по домам позволяет понять, какие области жизни наиболее активны и требуют вашего внимания.
-                </p>
-                <div class="planets-houses">
-                    ${this.renderPlanetsInHouses(planets)}
-                </div>
-                <p class="section-detail" style="margin-top: 20px;">
-                    ${this.analyzeHouseDistribution(planets)}
-                </p>
-            </div>
-            
-            <!-- РАЗДЕЛ 6: КЛЮЧЕВЫЕ АСПЕКТЫ -->
-            <div class="interpretation-section aspects-section">
-                <h4>⚡ ВЗАИМОДЕЙСТВИЕ ПЛАНЕТ: АСПЕКТЫ</h4>
-                <p class="section-detail">
-                    Аспекты — это угловые расстояния между планетами, показывающие, как различные части вашей личности взаимодействуют друг с другом. Одни аспекты создают гармонию и таланты, другие — напряжение и вызовы, которые становятся точками роста.
-                </p>
-                <div class="aspects-interpretation">
-                    ${this.renderAspectsInterpretation(aspects)}
-                </div>
-            </div>
-            
-            <!-- РАЗДЕЛ 7: ОБЩИЙ ПОРТРЕТ -->
-            <div class="interpretation-section summary-section">
-                <h4>🌟 СИНТЕЗ: ВАША УНИКАЛЬНАЯ ЛИЧНОСТЬ</h4>
-                <p class="summary-text">
-                    ${this.renderOverallPortrait(ascSign, sunSign, moonSign, planets, aspects)}
-                </p>
-                <p class="section-detail" style="margin-top: 20px;">
-                    Ваша натальная карта — это не приговор, а карта местности. Звезды указывают направление, но выбор пути всегда остается за вами. Используйте знание о своих сильных сторонах, чтобы реализовать потенциал, и работайте над зонами роста, чтобы стать гармоничной личностью.
-                </p>
-                <p class="section-detail" style="margin-top: 20px; font-style: italic; color: #c9a54b;">
-                    "Познай самого себя, и ты познаешь Вселенную и богов" — Гермес Трисмегист
-                </p>
-            </div>
+    <div class="interpretation-container">
+        <!-- Вступление -->
+        <div class="interpretation-section intro-section">
+            <h4>🌟 ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ</h4>
+            <p class="section-content">
+                В момент вашего рождения, ${this.escapeHtml(birthDate)} в ${this.escapeHtml(birthTime)}, 
+                небесные тела выстроились в уникальную конфигурацию, которая сформировала ваш характер, 
+                таланты и жизненный путь. Анализ вашей натальной карты позволяет заглянуть в самые глубокие 
+                слои вашей личности и понять, какие энергии определяют вашу судьбу.
+            </p>
         </div>
-        `;
+        
+        <!-- Асцендент -->
+        <div class="interpretation-section ascendant-section">
+            <h4>🌅 АСЦЕНДЕНТ (Восходящий знак) — ${this.escapeHtml(ascSign)} ${this.escapeHtml(ascDegree)}°</h4>
+            <p class="section-content">${this.getAscendantShortDescription(ascSign)}</p>
+            <p class="section-detail">${ascDesc}</p>
+            <p class="section-detail"><em>Рекомендация:</em> ${this.getAscendantAdvice(ascSign)}</p>
+        </div>
+        
+        <!-- Солнце -->
+        <div class="interpretation-section sun-section">
+            <h4>☀️ СОЛНЦЕ (Сущность, эго, жизненная сила) — ${this.escapeHtml(sunSign)} ${this.escapeHtml(sunDegree)}° в ${sunHouse} доме</h4>
+            <p class="section-content">${this.getSunDescription(sunSign)}</p>
+            <p class="section-detail">${sunDesc}</p>
+            <p class="section-detail">${this.getSunInHouseDescription(sunSign, sunHouse)}</p>
+            <p class="section-detail"><em>Совет для самореализации:</em> ${this.getSunAdvice(sunSign, sunHouse)}</p>
+        </div>
+        
+        <!-- Луна -->
+        <div class="interpretation-section moon-section">
+            <h4>🌙 ЛУНА (Душа, эмоции, подсознание) — ${this.escapeHtml(moonSign)} ${this.escapeHtml(moonDegree)}° в ${moonHouse} доме</h4>
+            <p class="section-content">${this.getMoonDescription(moonSign)}</p>
+            <p class="section-detail">${moonDesc}</p>
+            <p class="section-detail">${this.getMoonInHouseDescription(moonSign, moonHouse)}</p>
+            <p class="section-detail"><em>Как обрести эмоциональный комфорт:</em> ${this.getMoonAdvice(moonSign, moonHouse)}</p>
+        </div>
+        
+        <!-- Баланс стихий -->
+        <div class="interpretation-section elements-section">
+            <h4>🔥💧🌍💨 БАЛАНС СТИХИЙ В ВАШЕЙ КАРТЕ</h4>
+            <p class="section-detail">${analysis}</p>
+        </div>
+        
+        <!-- Ключевые аспекты -->
+        ${aspects && aspects.length > 0 ? `
+        <div class="interpretation-section aspects-section">
+            <h4>⚡ ВЗАИМОДЕЙСТВИЕ ПЛАНЕТ: АСПЕКТЫ</h4>
+            <p class="section-detail">Аспекты — это угловые расстояния между планетами, показывающие, как различные части вашей личности взаимодействуют друг с другом.</p>
+            ${aspects.slice(0, 8).map(a => `<p class="section-detail">• ${a.planet1} — ${a.planet2}: ${a.description}</p>`).join('')}
+        </div>
+        ` : ''}
+        
+        <!-- Общий портрет -->
+        <div class="interpretation-section summary-section">
+            <h4>🌟 СИНТЕЗ: ВАША УНИКАЛЬНАЯ ЛИЧНОСТЬ</h4>
+            <p class="summary-text">
+                ${this.renderOverallPortrait(ascSign, sunSign, moonSign, planets, aspects)}
+            </p>
+            <p class="section-detail" style="margin-top: 20px; font-style: italic;">
+                "Познай самого себя, и ты познаешь Вселенную и богов" — Гермес Трисмегист
+            </p>
+        </div>
+    </div>
+    `;
     }
 
     /**
      * Рендеринг расширенного отчета
      */
-    renderExpandedReport(data) {
+    renderExpandedReport(data, tariffCode) {
         const planets = data.planets || {};
         const ascendant = data.ascendant || {};
         const ascSign = ascendant.sign || 'Неизвестно';
         const sunSign = planets.sun?.sign || 'Неизвестно';
         const moonSign = planets.moon?.sign || 'Неизвестно';
 
-        return `
+        // Для базового тарифа — расширенный отчет не показываем
+        if (tariffCode === 'natal_basic') {
+            return '';
+        }
+
+        // Для стандартного тарифа — добавляем психологический портрет и таланты
+        if (tariffCode === 'natal_standard') {
+            return `
         <div class="expanded-report">
             <h3 class="report-section-title">🧠 ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h3>
             <div class="report-section">
@@ -462,33 +614,49 @@ class AstrologyRenderService {
             <div class="report-section">
                 ${this.renderTalents(planets)}
             </div>
-
-            <h3 class="report-section-title">📊 ПИРАМИДА ПОТРЕБНОСТЕЙ</h3>
-            <div class="report-section">
-                ${this.renderMaslowPyramid(planets)}
-            </div>
-
-            <h3 class="report-section-title">🔄 ЖИЗНЕННЫЕ СЦЕНАРИИ</h3>
-            <div class="report-section">
-                ${this.renderLifeScenarios(planets)}
-            </div>
-
-            <h3 class="report-section-title">💼 БИЗНЕС И КАРЬЕРА</h3>
-            <div class="report-section">
-                ${this.renderBusinessAdvice(planets)}
-            </div>
-
-            <h3 class="report-section-title">⚕️ ЗДОРОВЬЕ И РИСКИ</h3>
-            <div class="report-section">
-                ${this.renderHealthRisks(planets)}
-            </div>
-
-            <h3 class="report-section-title">🌟 ЗАДАЧА ТЕКУЩЕГО ВОПЛОЩЕНИЯ</h3>
-            <div class="report-section">
-                ${this.renderLifeTask(planets)}
-            </div>
         </div>
         `;
+        }
+
+        // Для полного и премиум тарифов — полный расширенный отчет
+        return `
+    <div class="expanded-report">
+        <h3 class="report-section-title">🧠 ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ</h3>
+        <div class="report-section">
+            ${this.renderPsychologicalProfile(sunSign, moonSign, ascSign)}
+        </div>
+
+        <h3 class="report-section-title">🎯 ВРОЖДЕННЫЕ ТАЛАНТЫ</h3>
+        <div class="report-section">
+            ${this.renderTalents(planets)}
+        </div>
+
+        <h3 class="report-section-title">📊 ПИРАМИДА ПОТРЕБНОСТЕЙ (Маслоу)</h3>
+        <div class="report-section">
+            ${this.renderMaslowPyramid(planets)}
+        </div>
+
+        <h3 class="report-section-title">🔄 ЖИЗНЕННЫЕ СЦЕНАРИИ</h3>
+        <div class="report-section">
+            ${this.renderLifeScenarios(planets)}
+        </div>
+
+        <h3 class="report-section-title">💼 БИЗНЕС И КАРЬЕРА</h3>
+        <div class="report-section">
+            ${this.renderBusinessAdvice(planets)}
+        </div>
+
+        <h3 class="report-section-title">⚕️ ЗДОРОВЬЕ И РИСКИ</h3>
+        <div class="report-section">
+            ${this.renderHealthRisks(planets)}
+        </div>
+
+        <h3 class="report-section-title">🌟 ЗАДАЧА ТЕКУЩЕГО ВОПЛОЩЕНИЯ</h3>
+        <div class="report-section">
+            ${this.renderLifeTask(planets)}
+        </div>
+    </div>
+    `;
     }
 
     // ========== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ==========

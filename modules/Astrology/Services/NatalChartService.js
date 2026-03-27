@@ -345,13 +345,28 @@ class NatalChartService {
      */
     async calculate(data) {
         try {
-            const { fullName, birthDate, birthTime, latitude, longitude, houseSystem, userId } = data;
+            const { fullName, birthDate, birthTime, latitude, longitude, houseSystem, userId, tariffCode } = data;
 
-            const [day, month, year] = birthDate.split('.').map(Number);
+            console.log('[NatalChartService] Расчет натальной карты:', { fullName, birthDate, birthTime, latitude, longitude, tariffCode });
+
+            // Парсим дату - поддерживаем оба формата
+            let day, month, year;
+
+            if (birthDate.includes('-')) {
+                // Формат YYYY-MM-DD
+                [year, month, day] = birthDate.split('-').map(Number);
+            } else if (birthDate.includes('.')) {
+                // Формат DD.MM.YYYY
+                [day, month, year] = birthDate.split('.').map(Number);
+            } else {
+                throw new Error('Неверный формат даты. Используйте ДД.ММ.ГГГГ или ГГГГ-ММ-ДД');
+            }
+
             const [hour, minute] = birthTime.split(':').map(Number);
 
             // Валидация
             if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hour) || isNaN(minute)) {
+                console.error('Ошибка парсинга:', { day, month, year, hour, minute, birthDate, birthTime });
                 throw new Error('Неверный формат даты или времени');
             }
 
@@ -375,20 +390,48 @@ class NatalChartService {
             // Данные для отрисовки
             const chartData = this.formatForDraw(enrichedPlanets, houses);
 
-            // Генерация интерпретации
+            // Форматируем дату для ответа в читаемый формат
+            const formattedBirthDate = `${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year}`;
+
+            // Базовая интерпретация
             const interpretation = this.generateInterpretation(
                 ascendantDesc,
                 enrichedPlanets.sun,
                 enrichedPlanets.moon,
                 enrichedPlanets,
-                aspects
+                aspects,
+                tariffCode
             );
+
+            // Расширенная интерпретация (для платных тарифов)
+            let expandedInterpretation = null;
+            if (tariffCode === 'natal_full' || tariffCode === 'natal_premium') {
+                expandedInterpretation = this.generateExpandedInterpretation(enrichedPlanets, aspects, tariffCode);
+            }
+
+            // Кармический анализ (только для премиум)
+            let karmaAnalysis = null;
+            if (tariffCode === 'natal_premium') {
+                karmaAnalysis = this.generateKarmaAnalysis(enrichedPlanets);
+            }
+
+            // Рекомендации (только для премиум)
+            let recommendations = null;
+            if (tariffCode === 'natal_premium') {
+                recommendations = this.generateRecommendations(enrichedPlanets);
+            }
+
+            // Транзитный прогноз (только для премиум)
+            let transits = null;
+            if (tariffCode === 'natal_premium') {
+                transits = this.generateTransits();
+            }
 
             return {
                 success: true,
                 data: {
                     fullName,
-                    birthDate,
+                    birthDate: formattedBirthDate,
                     birthTime,
                     latitude,
                     longitude,
@@ -398,7 +441,12 @@ class NatalChartService {
                     houses: enrichedHouses,
                     aspects: aspects,
                     chartData: chartData,
-                    interpretation: interpretation
+                    interpretation: interpretation,
+                    expandedInterpretation: expandedInterpretation,
+                    karmaAnalysis: karmaAnalysis,
+                    recommendations: recommendations,
+                    transits: transits,
+                    tariffCode: tariffCode
                 }
             };
 
@@ -411,10 +459,287 @@ class NatalChartService {
         }
     }
 
+    generateExpandedInterpretation(planets, aspects, tariffCode) {
+        // Для стандартного тарифа — не показываем расширенный отчет
+        if (tariffCode === 'natal_standard') {
+            return null;
+        }
+
+        // Только для полного и премиум тарифов
+        let html = `
+    <div class="expanded-report">
+        <h3>🧠 РАСШИРЕННЫЙ ПСИХОЛОГИЧЕСКИЙ АНАЛИЗ</h3>
+    `;
+
+        // Анализ стихий
+        const fireCount = this.countElement('fire', planets);
+        const earthCount = this.countElement('earth', planets);
+        const airCount = this.countElement('air', planets);
+        const waterCount = this.countElement('water', planets);
+
+        html += `
+    <div class="report-section">
+        <h4>🔥 Баланс стихий</h4>
+        <div class="elements-bars">
+            <div>Огонь: ${fireCount}% <div class="bar"><div style="width: ${fireCount}%; background: #ff4d4d;"></div></div></div>
+            <div>Земля: ${earthCount}% <div class="bar"><div style="width: ${earthCount}%; background: #4dff4d;"></div></div></div>
+            <div>Воздух: ${airCount}% <div class="bar"><div style="width: ${airCount}%; background: #4d4dff;"></div></div></div>
+            <div>Вода: ${waterCount}% <div class="bar"><div style="width: ${waterCount}%; background: #4dffff;"></div></div></div>
+        </div>
+        <p>${this.getElementsAnalysis(fireCount, earthCount, airCount, waterCount)}</p>
+    </div>
+    `;
+
+        // Анализ домов (наиболее загруженные)
+        const houseDistribution = this.analyzeHouseDistribution(planets);
+        html += `
+    <div class="report-section">
+        <h4>🏠 Сферы жизни</h4>
+        <p>${houseDistribution}</p>
+    </div>
+    `;
+
+        // Ключевые аспекты
+        if (aspects && aspects.length > 0) {
+            html += `
+        <div class="report-section">
+            <h4>⚡ Ключевые аспекты</h4>
+            ${aspects.slice(0, 8).map(a => `<p>• ${a.planet1} — ${a.planet2}: ${a.description}</p>`).join('')}
+        </div>
+        `;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    generateKarmaAnalysis(planets) {
+        const saturn = planets.saturn;
+        const northNode = planets.northNode || { sign: 'Стрелец', degreeInSign: '15.0' };
+        const southNode = planets.southNode || { sign: 'Близнецы', degreeInSign: '15.0' };
+
+        const saturnSign = saturn?.sign || 'Овен';
+
+        const pastLife = this.getPastLifeBySouthNode(southNode.sign);
+        const currentTask = this.getCurrentTaskByNorthNode(northNode.sign);
+        const saturnLesson = this.getSaturnLesson(saturnSign);
+
+        return {
+            pastLifeLessons: pastLife,
+            currentTask: currentTask,
+            saturnLesson: saturnLesson
+        };
+    }
+
+    generateRecommendations(planets) {
+        const sun = planets.sun;
+        const moon = planets.moon;
+        const ascendant = planets.ascendant || { sign: 'Близнецы' };
+
+        const recommendations = [];
+
+        if (sun) {
+            recommendations.push(`Раскрывайте свою солнечную природу (${sun.sign}) через ${this.getSunRecommendation(sun.sign)}`);
+        }
+        if (moon) {
+            recommendations.push(`Заботьтесь о своей лунной потребности (${moon.sign}) через ${this.getMoonRecommendation(moon.sign)}`);
+        }
+        if (ascendant) {
+            recommendations.push(`Используйте силу асцендента (${ascendant.sign}) для ${this.getAscendantRecommendation(ascendant.sign)}`);
+        }
+
+        return recommendations;
+    }
+
+    generateTransits() {
+        const now = new Date();
+        const month = now.getMonth();
+        const seasons = ['зиму', 'весну', 'лето', 'осень'];
+        const season = seasons[Math.floor(month / 3)];
+
+        return `В ближайшие три месяца ожидается ${season}й период активности. ${month < 3 ? 'Зимой' : month < 6 ? 'Весной' : month < 9 ? 'Летом' : 'Осенью'} возможны важные события в сфере карьеры и отношений.`;
+    }
+
+    countElement(element, planets) {
+        const elementMap = {
+            'fire': ['Овен', 'Лев', 'Стрелец'],
+            'earth': ['Телец', 'Дева', 'Козерог'],
+            'air': ['Близнецы', 'Весы', 'Водолей'],
+            'water': ['Рак', 'Скорпион', 'Рыбы']
+        };
+
+        let count = 0;
+        let total = 0;
+
+        for (const planet of Object.values(planets)) {
+            if (planet && planet.sign) {
+                total++;
+                if (elementMap[element].includes(planet.sign)) count++;
+            }
+        }
+
+        return total > 0 ? Math.round((count / total) * 100) : 0;
+    }
+
+    getElementsAnalysis(fire, earth, air, water) {
+        if (fire > 40) return 'В вашей карте преобладает стихия Огня. Вы энергичны, страстны и инициативны.';
+        if (earth > 40) return 'В вашей карте преобладает стихия Земли. Вы практичны, надежны и основательны.';
+        if (air > 40) return 'В вашей карте преобладает стихия Воздуха. Вы коммуникабельны и интеллектуальны.';
+        if (water > 40) return 'В вашей карте преобладает стихия Воды. Вы эмоциональны, интуитивны и чувствительны.';
+        return 'В вашей карте все стихии представлены гармонично. Вы многогранны и адаптивны.';
+    }
+
+    analyzeHouseDistribution(planets) {
+        const houseCount = {};
+        for (const planet of Object.values(planets)) {
+            if (planet && planet.longitude !== undefined) {
+                const house = Math.floor(planet.longitude / 30) + 1;
+                houseCount[house] = (houseCount[house] || 0) + 1;
+            }
+        }
+
+        let maxHouse = null;
+        let maxCount = 0;
+        for (let i = 1; i <= 12; i++) {
+            if (houseCount[i] > maxCount) {
+                maxCount = houseCount[i];
+                maxHouse = i;
+            }
+        }
+
+        const houseMeanings = {
+            1: 'личности и самовыражения',
+            2: 'финансов и самооценки',
+            3: 'общения и обучения',
+            4: 'дома и семьи',
+            5: 'творчества и любви',
+            6: 'работы и здоровья',
+            7: 'партнерства и брака',
+            8: 'трансформации и кризисов',
+            9: 'путешествий и философии',
+            10: 'карьеры и призвания',
+            11: 'друзей и надежд',
+            12: 'подсознания и тайн'
+        };
+
+        return maxHouse ?
+            `Наибольшее скопление планет в ${maxHouse} доме (${houseMeanings[maxHouse]}). Эта сфера жизни будет для вас наиболее важной.` :
+            'Планеты равномерно распределены по домам, что дает вам многогранность интересов.';
+    }
+
+    getPastLifeBySouthNode(sign) {
+        const pastLife = {
+            'Овен': 'В прошлых жизнях вы действовали импульсивно и самостоятельно.',
+            'Телец': 'В прошлых жизнях вы накапливали материальные ценности.',
+            'Близнецы': 'В прошлых жизнях вы много общались и путешествовали.',
+            'Рак': 'В прошлых жизнях вы были глубоко привязаны к семье и дому.',
+            'Лев': 'В прошлых жизнях вы были в центре внимания, творили и вдохновляли.',
+            'Дева': 'В прошлых жизнях вы служили, анализировали, стремились к совершенству.',
+            'Весы': 'В прошлых жизнях вы искали гармонию и партнерство.',
+            'Скорпион': 'В прошлых жизнях вы проходили через глубокие трансформации.',
+            'Стрелец': 'В прошлых жизнях вы путешествовали и искали смысл жизни.',
+            'Козерог': 'В прошлых жизнях вы строили карьеру и достигали высот.',
+            'Водолей': 'В прошлых жизнях вы были свободны и независимы в мыслях.',
+            'Рыбы': 'В прошлых жизнях вы были погружены в искусство и духовность.'
+        };
+        return pastLife[sign] || 'Ваш прошлый опыт был богат и разнообразен.';
+    }
+
+    getCurrentTaskByNorthNode(sign) {
+        const tasks = {
+            'Овен': 'научиться действовать самостоятельно, проявлять инициативу.',
+            'Телец': 'научиться ценить себя и создавать устойчивую ценность.',
+            'Близнецы': 'научиться коммуникации и обмену информацией.',
+            'Рак': 'научиться заботиться о себе и создавать эмоциональную безопасность.',
+            'Лев': 'научиться творческому самовыражению и лидерству.',
+            'Дева': 'научиться служить и совершенствовать.',
+            'Весы': 'научиться строить гармоничные отношения.',
+            'Скорпион': 'научиться трансформации и глубокому познанию.',
+            'Стрелец': 'научиться искать смысл и расширять горизонты.',
+            'Козерог': 'научиться ответственности и достижению целей.',
+            'Водолей': 'научиться быть уникальным и вносить вклад в общество.',
+            'Рыбы': 'научиться доверять интуиции и соединяться с высшим.'
+        };
+        return tasks[sign] || 'раскрыть свой уникальный потенциал.';
+    }
+
+    getSaturnLesson(sign) {
+        const lessons = {
+            'Овен': 'научиться действовать самостоятельно, не оглядываясь на других.',
+            'Телец': 'научиться ценить себя и свои ресурсы.',
+            'Близнецы': 'научиться ясно выражать мысли и слушать.',
+            'Рак': 'научиться заботиться о себе так же, как о других.',
+            'Лев': 'научиться принимать себя и не ждать постоянного признания.',
+            'Дева': 'научиться принимать несовершенство.',
+            'Весы': 'научиться принимать решения и нести за них ответственность.',
+            'Скорпион': 'научиться отпускать контроль и доверять.',
+            'Стрелец': 'научиться ответственности и завершению начатого.',
+            'Козерог': 'научиться радоваться жизни без погони за статусом.',
+            'Водолей': 'научиться балансу между свободой и близостью.',
+            'Рыбы': 'научиться различать интуицию и иллюзии.'
+        };
+        return lessons[sign] || 'интегрировать свои уроки и стать более целостной личностью.';
+    }
+
+    getSunRecommendation(sign) {
+        const recs = {
+            'Овен': 'спорт, соревнования, лидерство',
+            'Телец': 'творчество, природа, накопление',
+            'Близнецы': 'общение, обучение, путешествия',
+            'Рак': 'заботу о близких, дом',
+            'Лев': 'творчество, выступления, хобби',
+            'Дева': 'работу, служение, порядок',
+            'Весы': 'искусство, партнерство, гармонию',
+            'Скорпион': 'исследования, психологию, трансформацию',
+            'Стрелец': 'путешествия, философию, обучение',
+            'Козерог': 'карьеру, достижения, структуру',
+            'Водолей': 'инновации, друзей, социальную активность',
+            'Рыбы': 'искусство, музыку, духовные практики'
+        };
+        return recs[sign] || 'самовыражение';
+    }
+
+    getMoonRecommendation(sign) {
+        const recs = {
+            'Овен': 'физическую активность',
+            'Телец': 'создание уюта и комфорта',
+            'Близнецы': 'общение и новую информацию',
+            'Рак': 'время с семьей и близкими',
+            'Лев': 'творчество и внимание к себе',
+            'Дева': 'порядок и заботу о здоровье',
+            'Весы': 'красоту и гармонию',
+            'Скорпион': 'глубокие чувства и трансформацию',
+            'Стрелец': 'свободу и новые впечатления',
+            'Козерог': 'достижения и структуру',
+            'Водолей': 'друзей и единомышленников',
+            'Рыбы': 'творчество и уединение'
+        };
+        return recs[sign] || 'эмоциональный комфорт';
+    }
+
+    getAscendantRecommendation(sign) {
+        const recs = {
+            'Овен': 'проявления себя в мире',
+            'Телец': 'создания устойчивости',
+            'Близнецы': 'коммуникации',
+            'Рак': 'эмпатии и заботы',
+            'Лев': 'самопрезентации',
+            'Дева': 'служения и порядка',
+            'Весы': 'дипломатии',
+            'Скорпион': 'глубины и проницательности',
+            'Стрелец': 'расширения горизонтов',
+            'Козерог': 'достижения целей',
+            'Водолей': 'оригинальности',
+            'Рыбы': 'интуиции и творчества'
+        };
+        return recs[sign] || 'личностного роста';
+    }
+    // modules/astrology/Services/NatalChartService.js
+
     /**
-     * Генерация интерпретации
+     * Генерация интерпретации в зависимости от тарифа
      */
-    generateInterpretation(ascendant, sun, moon, planets, aspects) {
+    generateInterpretation(ascendant, sun, moon, planets, aspects, tariffCode = 'natal_basic') {
         const ascSign = ascendant.sign;
         const sunSign = sun?.sign || 'Неизвестно';
         const moonSign = moon?.sign || 'Неизвестно';
@@ -422,7 +747,74 @@ class NatalChartService {
         const sunElement = sun?.element || '—';
         const moonElement = moon?.element || '—';
 
-        // Базовый портрет
+        // ========== БАЗОВЫЙ ТАРИФ ==========
+        if (tariffCode === 'natal_basic') {
+            let portrait = `
+🌟 **ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ (БАЗОВЫЙ)**
+
+**Асцендент (${ascSign}, ${ascElement})**
+${ascendant.description}
+
+**Солнце (${sunSign}, ${sunElement})**
+${sun?.signDescription || 'Описание отсутствует'}
+
+**Луна (${moonSign}, ${moonElement})**
+${moon?.signDescription || 'Описание отсутствует'}
+`;
+
+            // Краткий анализ стихий
+            if (ascElement === sunElement && sunElement === moonElement) {
+                portrait += `
+✨ **Стихийный портрет**
+В вашей карте усилена стихия ${ascElement}. Это дает вам целостность и концентрацию энергии.`;
+            } else {
+                portrait += `
+✨ **Стихийный портрет**
+В вашей карте сочетаются стихии: внешность ${ascElement}, сущность ${sunElement}, эмоции ${moonElement}. Вы многогранны и адаптивны.`;
+            }
+
+            return portrait;
+        }
+
+        // ========== СТАНДАРТНЫЙ ТАРИФ ==========
+        if (tariffCode === 'natal_standard') {
+            let portrait = `
+🌟 **ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ (СТАНДАРТНЫЙ)**
+
+**Асцендент (${ascSign}, ${ascElement})**
+${ascendant.description}
+
+**Солнце (${sunSign}, ${sunElement})**
+${sun?.signDescription || 'Описание отсутствует'}
+
+**Луна (${moonSign}, ${moonElement})**
+${moon?.signDescription || 'Описание отсутствует'}
+`;
+
+            // Анализ стихий
+            if (ascElement === sunElement && sunElement === moonElement) {
+                portrait += `
+✨ **Стихийный портрет**
+В вашей карте трижды усилена стихия ${ascElement}. Это дает мощную концентрацию энергии и целостность натуры.`;
+            } else {
+                portrait += `
+✨ **Стихийный портрет**
+В вашей карте сочетаются разные стихии: внешность ${ascElement}, сущность ${sunElement}, эмоции ${moonElement}. Это делает вас многогранной личностью.`;
+            }
+
+            // Ключевые аспекты (только основные)
+            if (aspects && aspects.length > 0) {
+                portrait += `\n\n⚡ **КЛЮЧЕВЫЕ АСПЕКТЫ**\n`;
+                const topAspects = aspects.slice(0, 3); // Только 3 основных аспекта
+                topAspects.forEach(aspect => {
+                    portrait += `• ${aspect.planet1} — ${aspect.planet2}: ${aspect.description}\n`;
+                });
+            }
+
+            return portrait;
+        }
+
+        // ========== ПОЛНЫЙ И ПРЕМИУМ ТАРИФЫ ==========
         let portrait = `
 🌟 **ВАШ АСТРОЛОГИЧЕСКИЙ ПОРТРЕТ**
 
@@ -447,11 +839,10 @@ ${moon?.signDescription || 'Описание отсутствует'}
 В вашей карте сочетаются разные стихии: внешность ${ascElement}, сущность ${sunElement}, эмоции ${moonElement}. Это делает вас многогранной личностью.`;
         }
 
-        // Ключевые аспекты
+        // Все аспекты
         if (aspects && aspects.length > 0) {
-            portrait += `\n\n⚡ **КЛЮЧЕВЫЕ АСПЕКТЫ**\n`;
-            const topAspects = aspects.slice(0, 5);
-            topAspects.forEach(aspect => {
+            portrait += `\n\n⚡ **ВСЕ АСПЕКТЫ**\n`;
+            aspects.forEach(aspect => {
                 portrait += `• ${aspect.planet1} — ${aspect.planet2}: ${aspect.description}\n`;
             });
         }
