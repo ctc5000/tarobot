@@ -12,7 +12,6 @@ class CoreApp {
         this.loadMenuData();
         this.renderMainNav();
         this.renderFooter();
-        this.initMetrika();
     }
 
     async loadMenuData() {
