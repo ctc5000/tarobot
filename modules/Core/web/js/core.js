@@ -12,14 +12,13 @@ class CoreApp {
         this.loadMenuData();
         this.renderMainNav();
         this.renderFooter();
+        this.initMetrika();
     }
+
     async loadMenuData() {
         try {
             // Загружаем меню из JSON файлов
-            const [mainMenu, mobileMenu, footerMenu] = await Promise.all([
-                fetch('/core/menu.json').then(res => res.json()),
-                fetch('/core/mobile-menu.json').then(res => res.json()),
-                fetch('/core/menu.json').then(res => res.json()) // footer берем из основного меню
+            const [mainMenu, mobileMenu, footerMenu] = await Promise.all([fetch('/core/menu.json').then(res => res.json()), fetch('/core/mobile-menu.json').then(res => res.json()), fetch('/core/menu.json').then(res => res.json()) // footer берем из основного меню
             ]);
 
             this.menuData = mainMenu;
@@ -86,9 +85,7 @@ class CoreApp {
         }
 
         if (footerLinks && this.footerData) {
-            footerLinks.innerHTML = this.footerData.links.map(link =>
-                `<a href="${link.url}">${link.name}</a>`
-            ).join('');
+            footerLinks.innerHTML = this.footerData.links.map(link => `<a href="${link.url}">${link.name}</a>`).join('');
         }
 
         if (footerBottom && this.footerData) {
@@ -142,6 +139,7 @@ class CoreApp {
             });
         }
     }
+
     async checkAuth() {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -239,6 +237,50 @@ class CoreApp {
     logout() {
         localStorage.removeItem('token');
         window.location.href = '/';
+    }
+
+    initMetrika() {
+        // Проверяем, что Метрика еще не инициализирована
+        if (typeof window.ym !== 'undefined') {
+            console.log('Yandex.Metrika already initialized');
+            return;
+        }
+
+        // Создаем скрипт динамически
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.src = 'https://mc.yandex.ru/metrika/tag.js?id=107722589';
+
+        // Добавляем обработчик загрузки скрипта
+        script.onload = () => {
+            // Инициализируем счетчик
+            if (typeof window.ym === 'function') {
+                window.ym(107722589, 'init', {
+                    ssr: true,
+                    webvisor: true,
+                    clickmap: true,
+                    ecommerce: "dataLayer",
+                    referrer: document.referrer,
+                    url: location.href,
+                    accurateTrackBounce: true,
+                    trackLinks: true
+                });
+                console.log('Yandex.Metrika initialized');
+            }
+        };
+
+        script.onerror = (error) => {
+            console.error('Failed to load Yandex.Metrika:', error);
+        };
+
+        // Добавляем скрипт в head
+        document.head.appendChild(script);
+
+        // Добавляем noscript fallback
+        const noscript = document.createElement('noscript');
+        noscript.innerHTML = `<div><img src="https://mc.yandex.ru/watch/107722589" style="position:absolute; left:-9999px;" alt="" /></div>`;
+        document.body.appendChild(noscript);
     }
 }
 
