@@ -270,7 +270,7 @@
                     <h3 style="color: var(--accent-gold); margin: 0 0 15px 0;">🏛️ АРХЕТИП ЛИЧНОСТИ</h3>
                     <h4 style="color: var(--text-primary); margin: 0 0 10px 0;">${psychology.archetype.name || ''}</h4>
                     <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 15px;">${psychology.archetype.description || ''}</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-bottom: 15px;">
                         <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 12px;">
                             <strong style="color: #4caf50; display: block; margin-bottom: 5px;">🎁 Дар</strong>
                             <span style="color: var(--text-secondary);">${psychology.archetype.gift || ''}</span>
