@@ -823,9 +823,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 2px solid var(--history-border);
+    border-bottom: 1px solid var(--border-color);
     flex-wrap: wrap;
     gap: 15px;
 }
@@ -851,11 +851,11 @@
 
 .btn-download-pdf {
     background: transparent;
-    border: 1px solid var(--history-primary);
-    color: var(--history-primary);
-    padding: 10px 20px;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 8px 20px;
     border-radius: 30px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -865,11 +865,11 @@
 }
 
 .btn-download-pdf:hover {
-    background: var(--history-gradient);
-    color: #1a1a24;
+    background: var(--primary-gradient);
+    color: var(--dark);
     transform: translateY(-2px);
-    box-shadow: var(--history-glow);
 }
+
 
 .person-info-grid {
     display: grid;
@@ -1591,6 +1591,7 @@
     border-bottom: 1px solid var(--history-border);
     position: relative;
     padding-left: 20px;
+    text-align: left;
 }
 
 .grid-item li:last-child {

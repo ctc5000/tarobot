@@ -799,10 +799,999 @@ class NumerologyPdfService {
         `;
     }
 
-    formatDate(dateStr) {
+   /* formatDate(dateStr) {
         if (!dateStr) return '';
         const [day, month, year] = dateStr.split('.');
         return `${day}.${month}.${year}`;
+    }*/
+
+    // modules/Numerology/Services/NumerologyPdfService.js
+// Добавьте эти методы в существующий класс
+
+    /**
+     * Генерация PDF для прогноза на день
+     */
+    async generateDayForecastPDF(data) {
+        const html = this.generateDayForecastHTML(data);
+        return this.generatePDFFromHTML(html);
+    }
+
+    /**
+     * Генерация PDF для прогноза на неделю
+     */
+    async generateWeekForecastPDF(data) {
+        const html = this.generateWeekForecastHTML(data);
+        return this.generatePDFFromHTML(html);
+    }
+
+    /**
+     * Генерация PDF для прогноза на месяц
+     */
+    async generateMonthForecastPDF(data) {
+        const html = this.generateMonthForecastHTML(data);
+        return this.generatePDFFromHTML(html);
+    }
+
+    /**
+     * Генерация PDF для прогноза на год
+     */
+    async generateYearForecastPDF(data) {
+        const html = this.generateYearForecastHTML(data);
+        return this.generatePDFFromHTML(html);
+    }
+
+    /**
+     * Генерация PDF для совместимости
+     */
+    async generateCompatibilityPDF(data) {
+        const html = this.generateCompatibilityHTML(data);
+        return this.generatePDFFromHTML(html);
+    }
+
+    /**
+     * Универсальный метод генерации PDF из HTML
+     */
+    async generatePDFFromHTML(html) {
+        let browser = null;
+        try {
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+
+            const page = await browser.newPage();
+            await page.setViewport({ width: 1200, height: 1600 });
+            await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+
+            const pdf = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+                preferCSSPageSize: true
+            });
+
+            return Buffer.from(pdf);
+        } catch (error) {
+            console.error('Ошибка генерации PDF:', error);
+            throw error;
+        } finally {
+            if (browser) await browser.close();
+        }
+    }
+
+    /**
+     * HTML для прогноза на день
+     */
+    generateDayForecastHTML(data) {
+        const { fullName, birthDate, forecast, interpretation, deepPortrait, targetDate } = data;
+        const numbers = forecast.numbers || {};
+        const desc = forecast.description || {};
+        const universal = desc.universal || {};
+        const personal = desc.personal || {};
+        const expression = desc.expression || {};
+        const dateInfo = desc.dateInfo || {};
+        const tarot = forecast.tarot || {};
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+
+        const formattedTargetDate = targetDate ? this.formatDate(targetDate) : '—';
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Прогноз на день - ${fullName}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    background: #ffffff;
+                    color: #000000;
+                    line-height: 1.5;
+                    font-size: 12pt;
+                }
+                .container { max-width: 180mm; margin: 0 auto; }
+                .title-page {
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    page-break-after: always;
+                }
+                .title-page h1 {
+                    font-size: 28pt;
+                    font-weight: bold;
+                    color: #000000;
+                    margin-bottom: 10mm;
+                    text-transform: uppercase;
+                }
+                .title-page h2 { font-size: 18pt; font-weight: normal; margin-bottom: 20mm; }
+                .title-page .name { font-size: 24pt; font-weight: bold; margin: 15mm 0; padding: 10mm 0; border-top: 2px solid #000000; border-bottom: 2px solid #000000; }
+                .title-page .date { font-size: 14pt; margin: 10mm 0; }
+                .title-page .stamp { margin-top: 20mm; font-size: 10pt; color: #666666; }
+                .section-title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 10mm 0 5mm 0;
+                    padding-bottom: 2mm;
+                    border-bottom: 1px solid #000000;
+                }
+                .subsection-title { font-size: 14pt; font-weight: bold; margin: 5mm 0 3mm 0; }
+                .numbers-grid {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 5mm 0;
+                }
+                .numbers-grid td {
+                    border: 1px solid #000000;
+                    padding: 3mm;
+                    text-align: center;
+                    width: 33%;
+                }
+                .numbers-grid .number { font-size: 24pt; font-weight: bold; }
+                .numbers-grid .label { font-size: 10pt; color: #666666; }
+                .code-grid {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin: 5mm 0;
+                }
+                .code-item {
+                    flex: 1;
+                    min-width: 150px;
+                    border: 1px solid #cccccc;
+                    padding: 3mm;
+                    background: #f5f5f5;
+                }
+                .energy-badge {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin: 5mm 0;
+                }
+                .energy-badge span {
+                    padding: 2mm 5mm;
+                    background: #f0f0f0;
+                    border: 1px solid #cccccc;
+                    border-radius: 20px;
+                }
+                .forecast-sections {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 5mm;
+                    margin: 5mm 0;
+                }
+                .forecast-section {
+                    border: 1px solid #cccccc;
+                    padding: 3mm;
+                    background: #fafafa;
+                }
+                .forecast-section h4 { margin-bottom: 2mm; }
+                .tarot-mini {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #f5f5f5;
+                    border: 1px solid #cccccc;
+                }
+                .detail-block {
+                    margin: 3mm 0;
+                    padding: 3mm;
+                    border: 1px solid #eeeeee;
+                }
+                .affirmation {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #f0f0f0;
+                    font-style: italic;
+                    text-align: center;
+                }
+                .interpretation-text, .portrait-text {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #fafafa;
+                    line-height: 1.6;
+                    white-space: pre-line;
+                }
+                .footer {
+                    margin-top: 10mm;
+                    text-align: right;
+                    font-size: 10pt;
+                    color: #666666;
+                }
+                @media print {
+                    body { background: white; }
+                    .page-break { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="title-page">
+                    <h1>АЛГОРИТМ СУДЬБЫ</h1>
+                    <h2>Прогноз на день</h2>
+                    <div class="name">${fullName}</div>
+                    <div class="date">Дата рождения: ${this.formatDate(birthDate)}<br>Дата прогноза: ${formattedTargetDate}</div>
+                    <div class="stamp">Официальный документ • Дата составления: ${currentDate}</div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">1. КОСМИЧЕСКИЙ КОД ДНЯ</h3>
+                    <table class="numbers-grid">
+                        <tr>
+                            <td><div class="number">${numbers.universal || '?'}</div><div class="label">Универсальное число</div></td>
+                            <td><div class="number">${numbers.personal || '?'}</div><div class="label">Личное число</div></td>
+                            <td><div class="number">${numbers.expression || '?'}</div><div class="label">Число выражения</div></td>
+                        </tr>
+                    </table>
+
+                    <div class="code-grid">
+                        <div class="code-item"><strong>Стихия:</strong> ${universal.element || '—'}</div>
+                        <div class="code-item"><strong>Планета:</strong> ${universal.planet || '—'}</div>
+                        <div class="code-item"><strong>Лунный день:</strong> ${dateInfo.lunarDay || '—'}</div>
+                    </div>
+
+                    <h3 class="section-title">2. ЭНЕРГЕТИКА ДНЯ</h3>
+                    <p><strong>${universal.name || ''}</strong> — ${universal.positive || ''}</p>
+                    ${universal.negative ? `<p style="margin-top: 3mm;"><strong>⚠️ Внимание:</strong> ${universal.negative}</p>` : ''}
+
+                    <h3 class="section-title">3. ПРОГНОЗ ПО СФЕРАМ ЖИЗНИ</h3>
+                    <div class="forecast-sections">
+                        <div class="forecast-section"><h4>💼 Карьера</h4><p>${universal.career || '—'}</p></div>
+                        <div class="forecast-section"><h4>❤️ Любовь</h4><p>${universal.love || '—'}</p></div>
+                        <div class="forecast-section"><h4>🌿 Здоровье</h4><p>${universal.health || '—'}</p></div>
+                        <div class="forecast-section"><h4>💰 Финансы</h4><p>${universal.finance || '—'}</p></div>
+                    </div>
+
+                    <h3 class="section-title">4. КАРТА ТАРО ДНЯ</h3>
+                    <div class="tarot-mini">
+                        <h4>${tarot.name || 'Карта дня'}</h4>
+                        <p>${tarot.description || ''}</p>
+                        <p><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+
+                    <h3 class="section-title">5. РЕКОМЕНДАЦИИ</h3>
+                    <div class="detail-block"><strong>🎨 Цвета дня:</strong> ${(forecast.colors || ['Белый']).join(', ')}</div>
+                    <div class="detail-block"><strong>💎 Камни-талисманы:</strong> ${(forecast.crystals || ['Горный хрусталь']).join(', ')}</div>
+                    <div class="detail-block"><strong>🌺 Ароматы:</strong> ${(forecast.scents || ['Лаванда']).join(', ')}</div>
+                    <div class="detail-block"><strong>⏰ Благоприятные часы:</strong> ${(forecast.favorableHours || ['11:00-13:00']).join(', ')}</div>
+
+                    <div class="affirmation">
+                        <p>"${forecast.affirmation || 'Я в гармонии с потоком жизни'}"</p>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div>
+                    <h3 class="section-title">СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text">${(interpretation || '').replace(/\n/g, '<br>')}</div>
+
+                    <h3 class="section-title">ГЛУБИННЫЙ ПОРТРЕТ ДНЯ</h3>
+                    <div class="portrait-text">${(deepPortrait || '').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * HTML для прогноза на неделю
+     */
+    generateWeekForecastHTML(data) {
+        const { fullName, birthDate, weekRange, forecast, interpretation, deepPortrait } = data;
+        const weekAnalysis = forecast.weekAnalysis || {};
+        const lifeAreas = forecast.lifeAreas || {};
+        const dailyBreakdown = forecast.dailyBreakdown || [];
+        const tarot = forecast.tarot || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+
+        const dailyHTML = dailyBreakdown.map(day => `
+            <div style="border: 1px solid #cccccc; padding: 3mm; margin: 3mm 0;">
+                <h4 style="margin: 0 0 2mm 0;">${day.dayName} (${day.date})</h4>
+                <div><strong>Число дня:</strong> ${day.universalNumber} (личное: ${day.personalNumber})</div>
+                <div><strong>Энергия:</strong> ${day.energy || '—'}</div>
+                <div><strong>Фокус:</strong> ${day.focus || '—'}</div>
+                <div><strong>Совет:</strong> ${day.advice || '—'}</div>
+                <div><strong>Цвет:</strong> ${day.color || '—'} | <strong>Камень:</strong> ${day.crystal || '—'}</div>
+            </div>
+        `).join('');
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Прогноз на неделю - ${fullName}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    background: #ffffff;
+                    color: #000000;
+                    line-height: 1.5;
+                    font-size: 12pt;
+                }
+                .container { max-width: 180mm; margin: 0 auto; }
+                .title-page {
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    page-break-after: always;
+                }
+                .title-page h1 {
+                    font-size: 28pt;
+                    font-weight: bold;
+                    margin-bottom: 10mm;
+                    text-transform: uppercase;
+                }
+                .title-page h2 { font-size: 18pt; font-weight: normal; margin-bottom: 20mm; }
+                .title-page .name { font-size: 24pt; font-weight: bold; margin: 15mm 0; padding: 10mm 0; border-top: 2px solid #000000; border-bottom: 2px solid #000000; }
+                .title-page .date { font-size: 14pt; margin: 10mm 0; }
+                .section-title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 10mm 0 5mm 0;
+                    padding-bottom: 2mm;
+                    border-bottom: 1px solid #000000;
+                }
+                .week-analysis { margin: 5mm 0; }
+                .life-areas-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 3mm;
+                    margin: 5mm 0;
+                }
+                .life-area {
+                    border: 1px solid #cccccc;
+                    padding: 3mm;
+                }
+                .daily-item { margin: 3mm 0; }
+                .interpretation-text, .portrait-text {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #fafafa;
+                    line-height: 1.6;
+                    white-space: pre-line;
+                }
+                .footer {
+                    margin-top: 10mm;
+                    text-align: right;
+                    font-size: 10pt;
+                    color: #666666;
+                }
+                @media print {
+                    body { background: white; }
+                    .page-break { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="title-page">
+                    <h1>АЛГОРИТМ СУДЬБЫ</h1>
+                    <h2>Прогноз на неделю</h2>
+                    <div class="name">${fullName}</div>
+                    <div class="date">Дата рождения: ${this.formatDate(birthDate)}<br>Неделя: ${weekRange?.start || '—'} — ${weekRange?.end || '—'}</div>
+                    <div class="stamp">Официальный документ • Дата составления: ${currentDate}</div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">1. ОБЩАЯ ХАРАКТЕРИСТИКА НЕДЕЛИ</h3>
+                    <div class="week-analysis">
+                        <h4>${weekAnalysis.theme || 'Прогноз на неделю'}</h4>
+                        <p>${weekAnalysis.description || ''}</p>
+                        <p><strong>Совет недели:</strong> ${weekAnalysis.advice || ''}</p>
+                        ${weekAnalysis.personalNote ? `<p><strong>Персональная нота:</strong> ${weekAnalysis.personalNote}</p>` : ''}
+                    </div>
+
+                    <h3 class="section-title">2. ПРОГНОЗ ПО СФЕРАМ ЖИЗНИ</h3>
+                    <div class="life-areas-grid">
+                        <div class="life-area"><strong>💼 Карьера</strong><br>${lifeAreas.career || '—'}</div>
+                        <div class="life-area"><strong>❤️ Любовь</strong><br>${lifeAreas.love || '—'}</div>
+                        <div class="life-area"><strong>🌿 Здоровье</strong><br>${lifeAreas.health || '—'}</div>
+                        <div class="life-area"><strong>💰 Финансы</strong><br>${lifeAreas.finance || '—'}</div>
+                    </div>
+
+                    <h3 class="section-title">3. ДНЕВНАЯ РАЗБИВКА</h3>
+                    <div class="daily-item">${dailyHTML}</div>
+
+                    <h3 class="section-title">4. РЕКОМЕНДАЦИИ НА НЕДЕЛЮ</h3>
+                    <div><strong>🎨 Цвета недели:</strong> ${colors.join(', ') || '—'}</div>
+                    <div><strong>💎 Камни:</strong> ${crystals.join(', ') || '—'}</div>
+                    <div><strong>🌺 Ароматы:</strong> ${scents.join(', ') || '—'}</div>
+
+                    <div class="affirmation" style="margin: 5mm 0; padding: 5mm; background: #f0f0f0; font-style: italic; text-align: center;">
+                        <p>"${affirmation}"</p>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div>
+                    <h3 class="section-title">СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text">${(interpretation || '').replace(/\n/g, '<br>')}</div>
+
+                    <h3 class="section-title">ГЛУБИННЫЙ ПОРТРЕТ НЕДЕЛИ</h3>
+                    <div class="portrait-text">${(deepPortrait || '').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * HTML для прогноза на месяц
+     */
+    generateMonthForecastHTML(data) {
+        const { fullName, birthDate, monthRange, forecast, interpretation, deepPortrait } = data;
+        const monthAnalysis = forecast.monthAnalysis || {};
+        const lifeAreas = forecast.lifeAreas || {};
+        const weeklyBreakdown = forecast.weeklyBreakdown || [];
+        const importantDates = forecast.importantDates || [];
+        const tarot = forecast.tarot || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+
+        const weeklyHTML = weeklyBreakdown.map(week => `
+            <div style="border: 1px solid #cccccc; padding: 3mm; margin: 3mm 0;">
+                <h4>Неделя ${week.weekNumber} (${week.startDate} — ${week.endDate})</h4>
+                <div><strong>Число недели:</strong> ${week.weekNumberValue}</div>
+                <div><strong>Энергия:</strong> ${week.energy || '—'}</div>
+                <div><strong>Фокус:</strong> ${week.focus || '—'}</div>
+            </div>
+        `).join('');
+
+        const datesHTML = importantDates.map(date => `
+            <div style="display: inline-block; width: 30%; margin: 2mm; padding: 2mm; border: 1px solid #cccccc;">
+                <strong>${date.date}</strong><br>
+                Число: ${date.dayNumber}<br>
+                ${date.reason || ''}
+            </div>
+        `).join('');
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Прогноз на месяц - ${fullName}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    background: #ffffff;
+                    color: #000000;
+                    line-height: 1.5;
+                    font-size: 12pt;
+                }
+                .container { max-width: 180mm; margin: 0 auto; }
+                .title-page {
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    page-break-after: always;
+                }
+                .title-page h1 {
+                    font-size: 28pt;
+                    font-weight: bold;
+                    margin-bottom: 10mm;
+                    text-transform: uppercase;
+                }
+                .title-page h2 { font-size: 18pt; font-weight: normal; margin-bottom: 20mm; }
+                .title-page .name { font-size: 24pt; font-weight: bold; margin: 15mm 0; padding: 10mm 0; border-top: 2px solid #000000; border-bottom: 2px solid #000000; }
+                .title-page .date { font-size: 14pt; margin: 10mm 0; }
+                .section-title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 10mm 0 5mm 0;
+                    padding-bottom: 2mm;
+                    border-bottom: 1px solid #000000;
+                }
+                .life-areas-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 3mm;
+                    margin: 5mm 0;
+                }
+                .life-area {
+                    border: 1px solid #cccccc;
+                    padding: 3mm;
+                }
+                .dates-grid {
+                    display: flex;
+                    flex-wrap: wrap;
+                    margin: 5mm 0;
+                }
+                .interpretation-text, .portrait-text {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #fafafa;
+                    line-height: 1.6;
+                    white-space: pre-line;
+                }
+                .footer {
+                    margin-top: 10mm;
+                    text-align: right;
+                    font-size: 10pt;
+                    color: #666666;
+                }
+                @media print {
+                    body { background: white; }
+                    .page-break { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="title-page">
+                    <h1>АЛГОРИТМ СУДЬБЫ</h1>
+                    <h2>Прогноз на месяц</h2>
+                    <div class="name">${fullName}</div>
+                    <div class="date">Дата рождения: ${this.formatDate(birthDate)}<br>Месяц: ${monthRange?.monthName || '—'} ${monthRange?.year || ''}</div>
+                    <div class="stamp">Официальный документ • Дата составления: ${currentDate}</div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">1. ОБЩАЯ ХАРАКТЕРИСТИКА МЕСЯЦА</h3>
+                    <div>
+                        <h4>${monthAnalysis.theme || 'Прогноз на месяц'}</h4>
+                        <p>${monthAnalysis.description || ''}</p>
+                        <p><strong>Совет месяца:</strong> ${monthAnalysis.advice || ''}</p>
+                        ${monthAnalysis.personalNote ? `<p><strong>Персональная нота:</strong> ${monthAnalysis.personalNote}</p>` : ''}
+                    </div>
+
+                    <h3 class="section-title">2. ПРОГНОЗ ПО СФЕРАМ ЖИЗНИ</h3>
+                    <div class="life-areas-grid">
+                        <div class="life-area"><strong>💼 Карьера</strong><br>${lifeAreas.career || '—'}</div>
+                        <div class="life-area"><strong>❤️ Любовь</strong><br>${lifeAreas.love || '—'}</div>
+                        <div class="life-area"><strong>🌿 Здоровье</strong><br>${lifeAreas.health || '—'}</div>
+                        <div class="life-area"><strong>💰 Финансы</strong><br>${lifeAreas.finance || '—'}</div>
+                    </div>
+
+                    <h3 class="section-title">3. НЕДЕЛЬНАЯ РАЗБИВКА</h3>
+                    ${weeklyHTML}
+
+                    <h3 class="section-title">4. ВАЖНЫЕ ДАТЫ МЕСЯЦА</h3>
+                    <div class="dates-grid">${datesHTML}</div>
+
+                    <h3 class="section-title">5. КАРТА ТАРО МЕСЯЦА</h3>
+                    <div style="padding: 5mm; border: 1px solid #cccccc; margin: 5mm 0;">
+                        <h4>${tarot.name || 'Карта месяца'}</h4>
+                        <p>${tarot.description || ''}</p>
+                        <p><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+
+                    <div class="affirmation" style="margin: 5mm 0; padding: 5mm; background: #f0f0f0; font-style: italic; text-align: center;">
+                        <p>"${affirmation}"</p>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div>
+                    <h3 class="section-title">СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text">${(interpretation || '').replace(/\n/g, '<br>')}</div>
+
+                    <h3 class="section-title">ГЛУБИННЫЙ ПОРТРЕТ МЕСЯЦА</h3>
+                    <div class="portrait-text">${(deepPortrait || '').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * HTML для прогноза на год
+     */
+    generateYearForecastHTML(data) {
+        const { fullName, birthDate, yearInfo, forecast, interpretation, deepPortrait } = data;
+        const yearAnalysis = forecast.yearAnalysis || {};
+        const yearCycle = forecast.yearCycle || {};
+        const quarterlyBreakdown = forecast.quarterlyBreakdown || [];
+        const monthlyHighlights = forecast.monthlyHighlights || [];
+        const importantDates = forecast.importantDates || [];
+        const tarot = forecast.tarot || {};
+        const colors = forecast.colors || [];
+        const crystals = forecast.crystals || [];
+        const scents = forecast.scents || [];
+        const affirmation = forecast.affirmation || '';
+        const chineseZodiac = yearInfo?.chineseZodiac || {};
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+
+        const quarterlyHTML = quarterlyBreakdown.map(q => `
+            <div style="border: 1px solid #cccccc; padding: 3mm; margin: 3mm 0;">
+                <h4>${q.season} (${q.months?.join(', ') || ''})</h4>
+                <div><strong>Число:</strong> ${q.number || '?'}</div>
+                <div><strong>Энергия:</strong> ${q.energy || '—'}</div>
+                <div><strong>Фокус:</strong> ${q.focus || '—'}</div>
+                <div><strong>Совет:</strong> ${q.advice || '—'}</div>
+            </div>
+        `).join('');
+
+        const monthsHTML = monthlyHighlights.map(m => `
+            <div style="display: inline-block; width: 30%; margin: 2mm; padding: 2mm; border: 1px solid #cccccc;">
+                <strong>${m.monthName}</strong><br>
+                Число: ${m.number}<br>
+                ${m.reason || ''}
+            </div>
+        `).join('');
+
+        const datesHTML = importantDates.map(d => `
+            <div style="display: inline-block; width: 45%; margin: 2mm; padding: 2mm; border: 1px solid #cccccc;">
+                <strong>${d.date}</strong><br>
+                ${d.name}<br>
+                Число: ${d.number}<br>
+                ${d.reason}
+            </div>
+        `).join('');
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Прогноз на год - ${fullName}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    background: #ffffff;
+                    color: #000000;
+                    line-height: 1.5;
+                    font-size: 12pt;
+                }
+                .container { max-width: 180mm; margin: 0 auto; }
+                .title-page {
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    page-break-after: always;
+                }
+                .title-page h1 {
+                    font-size: 28pt;
+                    font-weight: bold;
+                    margin-bottom: 10mm;
+                    text-transform: uppercase;
+                }
+                .title-page h2 { font-size: 18pt; font-weight: normal; margin-bottom: 20mm; }
+                .title-page .name { font-size: 24pt; font-weight: bold; margin: 15mm 0; padding: 10mm 0; border-top: 2px solid #000000; border-bottom: 2px solid #000000; }
+                .title-page .date { font-size: 14pt; margin: 10mm 0; }
+                .section-title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 10mm 0 5mm 0;
+                    padding-bottom: 2mm;
+                    border-bottom: 1px solid #000000;
+                }
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 3mm;
+                    margin: 5mm 0;
+                }
+                .info-item {
+                    border: 1px solid #cccccc;
+                    padding: 3mm;
+                }
+                .dates-grid {
+                    display: flex;
+                    flex-wrap: wrap;
+                    margin: 5mm 0;
+                }
+                .interpretation-text, .portrait-text {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #fafafa;
+                    line-height: 1.6;
+                    white-space: pre-line;
+                }
+                .footer {
+                    margin-top: 10mm;
+                    text-align: right;
+                    font-size: 10pt;
+                    color: #666666;
+                }
+                @media print {
+                    body { background: white; }
+                    .page-break { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="title-page">
+                    <h1>АЛГОРИТМ СУДЬБЫ</h1>
+                    <h2>Прогноз на ${yearInfo?.year || '2026'} год</h2>
+                    <div class="name">${fullName}</div>
+                    <div class="date">Дата рождения: ${this.formatDate(birthDate)}</div>
+                    <div class="stamp">Официальный документ • Дата составления: ${currentDate}</div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">1. ОБЩАЯ ХАРАКТЕРИСТИКА ГОДА</h3>
+                    <div class="info-grid">
+                        <div class="info-item"><strong>Число года:</strong> ${forecast.yearNumber || '?'}</div>
+                        <div class="info-item"><strong>Универсальное число:</strong> ${yearInfo?.universalYearNumber || '?'}</div>
+                        <div class="info-item"><strong>Китайский гороскоп:</strong> ${chineseZodiac.element || ''} ${chineseZodiac.animal || ''}</div>
+                        <div class="info-item"><strong>9-летний цикл:</strong> ${yearCycle.name || '—'}</div>
+                    </div>
+
+                    <div>
+                        <h4>${yearAnalysis.theme || 'Прогноз на год'}</h4>
+                        <p>${yearAnalysis.description || ''}</p>
+                        <p><strong>Совет года:</strong> ${yearAnalysis.advice || ''}</p>
+                        ${yearAnalysis.personalNote ? `<p><strong>Персональная нота:</strong> ${yearAnalysis.personalNote}</p>` : ''}
+                    </div>
+
+                    <h3 class="section-title">2. КВАРТАЛЬНАЯ РАЗБИВКА</h3>
+                    ${quarterlyHTML}
+
+                    <h3 class="section-title">3. КЛЮЧЕВЫЕ МЕСЯЦЫ</h3>
+                    <div class="dates-grid">${monthsHTML}</div>
+
+                    <h3 class="section-title">4. ВАЖНЫЕ ДАТЫ</h3>
+                    <div class="dates-grid">${datesHTML}</div>
+
+                    <h3 class="section-title">5. КАРТА ТАРО ГОДА</h3>
+                    <div style="padding: 5mm; border: 1px solid #cccccc; margin: 5mm 0;">
+                        <h4>${tarot.name || 'Карта года'}</h4>
+                        <p>${tarot.description || ''}</p>
+                        <p><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                    </div>
+
+                    <div class="affirmation" style="margin: 5mm 0; padding: 5mm; background: #f0f0f0; font-style: italic; text-align: center;">
+                        <p>"${affirmation}"</p>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div>
+                    <h3 class="section-title">СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text">${(interpretation || '').replace(/\n/g, '<br>')}</div>
+
+                    <h3 class="section-title">ГЛУБИННЫЙ ПОРТРЕТ ГОДА</h3>
+                    <div class="portrait-text">${(deepPortrait || '').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    /**
+     * HTML для совместимости
+     */
+    generateCompatibilityHTML(data) {
+        const { fullName, birthDate, person1, person2, compatibility, interpretation, deepPortrait } = data;
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Анализ совместимости - ${fullName}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Times New Roman', Times, serif;
+                    background: #ffffff;
+                    color: #000000;
+                    line-height: 1.5;
+                    font-size: 12pt;
+                }
+                .container { max-width: 180mm; margin: 0 auto; }
+                .title-page {
+                    text-align: center;
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    page-break-after: always;
+                }
+                .title-page h1 {
+                    font-size: 28pt;
+                    font-weight: bold;
+                    margin-bottom: 10mm;
+                    text-transform: uppercase;
+                }
+                .title-page h2 { font-size: 18pt; font-weight: normal; margin-bottom: 20mm; }
+                .title-page .name { font-size: 24pt; font-weight: bold; margin: 15mm 0; padding: 10mm 0; border-top: 2px solid #000000; border-bottom: 2px solid #000000; }
+                .title-page .date { font-size: 14pt; margin: 10mm 0; }
+                .section-title {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    margin: 10mm 0 5mm 0;
+                    padding-bottom: 2mm;
+                    border-bottom: 1px solid #000000;
+                }
+                .persons-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 5mm;
+                    margin: 5mm 0;
+                }
+                .person-card {
+                    border: 1px solid #000000;
+                    padding: 5mm;
+                    text-align: center;
+                }
+                .compatibility-score {
+                    text-align: center;
+                    margin: 10mm 0;
+                }
+                .compatibility-value {
+                    font-size: 36pt;
+                    font-weight: bold;
+                }
+                .compatibility-bar {
+                    width: 80%;
+                    margin: 5mm auto;
+                    height: 4mm;
+                    background: #eeeeee;
+                    border: 1px solid #cccccc;
+                }
+                .compatibility-progress {
+                    height: 100%;
+                    background: #000000;
+                    width: ${compatibility?.score || 0}%;
+                }
+                .strengths-section, .challenges-section, .advice-section {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    border: 1px solid #cccccc;
+                }
+                .interpretation-text, .portrait-text {
+                    margin: 5mm 0;
+                    padding: 5mm;
+                    background: #fafafa;
+                    line-height: 1.6;
+                    white-space: pre-line;
+                }
+                .footer {
+                    margin-top: 10mm;
+                    text-align: right;
+                    font-size: 10pt;
+                    color: #666666;
+                }
+                @media print {
+                    body { background: white; }
+                    .page-break { page-break-after: always; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="title-page">
+                    <h1>АЛГОРИТМ СУДЬБЫ</h1>
+                    <h2>Нумерологический анализ совместимости</h2>
+                    <div class="name">${fullName}</div>
+                    <div class="date">Дата рождения: ${this.formatDate(birthDate)}</div>
+                    <div class="stamp">Официальный документ • Дата составления: ${currentDate}</div>
+                </div>
+
+                <div>
+                    <h3 class="section-title">1. ДАННЫЕ ПАРЫ</h3>
+                    <div class="persons-grid">
+                        <div class="person-card">
+                            <h4>${person1?.fullName || 'Партнер 1'}</h4>
+                            <p>Число судьбы: <strong>${person1?.numerology?.fate || '?'}</strong></p>
+                            <p>Дата рождения: ${this.formatDate(person1?.birthDate)}</p>
+                        </div>
+                        <div class="person-card">
+                            <h4>${person2?.fullName || 'Партнер 2'}</h4>
+                            <p>Число судьбы: <strong>${person2?.numerology?.fate || '?'}</strong></p>
+                            <p>Дата рождения: ${this.formatDate(person2?.birthDate)}</p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">2. УРОВЕНЬ СОВМЕСТИМОСТИ</h3>
+                    <div class="compatibility-score">
+                        <div class="compatibility-value">${compatibility?.score || 0}%</div>
+                        <div class="compatibility-level">${compatibility?.level || 'Совместимость'}</div>
+                        <div class="compatibility-bar">
+                            <div class="compatibility-progress" style="width: ${compatibility?.score || 0}%"></div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">3. АНАЛИЗ СОЮЗА</h3>
+                    <div class="strengths-section">
+                        <h4>🌟 Сильные стороны союза</h4>
+                        ${(compatibility?.strengths || []).map(s => `<p>• ${s}</p>`).join('')}
+                    </div>
+
+                    <div class="challenges-section">
+                        <h4>🌙 Зоны роста</h4>
+                        ${(compatibility?.challenges || []).map(c => `<p>• ${c}</p>`).join('')}
+                    </div>
+
+                    <div class="advice-section">
+                        <h4>💫 Совет по совместимости</h4>
+                        <p>${compatibility?.advice || ''}</p>
+                    </div>
+                </div>
+
+                <div class="page-break"></div>
+
+                <div>
+                    <h3 class="section-title">СВИТОК СУДЬБЫ</h3>
+                    <div class="interpretation-text">${(interpretation || '').replace(/\n/g, '<br>')}</div>
+
+                    <h3 class="section-title">ГЛУБИННЫЙ АНАЛИЗ ОТНОШЕНИЙ</h3>
+                    <div class="portrait-text">${(deepPortrait || '').replace(/\n/g, '<br>')}</div>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 АЛГОРИТМ СУДЬБЫ. Все права защищены.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    formatDate(dateStr) {
+        if (!dateStr) return '';
+        if (dateStr.includes('.')) return dateStr;
+        if (dateStr.includes('-')) {
+            const [year, month, day] = dateStr.split('-');
+            return `${day}.${month}.${year}`;
+        }
+        return dateStr;
     }
 }
 

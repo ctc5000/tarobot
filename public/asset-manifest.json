@@ -1,0 +1,13 @@
+{
+  "main.a5003e89492a1a09d769.min.js": "/build/js/main.a5003e89492a1a09d769.min.js",
+  "styles.0154e6b358e5d81569e7.min.css": "/build/css/styles.0154e6b358e5d81569e7.min.css",
+  "styles.8a9bea18e1a395437746.min.css": "/build/css/styles.8a9bea18e1a395437746.min.css",
+  "modules": [
+    "Core",
+    "Astrology",
+    "Astropsychology",
+    "Logs",
+    "Numerology",
+    "Tarot"
+  ]
+}

@@ -52,6 +52,33 @@
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             return response.blob();
+        },
+
+        /**
+         * Скачать PDF для расчета по ID и типу
+         * @param {string} calculationId - ID расчета
+         * @param {string} type - тип расчета (day, week, month, year, compatibility, full)
+         */
+        async downloadPDFByType(calculationId, type = 'full') {
+            const token = localStorage.getItem('token');
+            let endpoint = `/api/numerology/pdf/${type}/${calculationId}`;
+
+            // Для обратной совместимости
+            if (type === 'full') {
+                endpoint = `/api/numerology/pdf/${calculationId}`;
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки PDF: ${response.status}`);
+            }
+
+            return response.blob();
         }
+
     };
 })();

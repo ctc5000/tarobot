@@ -511,6 +511,219 @@ async function generatePdf(req, res) {
         });
     }
 }
+// modules/Numerology/Controllers/NumerologyView.js
+// Добавьте эти методы в конец файла, перед module.exports
+
+/**
+ * Скачать PDF для прогноза на день
+ */
+async function downloadDayForecastPDF(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await calculationService.getCalculationById(id, userId);
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            targetDate: calculation.targetDate,
+            forecast: calculation.result?.forecast || {},
+            interpretation: calculation.result?.interpretation || '',
+            deepPortrait: calculation.result?.deepPortrait || ''
+        };
+
+        const pdfBuffer = await pdfService.generateDayForecastPDF(pdfData);
+        const filename = `day-forecast-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in downloadDayForecastPDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Скачать PDF для прогноза на неделю
+ */
+async function downloadWeekForecastPDF(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await calculationService.getCalculationById(id, userId);
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            weekRange: calculation.result?.weekRange || {},
+            forecast: calculation.result?.forecast || {},
+            interpretation: calculation.result?.interpretation || '',
+            deepPortrait: calculation.result?.deepPortrait || ''
+        };
+
+        const pdfBuffer = await pdfService.generateWeekForecastPDF(pdfData);
+        const filename = `week-forecast-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in downloadWeekForecastPDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Скачать PDF для прогноза на месяц
+ */
+async function downloadMonthForecastPDF(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await calculationService.getCalculationById(id, userId);
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            monthRange: calculation.result?.monthRange || {},
+            forecast: calculation.result?.forecast || {},
+            interpretation: calculation.result?.interpretation || '',
+            deepPortrait: calculation.result?.deepPortrait || ''
+        };
+
+        const pdfBuffer = await pdfService.generateMonthForecastPDF(pdfData);
+        const filename = `month-forecast-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in downloadMonthForecastPDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Скачать PDF для прогноза на год
+ */
+async function downloadYearForecastPDF(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await calculationService.getCalculationById(id, userId);
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            yearInfo: calculation.result?.yearInfo || {},
+            forecast: calculation.result?.forecast || {},
+            interpretation: calculation.result?.interpretation || '',
+            deepPortrait: calculation.result?.deepPortrait || ''
+        };
+
+        const pdfBuffer = await pdfService.generateYearForecastPDF(pdfData);
+        const filename = `year-forecast-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in downloadYearForecastPDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Скачать PDF для совместимости
+ */
+async function downloadCompatibilityPDF(req, res) {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const calculation = await calculationService.getCalculationById(id, userId);
+
+        if (!calculation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Расчет не найден'
+            });
+        }
+
+        const pdfData = {
+            fullName: calculation.result?.fullName || 'Не указано',
+            birthDate: calculation.result?.birthDate || 'Не указана',
+            person1: calculation.result?.person1 || {},
+            person2: calculation.result?.person2 || {},
+            compatibility: calculation.result?.compatibility || {},
+            interpretation: calculation.result?.interpretation || '',
+            deepPortrait: calculation.result?.deepPortrait || ''
+        };
+
+        const pdfBuffer = await pdfService.generateCompatibilityPDF(pdfData);
+        const filename = `compatibility-${calculation.createdAt.toISOString().split('T')[0]}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error('Error in downloadCompatibilityPDF:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
 
 module.exports = {
     calculateBasic,
@@ -520,5 +733,12 @@ module.exports = {
     getHistory,
     getCalculation,
     downloadPdf,
-    generatePdf
+    generatePdf,
+    // Новые методы
+    downloadDayForecastPDF,
+    downloadWeekForecastPDF,
+    downloadMonthForecastPDF,
+    downloadYearForecastPDF,
+    downloadCompatibilityPDF
+
 };

@@ -106,6 +106,65 @@ const NumerologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyn
             makeHandlerAwareOfAsyncErrors(routeController.getAdminStats)
         );
     }
+    // Скачать PDF для прогноза на день
+    if (routeController.downloadDayForecastPDF) {
+        app.get(
+            '/api/numerology/pdf/day/:id',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.downloadDayForecastPDF)
+        );
+    }
+
+    // Скачать PDF для прогноза на неделю
+    if (routeController.downloadWeekForecastPDF) {
+        app.get(
+            '/api/numerology/pdf/week/:id',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.downloadWeekForecastPDF)
+        );
+    }
+
+    // Скачать PDF для прогноза на месяц
+    if (routeController.downloadMonthForecastPDF) {
+        app.get(
+            '/api/numerology/pdf/month/:id',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.downloadMonthForecastPDF)
+        );
+    }
+
+    // Скачать PDF для прогноза на год
+    if (routeController.downloadYearForecastPDF) {
+        app.get(
+            '/api/numerology/pdf/year/:id',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.downloadYearForecastPDF)
+        );
+    }
+
+    // Скачать PDF для совместимости
+    if (routeController.downloadCompatibilityPDF) {
+        app.get(
+            '/api/numerology/pdf/compatibility/:id',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.downloadCompatibilityPDF)
+        );
+    }
 };
 
 module.exports = NumerologyRoute;

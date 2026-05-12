@@ -35,6 +35,7 @@ const SocionicsService = require('./services/socionicsService');
 const AstropsychologyService = require('./services/astropsychologyService');
 const RunesService = require('./services/runesService');
 const NatalChartSimpleService = require('./services/natalChartSimpleService');
+const { assetMiddleware } = require('./middleware/assetLoader');
 
 // Инициализация сервисов
 const services = {
@@ -73,7 +74,7 @@ app.use(bodyParser.json({limit: '10mb'}));
 app.use(bodyParser.urlencoded({extended: true, limit: '10mb'}));
 app.use(cookieParser());
 app.use(cors());
-
+app.use(assetMiddleware);
 // ==================== СТАТИЧЕСКИЕ ФАЙЛЫ ====================
 // Это должно быть ПЕРЕД маршрутами, но ПОСЛЕ middleware
 //app.use(express.static(path.join(__dirname, 'public')));

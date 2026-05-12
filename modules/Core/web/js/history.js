@@ -40,8 +40,10 @@ class HistoryApp {
 
             if (response.ok) {
                 const data = await response.json();
-                window.cabinetApp.user = data.data.user;
-                window.cabinetApp.updateUI();
+                if (window.cabinetApp) {
+                    window.cabinetApp.user = data.data.user;
+                    window.cabinetApp.updateUI();
+                }
             } else if (response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
@@ -52,13 +54,23 @@ class HistoryApp {
     }
 
     initEventListeners() {
-        document.getElementById('filterType')?.addEventListener('change', () => this.applyFilters());
-        document.getElementById('filterDateFrom')?.addEventListener('change', () => this.applyFilters());
-        document.getElementById('filterDateTo')?.addEventListener('change', () => this.applyFilters());
+        const filterType = document.getElementById('filterType');
+        const filterDateFrom = document.getElementById('filterDateFrom');
+        const filterDateTo = document.getElementById('filterDateTo');
+
+        if (filterType) filterType.addEventListener('change', () => this.applyFilters());
+        if (filterDateFrom) filterDateFrom.addEventListener('change', () => this.applyFilters());
+        if (filterDateTo) filterDateTo.addEventListener('change', () => this.applyFilters());
 
         window.addEventListener('click', (e) => {
             const modal = document.getElementById('calculationModal');
             if (e.target === modal) {
+                this.closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
                 this.closeModal();
             }
         });
@@ -120,7 +132,7 @@ class HistoryApp {
         }
 
         list.innerHTML = data.calculations.map(calc => `
-            <div class="calculation-item" onclick="historyApp.viewCalculation('${calc.id}')">
+            <div class="calculation-item" data-calculation-id="${calc.id}" data-calculation-type="${calc.calculationType}">
                 <div class="calc-icon">
                     ${this.getCalculationIcon(calc.calculationType)}
                 </div>
@@ -135,12 +147,20 @@ class HistoryApp {
                         </div>
                     ` : ''}
                 </div>
-                <div class="calc-price">-${calc.price} ₽</div>
+                <div class="calc-price">-${parseFloat(calc.price).toLocaleString()} ₽</div>
                 <button class="btn-view" onclick="event.stopPropagation(); historyApp.viewCalculation('${calc.id}')">
                     <i class="fas fa-eye"></i>
                 </button>
             </div>
         `).join('');
+
+        document.querySelectorAll('.calculation-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-view')) return;
+                const id = item.dataset.calculationId;
+                this.viewCalculation(id);
+            });
+        });
 
         this.renderPagination();
     }
@@ -169,8 +189,8 @@ class HistoryApp {
             'compatibility': 'Совместимость'
         };
 
-        if (calc.service) {
-            return calc.service.name || names[calc.calculationType] || 'Расчет';
+        if (calc.service && calc.service.name) {
+            return calc.service.name;
         }
         return names[calc.calculationType] || 'Расчет';
     }
@@ -200,7 +220,14 @@ class HistoryApp {
             <i class="fas fa-chevron-left"></i>
         </button>`;
 
-        html += `<span class="page-info">${this.currentPage} / ${this.totalPages}</span>`;
+        const startPage = Math.max(1, this.currentPage - 2);
+        const endPage = Math.min(this.totalPages, this.currentPage + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<button onclick="historyApp.goToPage(${i})" ${this.currentPage === i ? 'disabled style="background: var(--primary-gradient); color: #1a1a24;"' : ''}>
+                ${i}
+            </button>`;
+        }
 
         html += `<button onclick="historyApp.goToPage(${this.currentPage + 1})" ${this.currentPage === this.totalPages ? 'disabled' : ''}>
             <i class="fas fa-chevron-right"></i>
@@ -210,6 +237,7 @@ class HistoryApp {
             <i class="fas fa-angle-double-right"></i>
         </button>`;
 
+        html += `<span class="page-info">${this.currentPage} / ${this.totalPages}</span>`;
         html += '</div>';
 
         pagination.innerHTML = html;
@@ -222,17 +250,26 @@ class HistoryApp {
     }
 
     applyFilters() {
-        this.filters.type = document.getElementById('filterType')?.value || 'all';
-        this.filters.dateFrom = document.getElementById('filterDateFrom')?.value || '';
-        this.filters.dateTo = document.getElementById('filterDateTo')?.value || '';
+        const filterType = document.getElementById('filterType');
+        const filterDateFrom = document.getElementById('filterDateFrom');
+        const filterDateTo = document.getElementById('filterDateTo');
+
+        this.filters.type = filterType?.value || 'all';
+        this.filters.dateFrom = filterDateFrom?.value || '';
+        this.filters.dateTo = filterDateTo?.value || '';
         this.currentPage = 1;
         this.loadHistory();
     }
 
     resetFilters() {
-        document.getElementById('filterType').value = 'all';
-        document.getElementById('filterDateFrom').value = '';
-        document.getElementById('filterDateTo').value = '';
+        const filterType = document.getElementById('filterType');
+        const filterDateFrom = document.getElementById('filterDateFrom');
+        const filterDateTo = document.getElementById('filterDateTo');
+
+        if (filterType) filterType.value = 'all';
+        if (filterDateFrom) filterDateFrom.value = '';
+        if (filterDateTo) filterDateTo.value = '';
+
         this.filters = {
             type: 'all',
             dateFrom: '',
@@ -244,6 +281,8 @@ class HistoryApp {
 
     async viewCalculation(id) {
         try {
+            this.showNotification('Загрузка расчета...', 'info');
+
             const response = await fetch(`/api/calculations/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -253,755 +292,445 @@ class HistoryApp {
             if (response.ok) {
                 const data = await response.json();
                 this.currentCalculation = data.data;
-                this.showFullCalculationModal(data.data);
+                this.showCalculationModal(data.data);
+            } else {
+                this.showNotification('Ошибка загрузки расчета', 'error');
             }
         } catch (error) {
             console.error('Error loading calculation:', error);
+            this.showNotification('Ошибка соединения', 'error');
         }
     }
 
+    showCalculationModal(calculation) {
+        const modal = document.getElementById('calculationModal');
+        const body = document.getElementById('modalBody');
+        const title = document.getElementById('modalTitle');
 
-    renderFullReport(result) {
-        const num = result.numerology;
+        if (!modal || !body) return;
+
+        title.textContent = this.getCalculationName(calculation);
+
+        const result = calculation.result || {};
+        const calcType = calculation.calculationType;
+
         let html = '';
 
-        // МАТРИЦА СУДЬБЫ
         html += `
-            <div class="report-section">
-                <h3 class="section-title">
-                    <i class="fas fa-calculator"></i> МАТРИЦА СУДЬБЫ
-                </h3>
-                <div class="numbers-grid">
-                    <div class="number-card">
-                        <div class="number-large">${num.base?.fate || '?'}</div>
-                        <div class="number-label">Судьба</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${num.base?.name || '?'}</div>
-                        <div class="number-label">Имя</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${num.base?.surname || '?'}</div>
-                        <div class="number-label">Род</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${num.base?.patronymic || '?'}</div>
-                        <div class="number-label">Предки</div>
+            <div class="modal-report-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 15px;">
+                <div class="report-badge ${calcType}" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.2), rgba(201, 165, 75, 0.1)); border: 1px solid var(--primary); border-radius: 40px;">
+                    ${this.getCalculationIcon(calcType)} ${this.getCalculationName(calculation)}
+                </div>
+                <button class="btn-download-pdf" onclick="historyApp.downloadPDF('${calculation.id}', '${calcType}')" style="background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-file-pdf"></i> Скачать PDF
+                </button>
+            </div>
+        `;
+
+        html += `
+            <div class="person-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="person-info-card" style="background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-user" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Ищущий</div>
+                        <div style="color: var(--text-primary); font-weight: 600;">${result.fullName || 'Не указано'}</div>
                     </div>
                 </div>
-                
-                <div class="special-numbers">
-                    <div class="special-card">
-                        <div class="special-value">${num.achilles?.number || '?'}</div>
-                        <div class="special-label">Ахиллесова пята</div>
-                        <p class="special-description">${num.achilles?.description || ''}</p>
-                    </div>
-                    <div class="special-card">
-                        <div class="special-value">${num.control?.number || '?'}</div>
-                        <div class="special-label">Число управления</div>
-                        <p class="special-description">${num.control?.description || ''}</p>
+                <div class="person-info-card" style="background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-calendar-alt" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Дата рождения</div>
+                        <div style="color: var(--text-primary); font-weight: 600;">${result.birthDate || '—'}</div>
                     </div>
                 </div>
-                
-                <h4 class="subsection-title">Социальные оклики</h4>
-                <div class="calls-grid">
-                    <div class="call-card">
-                        <div class="call-number">${num.calls?.close || '?'}</div>
-                        <div class="call-label">Близкий круг</div>
-                        <p class="call-description">${num.calls?.descriptions?.close || ''}</p>
+                <div class="person-info-card" style="background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-clock" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Дата расчета</div>
+                        <div style="color: var(--text-primary); font-weight: 600;">${new Date(calculation.createdAt).toLocaleDateString()}</div>
                     </div>
-                    <div class="call-card">
-                        <div class="call-number">${num.calls?.social || '?'}</div>
-                        <div class="call-label">Социум</div>
-                        <p class="call-description">${num.calls?.descriptions?.social || ''}</p>
+                </div>
+                ${calculation.targetDate ? `
+                <div class="person-info-card" style="background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-calendar-check" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Дата прогноза</div>
+                        <div style="color: var(--text-primary); font-weight: 600;">${this.formatDate(calculation.targetDate)}</div>
                     </div>
-                    <div class="call-card">
-                        <div class="call-number">${num.calls?.world || '?'}</div>
-                        <div class="call-label">Дальний круг</div>
-                        <p class="call-description">${num.calls?.descriptions?.world || ''}</p>
+                </div>
+                ` : ''}
+                <div class="person-info-card" style="background: rgba(18, 18, 26, 0.5); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-coins" style="color: var(--primary); font-size: 1.2rem;"></i>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.8rem;">Стоимость</div>
+                        <div style="color: var(--text-primary); font-weight: 600;">${parseFloat(calculation.price).toLocaleString()} ₽</div>
                     </div>
                 </div>
             </div>
         `;
 
-        // ЗВЕЗДНЫЙ КОД
-        if (result.zodiac) {
-            html += `
-                <div class="report-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-star"></i> ЗВЕЗДНЫЙ КОД
-                    </h3>
-                    <div class="zodiac-header">
-                        <div class="zodiac-symbol">${this.getZodiacSymbol(result.zodiac.name)}</div>
-                        <div>
-                            <h4>${result.zodiac.name}</h4>
-                            <p>${result.zodiac.element} • ${result.zodiac.planet}</p>
-                        </div>
-                    </div>
-                    <div class="zodiac-description">
-                        <p>${result.zodiac.description}</p>
-                    </div>
-                    <div class="zodiac-details">
-                        <div class="detail-item">
-                            <strong>🌟 Сильные стороны:</strong>
-                            <p>${result.zodiac.strengths}</p>
-                        </div>
-                        <div class="detail-item">
-                            <strong>🌙 Зоны роста:</strong>
-                            <p>${result.zodiac.weaknesses}</p>
-                        </div>
-                        <div class="detail-item">
-                            <strong>🎯 Жизненная миссия:</strong>
-                            <p>${result.zodiac.lifeMission}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+        if (calcType === 'full' && result.numerology) {
+            html += this.renderFullReport(result);
+        } else if (calcType === 'day' && result.forecast) {
+            html += this.renderDayForecastModal(result);
+        } else if (calcType === 'week' && result.forecast) {
+            html += this.renderWeekForecastModal(result);
+        } else if (calcType === 'month' && result.forecast) {
+            html += this.renderMonthForecastModal(result);
+        } else if (calcType === 'year' && result.forecast) {
+            html += this.renderYearForecastModal(result);
+        } else if (calcType === 'compatibility' && result.compatibility) {
+            html += this.renderCompatibilityModal(result);
+        } else if (result.numerology) {
+            html += this.renderBasicReportModal(result);
+        } else {
+            html += `<pre class="result-content" style="background: rgba(18, 18, 26, 0.5); padding: 20px; border-radius: 16px; overflow-x: auto;">${JSON.stringify(result, null, 2)}</pre>`;
         }
 
-        // ФЕН-ШУЙ
-        if (result.fengShui) {
-            html += `
-                <div class="report-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-wind"></i> ЭНЕРГИЯ ФЕН-ШУЙ
-                    </h3>
-                    <div class="fengshui-header">
-                        <div class="element-symbol">${this.getElementSymbol(result.fengShui.element)}</div>
-                        <h4>${result.fengShui.element}</h4>
+        body.innerHTML = html;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    renderBasicReportModal(result) {
+        const numerology = result.numerology || {};
+        const base = numerology.base || {};
+        const achilles = numerology.achilles || {};
+        const control = numerology.control || {};
+        const calls = numerology.calls || {};
+
+        let html = `
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-calculator"></i> МАТРИЦА СУДЬБЫ
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.fate || '?'}</div>
+                        <div style="color: var(--text-muted);">Число судьбы</div>
                     </div>
-                    <div class="fengshui-details">
-                        <p><strong>🎨 Цвет силы:</strong> ${result.fengShui.color}</p>
-                        <p><strong>🧭 Направление удачи:</strong> ${result.fengShui.direction}</p>
-                        <p><strong>⏰ Время активации:</strong> ${result.fengShui.season}</p>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.name || '?'}</div>
+                        <div style="color: var(--text-muted);">Число имени</div>
                     </div>
-                    <div class="fengshui-description">
-                        <p>${result.fengShui.description}</p>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.surname || '?'}</div>
+                        <div style="color: var(--text-muted);">Число рода</div>
                     </div>
-                    <div class="fengshui-affirmation">
-                        <p><em>"${result.fengShui.affirmation}"</em></p>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.patronymic || '?'}</div>
+                        <div style="color: var(--text-muted);">Число предков</div>
                     </div>
                 </div>
-            `;
-        }
-
-        // ТАРО
-        if (result.tarot) {
-            html += `
-                <div class="report-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-crown"></i> КАРТЫ ТАРО
-                    </h3>
-                    <div class="tarot-grid">
-                        ${this.renderTarotCard('Судьбы', result.tarot.fate)}
-                        ${this.renderTarotCard('Личности', result.tarot.personality)}
-                        ${this.renderTarotCard('Пути', result.tarot.control)}
+            </div>
+            
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-shield-alt"></i> КЛЮЧЕВЫЕ ЧИСЛА
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: rgba(201, 165, 75, 0.1); border-radius: 20px; padding: 25px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${achilles.number || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Ахиллесова пята</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${achilles.description || ''}</div>
+                    </div>
+                    <div style="background: rgba(201, 165, 75, 0.1); border-radius: 20px; padding: 25px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${control.number || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Число управления</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${control.description || ''}</div>
                     </div>
                 </div>
-            `;
-        }
-
-        // ПСИХОЛОГИЯ
-        if (result.psychology) {
-            html += `
-                <div class="report-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-brain"></i> ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ
-                    </h3>
-                    <div class="psychology-section">
-                        <h4>НЛП-профиль</h4>
-                        <p><strong>${result.psychology.modality?.title}</strong></p>
-                        <p>${result.psychology.modality?.description}</p>
-                        
-                        <h4>Архетип личности</h4>
-                        <p><strong>${result.psychology.archetype?.name}</strong></p>
-                        <p>${result.psychology.archetype?.description}</p>
-                        
-                        <h4>Тип привязанности</h4>
-                        <p><strong>${result.psychology.attachment?.name}</strong></p>
-                        <p>${result.psychology.attachment?.description}</p>
+            </div>
+            
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-users"></i> СОЦИАЛЬНЫЕ ОКЛИКИ
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.close || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Близкий круг</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${(calls.descriptions?.close || '').substring(0, 100)}...</div>
+                    </div>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.social || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Социум</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${(calls.descriptions?.social || '').substring(0, 100)}...</div>
+                    </div>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.world || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Дальний круг</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${(calls.descriptions?.world || '').substring(0, 100)}...</div>
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        `;
 
-        // ПАТТЕРНЫ
-        if (result.patterns && result.patterns.length > 0) {
-            html += `
-                <div class="report-section">
-                    <h3 class="section-title">
-                        <i class="fas fa-puzzle-piece"></i> ПАТТЕРНЫ ЛИЧНОСТИ
-                    </h3>
-                    <div class="patterns-list">
-                        ${result.patterns.map(p => `
-                            <div class="pattern-item">
-                                <p>✦ ${p}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // СВИТОК СУДЬБЫ
         if (result.interpretation) {
             html += `
-                <div class="report-section">
-                    <h3 class="section-title">
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
                         <i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ
                     </h3>
-                    <div class="scroll-text">
+                    <div style="background: rgba(18, 18, 26, 0.5); padding: 20px; border-radius: 16px; line-height: 1.8; color: var(--text-secondary);">
                         ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
                     </div>
                 </div>
             `;
         }
 
-        // ГЛУБИННЫЙ ПОРТРЕТ
         if (result.deepPortrait) {
             html += `
                 <div class="report-section">
-                    <h3 class="section-title">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
                         <i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ
                     </h3>
-                    <div class="portrait-text">
+                    <div style="background: rgba(18, 18, 26, 0.5); padding: 20px; border-radius: 16px; line-height: 1.8; color: var(--text-secondary);">
                         ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
                     </div>
                 </div>
             `;
         }
 
-        // ИНТЕРПРЕТАЦИИ
-        if (result.numerology?.interpretations) {
-            html += `
-        <div class="report-section">
-            <h3 class="section-title">
-                <i class="fas fa-chart-pie"></i> ПОЛНЫЕ ИНТЕРПРЕТАЦИИ
-            </h3>
-            <div class="interpretations-grid">
-    `;
-
-            const interps = result.numerology.interpretations;
-
-            if (interps.career) {
-                html += this.renderInterpretationCard('💼 КАРЬЕРА', interps.career);
-            }
-            if (interps.family) {
-                html += this.renderInterpretationCard('👨‍👩‍👧‍👦 СЕМЬЯ', interps.family);
-            }
-            if (interps.love) {
-                html += this.renderInterpretationCard('❤️ ЛЮБОВЬ', interps.love);
-            }
-            if (interps.money) {
-                html += this.renderInterpretationCard('💰 ФИНАНСЫ', interps.money);
-            }
-            if (interps.health) {
-                html += this.renderInterpretationCard('🌿 ЗДОРОВЬЕ', interps.health);
-            }
-            if (interps.talent) {
-                html += this.renderInterpretationCard('⭐ ТАЛАНТЫ', interps.talent);
-            }
-
-            html += '</div></div>';
-        }
-
         return html;
     }
 
-    renderInterpretationCard(title, data) {
-        if (!data) return '';
-
-        // Форматирование списков
-        const formatList = (items) => {
-            if (!items || items.length === 0) return '';
-            return items.map(item => `<li>${item}</li>`).join('');
-        };
-
-        return `
-        <div class="interpretation-card">
-            <div class="interpretation-header">
-                <span class="interpretation-number-badge">${data.careerNumber || data.familyNumber || data.loveNumber || data.moneyNumber || data.healthNumber || data.talentNumber || '?'}</span>
-                <h4>${title}</h4>
-            </div>
-            
-            <div class="interpretation-content">
-                <p class="interpretation-description">${data.description || ''}</p>
-                
-                <div class="interpretation-detailed">
-                    <h5>📝 Подробное описание</h5>
-                    <p>${data.detailedDescription || data.description || ''}</p>
-                </div>
-                
-                ${data.strengths && data.strengths.length ? `
-                <div class="interpretation-section">
-                    <h5>🌟 Сильные стороны</h5>
-                    <ul class="strengths-list">
-                        ${formatList(data.strengths)}
-                    </ul>
-                </div>
-                ` : ''}
-                
-                ${data.weaknesses && data.weaknesses.length ? `
-                <div class="interpretation-section">
-                    <h5>🌙 Зоны роста</h5>
-                    <ul class="weaknesses-list">
-                        ${formatList(data.weaknesses)}
-                    </ul>
-                </div>
-                ` : ''}
-                
-                ${data.suitable && data.suitable.length ? `
-                <div class="interpretation-section">
-                    <h5>💼 Подходящие профессии</h5>
-                    <ul class="suitable-list">
-                        ${formatList(data.suitable)}
-                    </ul>
-                </div>
-                ` : ''}
-                
-                <div class="interpretation-grid">
-                    ${data.workStyle ? `
-                    <div class="grid-item">
-                        <h5>📊 Стиль работы</h5>
-                        <p>${data.workStyle}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.moneyApproach ? `
-                    <div class="grid-item">
-                        <h5>💰 Подход к деньгам</h5>
-                        <p>${data.moneyApproach}</p>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                <div class="interpretation-grid">
-                    ${data.managementStyle ? `
-                    <div class="grid-item">
-                        <h5>👥 Стиль управления</h5>
-                        <p>${data.managementStyle}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.idealEnvironment ? `
-                    <div class="grid-item">
-                        <h5>🏢 Идеальная среда</h5>
-                        <p>${data.idealEnvironment}</p>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                <div class="interpretation-grid">
-                    ${data.successFactors && data.successFactors.length ? `
-                    <div class="grid-item">
-                        <h5>✅ Факторы успеха</h5>
-                        <ul class="factors-list">
-                            ${formatList(data.successFactors)}
-                        </ul>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.failureFactors && data.failureFactors.length ? `
-                    <div class="grid-item">
-                        <h5>❌ Факторы риска</h5>
-                        <ul class="factors-list">
-                            ${formatList(data.failureFactors)}
-                        </ul>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                ${data.developmentPath ? `
-                <div class="interpretation-section development-path">
-                    <h5>🛤️ Путь развития</h5>
-                    <p>${data.developmentPath}</p>
-                </div>
-                ` : ''}
-                
-                <div class="interpretation-numbers">
-                    ${data.successNumber ? `
-                    <div class="number-item">
-                        <span class="number-label">📈 Число успеха:</span>
-                        <span class="number-value">${data.successNumber}</span>
-                        <span class="number-desc">${data.successDescription || ''}</span>
-                    </div>
-                    ` : ''}
-                    
-                    ${data.realizationNumber ? `
-                    <div class="number-item">
-                        <span class="number-label">🎯 Число реализации:</span>
-                        <span class="number-value">${data.realizationNumber}</span>
-                        <span class="number-desc">${data.realizationDescription || ''}</span>
-                    </div>
-                    ` : ''}
-                </div>
-                
-                ${data.advice ? `
-                <div class="interpretation-advice">
-                    <i class="fas fa-quote-left"></i>
-                    <p>${data.advice}</p>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-    `;
-    }
-
-    renderTarotCard(title, card) {
-        if (!card) return '';
-        return `
-            <div class="tarot-card">
-                <div class="tarot-image-container">
-                    <img src="${card.image || '/images/tarot/back.jpg'}" alt="${card.name}" onerror="this.src='/images/tarot/back.jpg'">
-                    <div class="tarot-number-badge">${card.number === 0 ? 22 : card.number}</div>
-                </div>
-                <div class="tarot-content">
-                    <h4>Карта ${title}</h4>
-                    <h5>${card.name}</h5>
-                    <p class="tarot-keywords">${card.keywords}</p>
-                    <p class="tarot-description">${card.description}</p>
-                    <p class="tarot-advice">${card.advice}</p>
-                </div>
-            </div>
-        `;
-    }
-
-    renderBasicReport(calculation, result) {
-        const calcType = calculation.calculationType;
-
-        // Для прогнозов
-        if (calcType === 'day' || calcType === 'week' || calcType === 'month' || calcType === 'year') {
-            return this.renderForecastReport(calculation, result);
-        }
-
-        // Для совместимости
-        if (calcType === 'compatibility') {
-            return this.renderCompatibilityReport(calculation, result);
-        }
-
-        // Для базового расчета
-        if (calcType === 'basic') {
-            return this.renderBasicCalculationReport(result);
-        }
-
-        // Fallback - если тип не определен
-        return this.renderGenericReport(result);
-    }
-
-    renderForecastReport(calculation, result) {
-        const forecast = result.forecast || result;
-        const calcType = calculation.calculationType;
+    renderFullReport(result) {
+        const numerology = result.numerology || {};
+        const base = numerology.base || {};
+        const achilles = numerology.achilles || {};
+        const control = numerology.control || {};
+        const calls = numerology.calls || {};
+        const interpretations = numerology.interpretations || {};
+        const zodiac = result.zodiac || {};
+        const fengShui = result.fengShui || {};
+        const tarot = result.tarot || {};
+        const psychology = result.psychology || {};
+        const patterns = result.patterns || [];
 
         let html = `
-            <div class="report-section">
-                <div class="forecast-header">
-                    <div class="forecast-number-large">${forecast.numbers?.universal || forecast.weekNumber || forecast.monthNumber || forecast.yearNumber || '?'}</div>
-                    <div class="forecast-title">
-                        <h3>${this.getCalculationName(calculation)}</h3>
-                        ${forecast.targetDate ? `<p>Дата прогноза: ${this.formatDate(forecast.targetDate)}</p>` : ''}
-                        ${forecast.weekRange ? `<p>Неделя: ${this.formatDate(forecast.weekRange.start)} — ${this.formatDate(forecast.weekRange.end)}</p>` : ''}
-                        ${forecast.monthRange ? `<p>${forecast.monthRange.monthName} ${forecast.monthRange.year}</p>` : ''}
-                        ${forecast.year ? `<p>${forecast.year} год</p>` : ''}
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-calculator"></i> МАТРИЦА СУДЬБЫ
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.fate || '?'}</div>
+                        <div style="color: var(--text-muted);">Число судьбы</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.name || '?'}</div>
+                        <div style="color: var(--text-muted);">Число имени</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.surname || '?'}</div>
+                        <div style="color: var(--text-muted);">Число рода</div>
+                    </div>
+                    <div style="text-align: center; padding: 20px; background: rgba(18, 18, 26, 0.5); border-radius: 16px;">
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${base.patronymic || '?'}</div>
+                        <div style="color: var(--text-muted);">Число предков</div>
                     </div>
                 </div>
+            </div>
+            
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-shield-alt"></i> КЛЮЧЕВЫЕ ЧИСЛА
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: rgba(201, 165, 75, 0.1); border-radius: 20px; padding: 25px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${achilles.number || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Ахиллесова пята</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${achilles.description || ''}</div>
+                    </div>
+                    <div style="background: rgba(201, 165, 75, 0.1); border-radius: 20px; padding: 25px; text-align: center;">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${control.number || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Число управления</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">${control.description || ''}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-users"></i> СОЦИАЛЬНЫЕ ОКЛИКИ
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.close || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Близкий круг</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${calls.descriptions?.close || ''}</div>
+                    </div>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.social || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Социум</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${calls.descriptions?.social || ''}</div>
+                    </div>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: var(--primary);">${calls.world || '?'}</div>
+                        <div style="color: var(--text-muted); margin-bottom: 10px;">Дальний круг</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;">${calls.descriptions?.world || ''}</div>
+                    </div>
+                </div>
+            </div>
         `;
 
-        // Универсальные числа для прогноза на день
-        if (calcType === 'day' && forecast.numbers) {
+        // Зодиак
+        if (zodiac.name) {
             html += `
-                <div class="forecast-cosmic-code">
-                    <h4><i class="fas fa-star"></i> КОСМИЧЕСКИЙ КОД ДНЯ</h4>
-                    <div class="code-grid">
-                        <div class="code-item">
-                            <span class="label">Универсальное число</span>
-                            <span class="value">${forecast.numbers.universal || '?'}</span>
-                            <span class="desc">${forecast.description?.universal?.name || ''}</span>
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-star"></i> ЗВЕЗДНЫЙ КОД
+                    </h3>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 25px;">
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                            <div style="font-size: 3rem;">${this.getZodiacSymbol(zodiac.name)}</div>
+                            <div>
+                                <h4 style="color: var(--primary); margin: 0;">${zodiac.name}</h4>
+                                <p style="color: var(--text-muted); margin: 5px 0 0;">${zodiac.element} • ${zodiac.planet}</p>
+                            </div>
                         </div>
-                        <div class="code-item">
-                            <span class="label">Личное число</span>
-                            <span class="value">${forecast.numbers.personal || '?'}</span>
-                            <span class="desc">${forecast.description?.personal?.influence || ''}</span>
-                        </div>
-                        <div class="code-item">
-                            <span class="label">Число выражения</span>
-                            <span class="value">${forecast.numbers.expression || '?'}</span>
-                            <span class="desc">${forecast.description?.expression?.meaning || ''}</span>
+                        <p style="color: var(--text-secondary); line-height: 1.8;">${zodiac.description || ''}</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                            <div><strong style="color: var(--primary);">Сильные стороны:</strong><br><span style="color: var(--text-secondary);">${zodiac.strengths || ''}</span></div>
+                            <div><strong style="color: var(--primary);">Зоны роста:</strong><br><span style="color: var(--text-secondary);">${zodiac.weaknesses || ''}</span></div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="forecast-energy">
-                    <div class="energy-badge">
-                        <span><i class="fas fa-fire"></i> Стихия: ${forecast.description?.universal?.element || ''}</span>
-                        <span><i class="fas fa-globe"></i> Планета: ${forecast.description?.universal?.planet || ''}</span>
-                        <span><i class="fas fa-moon"></i> Лунный день: ${forecast.description?.dateInfo?.lunarDay || ''}</span>
-                    </div>
-                </div>
-                
-                <div class="forecast-main">
-                    <p class="forecast-positive">${forecast.description?.universal?.positive || ''}</p>
-                    ${forecast.description?.universal?.negative ? `<p class="forecast-negative">⚠️ ${forecast.description.universal.negative}</p>` : ''}
-                </div>
-                
-                <div class="forecast-sections">
-                    <div class="forecast-section"><h4><i class="fas fa-briefcase"></i> Карьера</h4><p>${forecast.description?.universal?.career || ''}</p></div>
-                    <div class="forecast-section"><h4><i class="fas fa-heart"></i> Любовь</h4><p>${forecast.description?.universal?.love || ''}</p></div>
-                    <div class="forecast-section"><h4><i class="fas fa-leaf"></i> Здоровье</h4><p>${forecast.description?.universal?.health || ''}</p></div>
-                    <div class="forecast-section"><h4><i class="fas fa-coins"></i> Финансы</h4><p>${forecast.description?.universal?.finance || ''}</p></div>
                 </div>
             `;
         }
 
-        // Для недельного прогноза
-        if (calcType === 'week' && forecast.weekAnalysis) {
+        // Фен-шуй
+        if (fengShui.element) {
             html += `
-                <div class="week-ruler-info">
-                    <span><i class="fas fa-globe"></i> Покровитель: ${forecast.weekRuler?.planet || ''} (${forecast.weekRuler?.element || ''})</span>
-                    <span><i class="fas fa-star"></i> Качество: ${forecast.weekRuler?.quality || ''}</span>
-                </div>
-                
-                <div class="week-theme">
-                    <h4>${forecast.weekAnalysis.theme || ''}</h4>
-                    <p>${forecast.weekAnalysis.description || ''}</p>
-                    <div class="personal-note">${forecast.weekAnalysis.personalNote || ''}</div>
-                </div>
-                
-                <div class="week-advice">
-                    <i class="fas fa-quote-left"></i>
-                    <p>${forecast.weekAnalysis.advice || ''}</p>
-                </div>
-                
-                <div class="week-sections">
-                    <div class="section opportunities">
-                        <h5><i class="fas fa-check-circle"></i> Возможности</h5>
-                        <ul>${(forecast.weekAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-wind"></i> ЭНЕРГИЯ ФЕН-ШУЙ
+                    </h3>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 25px;">
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                            <div style="font-size: 3rem;">${this.getElementSymbol(fengShui.element)}</div>
+                            <h4 style="color: var(--primary); margin: 0;">${fengShui.element}</h4>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div><strong style="color: var(--primary);">Цвет силы:</strong><br><span style="color: var(--text-secondary);">${fengShui.color || '—'}</span></div>
+                            <div><strong style="color: var(--primary);">Направление:</strong><br><span style="color: var(--text-secondary);">${fengShui.direction || '—'}</span></div>
+                            <div><strong style="color: var(--primary);">Время активации:</strong><br><span style="color: var(--text-secondary);">${fengShui.season || '—'}</span></div>
+                        </div>
+                        <p style="color: var(--text-secondary); line-height: 1.8;">${fengShui.description || ''}</p>
+                        <div style="background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(18, 18, 26, 0.5)); padding: 15px; border-radius: 12px; margin-top: 15px;">
+                            <p style="color: var(--primary); font-style: italic; margin: 0;">"${fengShui.affirmation || ''}"</p>
+                        </div>
                     </div>
-                    <div class="section challenges">
-                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
-                        <ul>${(forecast.weekAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
-                    </div>
-                </div>
-                
-                <div class="life-areas-grid">
-                    <div class="life-area career"><i class="fas fa-briefcase"></i><p>${forecast.lifeAreas?.career || ''}</p></div>
-                    <div class="life-area love"><i class="fas fa-heart"></i><p>${forecast.lifeAreas?.love || ''}</p></div>
-                    <div class="life-area health"><i class="fas fa-leaf"></i><p>${forecast.lifeAreas?.health || ''}</p></div>
-                    <div class="life-area finance"><i class="fas fa-coins"></i><p>${forecast.lifeAreas?.finance || ''}</p></div>
                 </div>
             `;
+        }
 
-            // Дневная разбивка для недели
-            if (forecast.dailyBreakdown && forecast.dailyBreakdown.length > 0) {
+        // Таро
+        if (tarot.fate) {
+            html += `
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-crown"></i> КАРТЫ ТАРО
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        ${this.renderTarotCardModal('Судьбы', tarot.fate)}
+                        ${this.renderTarotCardModal('Личности', tarot.personality)}
+                        ${this.renderTarotCardModal('Пути', tarot.control)}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Интерпретации (карьера, семья, любовь, финансы, здоровье, таланты)
+        if (interpretations.career) {
+            html += this.renderInterpretationCard('КАРЬЕРА', interpretations.career);
+        }
+        if (interpretations.family) {
+            html += this.renderInterpretationCard('СЕМЬЯ', interpretations.family);
+        }
+        if (interpretations.love) {
+            html += this.renderInterpretationCard('ЛЮБОВЬ', interpretations.love);
+        }
+        if (interpretations.money) {
+            html += this.renderInterpretationCard('ФИНАНСЫ', interpretations.money);
+        }
+        if (interpretations.health) {
+            html += this.renderInterpretationCard('ЗДОРОВЬЕ', interpretations.health);
+        }
+        if (interpretations.talent) {
+            html += this.renderInterpretationCard('ТАЛАНТЫ', interpretations.talent);
+        }
+
+        // Психология
+        if (psychology.modality || psychology.archetype) {
+            html += `
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-brain"></i> ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ
+                    </h3>
+            `;
+
+            if (psychology.modality) {
                 html += `
-                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> ДНЕВНАЯ РАЗБИВКА</h4>
-                    <div class="week-daily-breakdown">
-                        ${forecast.dailyBreakdown.slice(0, 7).map(day => `
-                            <div class="week-day-card">
-                                <div class="day-header">
-                                    <span class="day-name">${day.dayName}</span>
-                                    <span class="day-date">${day.date}</span>
-                                </div>
-                                <div class="day-numbers">
-                                    <span class="day-number-large">${day.universalNumber}</span>
-                                    <span class="day-personal">личн. ${day.personalNumber}</span>
-                                </div>
-                                <div class="day-energy">${day.energy}</div>
-                                <div class="day-focus">${day.focus}</div>
-                                <div class="day-advice">💫 ${day.advice}</div>
-                            </div>
-                        `).join('')}
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="color: var(--primary);">НЛП-профиль: ${psychology.modality.title || ''}</h4>
+                        <p style="color: var(--text-secondary);">${psychology.modality.description || ''}</p>
                     </div>
                 `;
             }
-        }
 
-        // Для месячного прогноза
-        if (calcType === 'month' && forecast.monthAnalysis) {
-            html += `
-                <div class="month-ruler-info">
-                    <span><i class="fas fa-globe"></i> Покровитель: ${forecast.monthRuler?.planet || ''} (${forecast.monthRuler?.element || ''})</span>
-                    <span><i class="fas fa-star"></i> Качество: ${forecast.monthRuler?.quality || ''}</span>
-                    <span><i class="fas fa-wind"></i> Стихия: ${forecast.monthElement || ''}</span>
-                </div>
-                
-                <div class="month-theme">
-                    <h4>${forecast.monthAnalysis.theme || ''}</h4>
-                    <p>${forecast.monthAnalysis.description || ''}</p>
-                    <div class="personal-note">${forecast.monthAnalysis.personalNote || ''}</div>
-                </div>
-                
-                <div class="month-advice">
-                    <i class="fas fa-quote-left"></i>
-                    <p>${forecast.monthAnalysis.advice || ''}</p>
-                </div>
-                
-                <div class="month-sections">
-                    <div class="section opportunities">
-                        <h5><i class="fas fa-check-circle"></i> Возможности месяца</h5>
-                        <ul>${(forecast.monthAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
-                    </div>
-                    <div class="section challenges">
-                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы месяца</h5>
-                        <ul>${(forecast.monthAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
-                    </div>
-                </div>
-                
-                <div class="life-areas-grid">
-                    <div class="life-area career"><i class="fas fa-briefcase"></i><p>${forecast.lifeAreas?.career || ''}</p></div>
-                    <div class="life-area love"><i class="fas fa-heart"></i><p>${forecast.lifeAreas?.love || ''}</p></div>
-                    <div class="life-area health"><i class="fas fa-leaf"></i><p>${forecast.lifeAreas?.health || ''}</p></div>
-                    <div class="life-area finance"><i class="fas fa-coins"></i><p>${forecast.lifeAreas?.finance || ''}</p></div>
-                </div>
-            `;
-
-            // Недельная разбивка для месяца
-            if (forecast.weeklyBreakdown && forecast.weeklyBreakdown.length > 0) {
+            if (psychology.archetype) {
                 html += `
-                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> НЕДЕЛЬНАЯ РАЗБИВКА</h4>
-                    <div class="month-weekly-breakdown">
-                        ${forecast.weeklyBreakdown.map(week => `
-                            <div class="month-week-card">
-                                <div class="week-header">
-                                    <span class="week-number">Неделя ${week.weekNumber}</span>
-                                    <span class="week-dates">${week.startDate} — ${week.endDate}</span>
-                                    <span class="week-energy">${week.energy}</span>
-                                </div>
-                                <div class="week-number-value">Число недели: <strong>${week.weekNumberValue}</strong></div>
-                                <div class="week-focus">${week.focus}</div>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                        <h4 style="color: var(--primary);">Архетип: ${psychology.archetype.name || ''}</h4>
+                        <p style="color: var(--text-secondary);">${psychology.archetype.description || ''}</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                            <div style="background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: 8px;">
+                                <strong style="color: #4caf50;">Дар:</strong> ${psychology.archetype.gift || ''}
                             </div>
-                        `).join('')}
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 8px;">
+                                <strong style="color: #f44336;">Вызов:</strong> ${psychology.archetype.challenge || ''}
+                            </div>
+                        </div>
                     </div>
                 `;
             }
-        }
 
-        // Для годового прогноза
-        if (calcType === 'year' && forecast.yearAnalysis) {
-            html += `
-                <div class="year-cycle">
-                    <div class="cycle-name">${forecast.yearCycle?.name || ''}</div>
-                    <div class="cycle-desc">${forecast.yearCycle?.description || ''}</div>
-                    <div class="cycle-energy">${forecast.yearCycle?.energy || ''}</div>
-                </div>
-                
-                <div class="chinese-zodiac">
-                    <div class="zodiac-animal">🐉 ${forecast.yearInfo?.chineseZodiac?.animal || ''} (${forecast.yearInfo?.chineseZodiac?.element || ''})</div>
-                    <div class="zodiac-desc">${forecast.yearInfo?.chineseZodiac?.description || ''}</div>
-                </div>
-                
-                <div class="year-theme">
-                    <h4>${forecast.yearAnalysis.theme || ''}</h4>
-                    <p>${forecast.yearAnalysis.description || ''}</p>
-                    <div class="personal-note">${forecast.yearAnalysis.personalNote || ''}</div>
-                </div>
-                
-                <div class="year-advice">
-                    <i class="fas fa-quote-left"></i>
-                    <p>${forecast.yearAnalysis.advice || ''}</p>
-                </div>
-                
-                <div class="year-sections">
-                    <div class="section opportunities">
-                        <h5><i class="fas fa-check-circle"></i> Возможности</h5>
-                        <ul>${(forecast.yearAnalysis.opportunities || []).map(o => `<li>${o}</li>`).join('')}</ul>
-                    </div>
-                    <div class="section challenges">
-                        <h5><i class="fas fa-exclamation-triangle"></i> Вызовы</h5>
-                        <ul>${(forecast.yearAnalysis.challenges || []).map(c => `<li>${c}</li>`).join('')}</ul>
-                    </div>
-                </div>
-            `;
-
-            // Квартальная разбивка для года
-            if (forecast.quarterlyBreakdown && forecast.quarterlyBreakdown.length > 0) {
+            if (psychology.attachment) {
                 html += `
-                    <h4 class="section-title"><i class="fas fa-calendar-alt"></i> КВАРТАЛЬНАЯ РАЗБИВКА</h4>
-                    <div class="year-quarterly-breakdown">
-                        ${forecast.quarterlyBreakdown.map(quarter => `
-                            <div class="year-quarter-card">
-                                <div class="quarter-header">
-                                    <span class="quarter-name">${quarter.season}</span>
-                                    <span class="quarter-number">${quarter.number}</span>
-                                </div>
-                                <div class="quarter-months">${quarter.months?.join(' • ') || ''}</div>
-                                <div class="quarter-energy">${quarter.energy}</div>
-                                <div class="quarter-focus">${quarter.focus}</div>
-                                <div class="quarter-advice">💫 ${quarter.advice}</div>
-                            </div>
-                        `).join('')}
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px;">
+                        <h4 style="color: var(--primary);">Тип привязанности: ${psychology.attachment.name || ''}</h4>
+                        <p style="color: var(--text-secondary);">${psychology.attachment.description || ''}</p>
                     </div>
                 `;
             }
+
+            html += `</div>`;
         }
 
-        // Карта Таро
-        if (forecast.tarot) {
+        // Паттерны
+        if (patterns && patterns.length > 0) {
             html += `
-                <div class="forecast-tarot">
-                    <h4><i class="fas fa-crown"></i> КАРТА ТАРО: ${forecast.tarot.name || ''}</h4>
-                    <div class="tarot-mini">
-                        <div class="tarot-image-mini">
-                            <img src="${forecast.tarot.image || '/images/tarot/back.jpg'}" alt="${forecast.tarot.name}" onerror="this.src='/images/tarot/back.jpg'">
-                        </div>
-                        <div class="tarot-desc-mini">
-                            <p>${forecast.tarot.description || ''}</p>
-                            <p class="tarot-advice"><strong>Совет:</strong> ${forecast.tarot.advice || ''}</p>
-                        </div>
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-puzzle-piece"></i> ПАТТЕРНЫ ЛИЧНОСТИ
+                    </h3>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px;">
+                        ${patterns.slice(0, 10).map(p => `<p style="margin: 10px 0; padding-left: 20px; border-left: 2px solid var(--primary); color: var(--text-secondary);">✦ ${p}</p>`).join('')}
                     </div>
                 </div>
             `;
         }
-
-        // Цвета, камни, ароматы
-        if (forecast.colors || forecast.crystals || forecast.scents || forecast.fengShui) {
-            html += `
-                <div class="forecast-details-grid">
-                    ${forecast.colors ? `
-                        <div class="detail-block">
-                            <h5><i class="fas fa-paint-brush"></i> Цвета</h5>
-                            <p>${Array.isArray(forecast.colors) ? forecast.colors.join(', ') : forecast.colors}</p>
-                        </div>
-                    ` : ''}
-                    ${forecast.crystals ? `
-                        <div class="detail-block">
-                            <h5><i class="fas fa-gem"></i> Камни-талисманы</h5>
-                            <p>${Array.isArray(forecast.crystals) ? forecast.crystals.join(', ') : forecast.crystals}</p>
-                        </div>
-                    ` : ''}
-                    ${forecast.scents ? `
-                        <div class="detail-block">
-                            <h5><i class="fas fa-leaf"></i> Ароматы</h5>
-                            <p>${Array.isArray(forecast.scents) ? forecast.scents.join(', ') : forecast.scents}</p>
-                        </div>
-                    ` : ''}
-                    ${forecast.favorableHours ? `
-                        <div class="detail-block">
-                            <h5><i class="fas fa-clock"></i> Благоприятные часы</h5>
-                            <p>${Array.isArray(forecast.favorableHours) ? forecast.favorableHours.join(', ') : forecast.favorableHours}</p>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        // Аффирмация
-        if (forecast.affirmation) {
-            html += `
-                <div class="forecast-affirmation">
-                    <i class="fas fa-quote-left"></i>
-                    <p>${forecast.affirmation}</p>
-                </div>
-            `;
-        }
-
-        html += `</div>`;
 
         // Свиток судьбы
         if (result.interpretation) {
             html += `
-                <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
-                    <div class="scroll-text">
+                <div class="report-section" style="margin-bottom: 30px;">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ
+                    </h3>
+                    <div style="background: rgba(18, 18, 26, 0.5); padding: 20px; border-radius: 16px; line-height: 1.8; color: var(--text-secondary);">
                         ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
                     </div>
                 </div>
@@ -1012,8 +741,10 @@ class HistoryApp {
         if (result.deepPortrait) {
             html += `
                 <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
-                    <div class="portrait-text">
+                    <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ
+                    </h3>
+                    <div style="background: rgba(18, 18, 26, 0.5); padding: 20px; border-radius: 16px; line-height: 1.8; color: var(--text-secondary);">
                         ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
                     </div>
                 </div>
@@ -1023,244 +754,360 @@ class HistoryApp {
         return html;
     }
 
-    renderCompatibilityReport(calculation, result) {
+    renderInterpretationCard(title, data) {
+        if (!data) return '';
+
+        return `
+            <div class="report-section" style="margin-bottom: 30px;">
+                <h3 class="section-title" style="color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-chart-line"></i> ${title}
+                </h3>
+                <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 25px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">${data.title || ''}</h4>
+                    <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 20px;">${data.description || ''}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <strong style="color: #4caf50;">🌟 Сильные стороны</strong>
+                            <ul style="margin-top: 10px; list-style: none; padding-left: 0;">
+                                ${(data.strengths || []).map(s => `<li style="color: var(--text-secondary); margin-bottom: 5px;">✓ ${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <strong style="color: #ff9800;">🌙 Зоны роста</strong>
+                            <ul style="margin-top: 10px; list-style: none; padding-left: 0;">
+                                ${(data.weaknesses || []).map(w => `<li style="color: var(--text-secondary); margin-bottom: 5px;">• ${w}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    ${data.advice ? `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(201, 165, 75, 0.1); border-radius: 12px; border-left: 3px solid var(--primary);">
+                        <p style="color: var(--primary); font-style: italic; margin: 0;">💫 ${data.advice}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    renderTarotCardModal(title, card) {
+        if (!card) return '';
+
+        const cardNumber = card.number === 0 || card.number === 22 ? 22 : (card.number || '?');
+        const imageUrl = card.image || `/images/tarot/${cardNumber}.jpg`;
+
+        return `
+            <div class="tarotCard" style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; overflow: hidden; border: 1px solid var(--border-color);">
+                <div style="position: relative; padding-top: 140%; background: linear-gradient(135deg, #1a1a24, #0a0a0f); overflow: hidden;">
+                    <img src="${imageUrl}" 
+                         alt="${card.name}" 
+                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;"
+                         onerror="this.src='/images/tarot/back.jpg'">
+                    <div style="position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; background: linear-gradient(135deg, #c9a54b, #e2b96b); color: #0a0a0f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                        ${cardNumber}
+                    </div>
+                </div>
+                <div style="padding: 15px;">
+                    <div style="font-weight: bold; font-size: 1rem; color: var(--text-primary); text-align: center; margin-bottom: 5px;">${card.name}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-bottom: 10px;">Карта ${title}</div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px;">${(card.description || '').substring(0, 120)}...</p>
+                    <div style="padding: 10px; background: rgba(201, 165, 75, 0.1); border-radius: 12px; border-left: 3px solid var(--primary);">
+                        <p style="color: var(--primary); font-style: italic; font-size: 0.8rem; margin: 0;">💫 ${card.advice || ''}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderDayForecastModal(result) {
+        const forecast = result.forecast || {};
+        const numbers = forecast.numbers || {};
+        const desc = forecast.description || {};
+        const universal = desc.universal || {};
+        const tarot = forecast.tarot || {};
+
+        return `
+            <div class="forecast-card" style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 20px; margin: 20px 0;">
+                <div class="forecast-header" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div class="forecast-number-large" style="font-size: 3rem; font-weight: bold; color: var(--primary);">${numbers.universal || '?'}</div>
+                    <div>
+                        <h3 style="color: var(--primary); margin: 0;">${universal.name || 'Прогноз на день'}</h3>
+                        <p style="color: var(--text-muted); margin: 5px 0 0;">Дата: ${forecast.targetDate || result.targetDate || '—'}</p>
+                    </div>
+                </div>
+                
+                <div class="forecast-cosmic-code" style="margin-bottom: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-star"></i> КОСМИЧЕСКИЙ КОД ДНЯ</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div style="background: rgba(10, 10, 15, 0.5); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary);">${numbers.universal || '?'}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Универсальное число</div>
+                        </div>
+                        <div style="background: rgba(10, 10, 15, 0.5); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary);">${numbers.personal || '?'}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Личное число</div>
+                        </div>
+                        <div style="background: rgba(10, 10, 15, 0.5); padding: 12px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary);">${numbers.expression || '?'}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Число выражения</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="forecast-main" style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.1), rgba(10, 10, 15, 0.5)); border-radius: 16px;">
+                    <p style="color: var(--text-primary); line-height: 1.6;">${universal.positive || ''}</p>
+                    ${universal.negative ? `<p style="color: #ff6b6b; margin-top: 10px;">⚠️ ${universal.negative}</p>` : ''}
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: rgba(10, 10, 15, 0.5); padding: 15px; border-radius: 12px;">
+                        <h4 style="color: var(--primary);"><i class="fas fa-briefcase"></i> Карьера</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">${universal.career || '—'}</p>
+                    </div>
+                    <div style="background: rgba(10, 10, 15, 0.5); padding: 15px; border-radius: 12px;">
+                        <h4 style="color: var(--primary);"><i class="fas fa-heart"></i> Любовь</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">${universal.love || '—'}</p>
+                    </div>
+                    <div style="background: rgba(10, 10, 15, 0.5); padding: 15px; border-radius: 12px;">
+                        <h4 style="color: var(--primary);"><i class="fas fa-leaf"></i> Здоровье</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">${universal.health || '—'}</p>
+                    </div>
+                    <div style="background: rgba(10, 10, 15, 0.5); padding: 15px; border-radius: 12px;">
+                        <h4 style="color: var(--primary);"><i class="fas fa-coins"></i> Финансы</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">${universal.finance || '—'}</p>
+                    </div>
+                </div>
+                
+                ${tarot.name ? `
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 16px; margin-bottom: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-crown"></i> КАРТА ТАРО: ${tarot.name}</h4>
+                    <p style="color: var(--text-secondary);">${tarot.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 10px;"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                </div>
+                ` : ''}
+                
+                ${forecast.affirmation ? `
+                <div class="forecast-affirmation" style="padding: 20px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.15), rgba(10, 10, 15, 0.5)); border-radius: 20px; border: 1px solid var(--primary);">
+                    <p style="color: var(--text-primary); font-size: 1rem; font-style: italic; margin: 0; text-align: center;">"${forecast.affirmation}"</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    renderWeekForecastModal(result) {
+        const forecast = result.forecast || {};
+        const weekAnalysis = forecast.weekAnalysis || {};
+        const dailyBreakdown = forecast.dailyBreakdown || [];
+        const tarot = forecast.tarot || {};
+
+        const dailyHTML = (dailyBreakdown || []).map(day => `
+            <div style="background: rgba(10, 10, 15, 0.5); border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: bold; color: var(--primary);">${day.dayName}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${day.date}</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                    <span style="background: rgba(201, 165, 75, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 0.8rem;">Число: ${day.universalNumber}</span>
+                    <span style="background: rgba(201, 165, 75, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 0.8rem;">Энергия: ${day.energy}</span>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">${day.focus}</div>
+                <div style="color: var(--primary); font-size: 0.85rem; margin-top: 8px;">💫 ${day.advice}</div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="week-forecast" style="margin: 20px 0;">
+                <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">📅 ${weekAnalysis.theme || 'Прогноз на неделю'}</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">${weekAnalysis.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 15px;"><strong>Совет:</strong> ${weekAnalysis.advice || ''}</p>
+                </div>
+                
+                <h4 style="color: var(--primary); margin: 20px 0 15px;"><i class="fas fa-calendar-alt"></i> ДНЕВНАЯ РАЗБИВКА</h4>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${dailyHTML || '<p style="color: var(--text-secondary);">Нет данных</p>'}
+                </div>
+                
+                ${tarot.name ? `
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 16px; margin-top: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-crown"></i> КАРТА ТАРО: ${tarot.name}</h4>
+                    <p style="color: var(--text-secondary);">${tarot.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 10px;"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                </div>
+                ` : ''}
+                
+                ${forecast.affirmation ? `
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.15), rgba(10, 10, 15, 0.5)); border-radius: 20px; border: 1px solid var(--primary);">
+                    <p style="color: var(--text-primary); font-size: 1rem; font-style: italic; margin: 0; text-align: center;">"${forecast.affirmation}"</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    renderMonthForecastModal(result) {
+        const forecast = result.forecast || {};
+        const monthAnalysis = forecast.monthAnalysis || {};
+        const weeklyBreakdown = forecast.weeklyBreakdown || [];
+        const importantDates = forecast.importantDates || [];
+        const tarot = forecast.tarot || {};
+
+        const weeklyHTML = (weeklyBreakdown || []).map(week => `
+            <div style="background: rgba(10, 10, 15, 0.5); border-radius: 12px; padding: 15px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap;">
+                    <span style="font-weight: bold; color: var(--primary);">Неделя ${week.weekNumber}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">${week.startDate} — ${week.endDate}</span>
+                </div>
+                <div><strong>Число недели:</strong> ${week.weekNumberValue}</div>
+                <div><strong>Энергия:</strong> ${week.energy || '—'}</div>
+                <div><strong>Фокус:</strong> ${week.focus || '—'}</div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="month-forecast" style="margin: 20px 0;">
+                <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">📅 ${monthAnalysis.theme || 'Прогноз на месяц'}</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">${monthAnalysis.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 15px;"><strong>Совет:</strong> ${monthAnalysis.advice || ''}</p>
+                </div>
+                
+                <h4 style="color: var(--primary); margin: 20px 0 15px;"><i class="fas fa-calendar-alt"></i> НЕДЕЛЬНАЯ РАЗБИВКА</h4>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${weeklyHTML || '<p style="color: var(--text-secondary);">Нет данных</p>'}
+                </div>
+                
+                ${importantDates && importantDates.length > 0 ? `
+                <h4 style="color: var(--primary); margin: 20px 0 15px;"><i class="fas fa-star"></i> ВАЖНЫЕ ДАТЫ</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;">
+                    ${importantDates.map(date => `
+                        <div style="background: rgba(201, 165, 75, 0.1); padding: 8px; border-radius: 10px; text-align: center;">
+                            <div style="font-weight: bold; color: var(--primary);">${date.date}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted);">Число ${date.dayNumber}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+                
+                ${tarot.name ? `
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 16px; margin-top: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-crown"></i> КАРТА ТАРО: ${tarot.name}</h4>
+                    <p style="color: var(--text-secondary);">${tarot.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 10px;"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                </div>
+                ` : ''}
+                
+                ${forecast.affirmation ? `
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.15), rgba(10, 10, 15, 0.5)); border-radius: 20px; border: 1px solid var(--primary);">
+                    <p style="color: var(--text-primary); font-size: 1rem; font-style: italic; margin: 0; text-align: center;">"${forecast.affirmation}"</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    renderYearForecastModal(result) {
+        const forecast = result.forecast || {};
+        const yearAnalysis = forecast.yearAnalysis || {};
+        const quarterlyBreakdown = forecast.quarterlyBreakdown || [];
+        const monthlyHighlights = forecast.monthlyHighlights || [];
+        const tarot = forecast.tarot || {};
+
+        return `
+            <div class="year-forecast" style="margin: 20px 0;">
+                <div style="background: rgba(18, 18, 26, 0.5); border-radius: 20px; padding: 20px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">📅 ${yearAnalysis.theme || 'Прогноз на год'}</h3>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">${yearAnalysis.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 15px;"><strong>Совет:</strong> ${yearAnalysis.advice || ''}</p>
+                </div>
+                
+                <h4 style="color: var(--primary); margin: 20px 0 15px;"><i class="fas fa-chart-line"></i> КВАРТАЛЬНАЯ РАЗБИВКА</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    ${(quarterlyBreakdown || []).map(q => `
+                        <div style="background: rgba(10, 10, 15, 0.5); border-radius: 12px; padding: 15px;">
+                            <div style="font-weight: bold; color: var(--primary); margin-bottom: 8px;">${q.season}</div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">${q.focus || ''}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">💫 ${q.advice || ''}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                ${monthlyHighlights && monthlyHighlights.length > 0 ? `
+                <h4 style="color: var(--primary); margin: 20px 0 15px;"><i class="fas fa-star"></i> КЛЮЧЕВЫЕ МЕСЯЦЫ</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    ${monthlyHighlights.filter(m => m.importance !== 'обычный').slice(0, 6).map(month => `
+                        <div style="background: ${month.importance === 'судьбоносный' ? 'rgba(201, 165, 75, 0.2)' : 'rgba(76, 175, 80, 0.1)'}; padding: 8px 15px; border-radius: 20px;">
+                            ${month.monthName} (${month.number})
+                        </div>
+                    `).join('')}
+                </div>
+                ` : ''}
+                
+                ${tarot.name ? `
+                <div style="background: rgba(201, 165, 75, 0.05); padding: 15px; border-radius: 16px; margin-top: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-crown"></i> КАРТА ТАРО: ${tarot.name}</h4>
+                    <p style="color: var(--text-secondary);">${tarot.description || ''}</p>
+                    <p style="color: var(--primary); margin-top: 10px;"><strong>Совет:</strong> ${tarot.advice || ''}</p>
+                </div>
+                ` : ''}
+                
+                ${forecast.affirmation ? `
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, rgba(201, 165, 75, 0.15), rgba(10, 10, 15, 0.5)); border-radius: 20px; border: 1px solid var(--primary);">
+                    <p style="color: var(--text-primary); font-size: 1rem; font-style: italic; margin: 0; text-align: center;">"${forecast.affirmation}"</p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    renderCompatibilityModal(result) {
         const compatibility = result.compatibility || {};
         const person1 = result.person1 || {};
         const person2 = result.person2 || {};
 
         return `
-            <div class="report-section">
-                <div class="compatibility-header">
-                    <h3><i class="fas fa-heart"></i> АНАЛИЗ СОВМЕСТИМОСТИ</h3>
-                </div>
-                
-                <div class="compatibility-persons">
-                    <div class="person-card">
-                        <h4>${person1.fullName || 'Партнер 1'}</h4>
-                        <p>Число судьбы: <strong>${person1.numerology?.fate || '?'}</strong></p>
-                        <p>Дата рождения: ${person1.birthDate || '—'}</p>
+            <div style="margin: 20px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px;">${person1.fullName || 'Партнер 1'}</h4>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${person1.numerology?.fate || '?'}</div>
+                        <div style="color: var(--text-muted);">Число судьбы</div>
+                        <div style="color: var(--text-secondary); margin-top: 10px;">${person1.birthDate || '—'}</div>
                     </div>
-                    <div class="person-card">
-                        <h4>${person2.fullName || 'Партнер 2'}</h4>
-                        <p>Число судьбы: <strong>${person2.numerology?.fate || '?'}</strong></p>
-                        <p>Дата рождения: ${person2.birthDate || '—'}</p>
+                    <div style="background: rgba(18, 18, 26, 0.5); border-radius: 16px; padding: 20px; text-align: center;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px;">${person2.fullName || 'Партнер 2'}</h4>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${person2.numerology?.fate || '?'}</div>
+                        <div style="color: var(--text-muted);">Число судьбы</div>
+                        <div style="color: var(--text-secondary); margin-top: 10px;">${person2.birthDate || '—'}</div>
                     </div>
                 </div>
                 
-                <div class="compatibility-score">
-                    <div class="score-value">${compatibility.score || 0}%</div>
-                    <div class="score-level">${compatibility.level || 'Совместимость'}</div>
-                    <div class="compatibility-bar">
-                        <div class="compatibility-progress" style="width: ${compatibility.score || 0}%"></div>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 3rem; font-weight: bold; color: var(--primary);">${compatibility.score || 0}%</div>
+                    <div style="font-size: 1.2rem; color: var(--text-primary);">${compatibility.level || 'Совместимость'}</div>
+                    <div style="width: 70%; margin: 15px auto; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px;">
+                        <div style="width: ${compatibility.score || 0}%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: 4px;"></div>
                     </div>
                 </div>
                 
-                <div class="strengths-section">
-                    <h4><i class="fas fa-check-circle"></i> Сильные стороны союза</h4>
-                    <ul>
-                        ${(compatibility.strengths || []).map(s => `<li>${s}</li>`).join('')}
-                    </ul>
+                <div style="background: rgba(76, 175, 80, 0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="color: #4caf50;"><i class="fas fa-check-circle"></i> Сильные стороны союза</h4>
+                    ${(compatibility.strengths || []).map(s => `<p style="color: var(--text-primary); margin: 10px 0;">• ${s}</p>`).join('')}
                 </div>
                 
-                <div class="challenges-section">
-                    <h4><i class="fas fa-exclamation-triangle"></i> Зоны роста</h4>
-                    <ul>
-                        ${(compatibility.challenges || []).map(c => `<li>${c}</li>`).join('')}
-                    </ul>
+                <div style="background: rgba(244, 67, 54, 0.1); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                    <h4 style="color: #f44336;"><i class="fas fa-exclamation-triangle"></i> Зоны роста</h4>
+                    ${(compatibility.challenges || []).map(c => `<p style="color: var(--text-primary); margin: 10px 0;">• ${c}</p>`).join('')}
                 </div>
                 
-                <div class="advice-section">
-                    <h4><i class="fas fa-lightbulb"></i> Совет по совместимости</h4>
-                    <p>${compatibility.advice || ''}</p>
+                <div style="background: rgba(201, 165, 75, 0.1); border-radius: 16px; padding: 20px;">
+                    <h4 style="color: var(--primary);"><i class="fas fa-lightbulb"></i> Совет</h4>
+                    <p style="color: var(--text-primary);">${compatibility.advice || ''}</p>
                 </div>
             </div>
-            
-            ${result.interpretation ? `
-                <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
-                    <div class="scroll-text">
-                        ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
-                    </div>
-                </div>
-            ` : ''}
-            
-            ${result.deepPortrait ? `
-                <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
-                    <div class="portrait-text">
-                        ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
-                    </div>
-                </div>
-            ` : ''}
         `;
-    }
-
-    renderBasicCalculationReport(result) {
-        const numerology = result.numerology || {};
-        const base = numerology.base || {};
-        const achilles = numerology.achilles || {};
-        const control = numerology.control || {};
-        const calls = numerology.calls || {};
-
-        return `
-            <div class="report-section">
-                <div class="numbers-grid">
-                    <div class="number-card">
-                        <div class="number-large">${base.fate || '?'}</div>
-                        <div class="number-label">Судьба</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${base.name || '?'}</div>
-                        <div class="number-label">Имя</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${base.surname || '?'}</div>
-                        <div class="number-label">Род</div>
-                    </div>
-                    <div class="number-card">
-                        <div class="number-large">${base.patronymic || '?'}</div>
-                        <div class="number-label">Предки</div>
-                    </div>
-                </div>
-                
-                <div class="special-numbers">
-                    <div class="special-card">
-                        <div class="special-value">${achilles.number || '?'}</div>
-                        <div class="special-label">Ахиллесова пята</div>
-                        <p class="special-description">${achilles.description || ''}</p>
-                    </div>
-                    <div class="special-card">
-                        <div class="special-value">${control.number || '?'}</div>
-                        <div class="special-label">Число управления</div>
-                        <p class="special-description">${control.description || ''}</p>
-                    </div>
-                </div>
-                
-                <h4 class="subsection-title">Социальные оклики</h4>
-                <div class="calls-grid">
-                    <div class="call-card">
-                        <div class="call-number">${calls.close || '?'}</div>
-                        <div class="call-label">Близкий круг</div>
-                        <p class="call-description">${calls.descriptions?.close || ''}</p>
-                    </div>
-                    <div class="call-card">
-                        <div class="call-number">${calls.social || '?'}</div>
-                        <div class="call-label">Социум</div>
-                        <p class="call-description">${calls.descriptions?.social || ''}</p>
-                    </div>
-                    <div class="call-card">
-                        <div class="call-number">${calls.world || '?'}</div>
-                        <div class="call-label">Дальний круг</div>
-                        <p class="call-description">${calls.descriptions?.world || ''}</p>
-                    </div>
-                </div>
-            </div>
-            
-            ${result.interpretation ? `
-                <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-scroll"></i> СВИТОК СУДЬБЫ</h3>
-                    <div class="scroll-text">
-                        ${result.interpretation.split('\n').map(p => `<p>${p}</p>`).join('')}
-                    </div>
-                </div>
-            ` : ''}
-            
-            ${result.deepPortrait ? `
-                <div class="report-section">
-                    <h3 class="section-title"><i class="fas fa-moon"></i> ГЛУБИННЫЙ ПОРТРЕТ</h3>
-                    <div class="portrait-text">
-                        ${result.deepPortrait.split('\n').map(p => `<p>${p}</p>`).join('')}
-                    </div>
-                </div>
-            ` : ''}
-        `;
-    }
-
-    renderGenericReport(result) {
-        return `
-            <div class="report-section">
-                <pre class="result-content">${JSON.stringify(result, null, 2)}</pre>
-            </div>
-        `;
-    }
-
-    // Обновите метод showFullCalculationModal
-    showFullCalculationModal(calculation) {
-        const modal = document.getElementById('calculationModal');
-        const body = document.getElementById('modalBody');
-        const result = calculation.result || {};
-
-        document.getElementById('modalTitle').textContent = this.getCalculationName(calculation);
-
-        // Определяем тип расчета
-        const isFull = calculation.calculationType === 'full' || result.numerology?.interpretations;
-
-        let html = `
-            <div class="calculation-details">
-                <div class="modal-report-header">
-                    <div class="report-badge ${calculation.calculationType}">
-                        ${this.getCalculationIcon(calculation.calculationType)} ${this.getCalculationName(calculation)}
-                    </div>
-                    ${isFull ? `
-                        <button class="btn-download-pdf" onclick="historyApp.downloadPDF('${calculation.id}')">
-                            <i class="fas fa-file-pdf"></i> Скачать PDF
-                        </button>
-                    ` : ''}
-                </div>
-                
-                <div class="person-info-grid">
-                    <div class="person-info-card">
-                        <i class="fas fa-user"></i>
-                        <div>
-                            <span class="label">Ищущий</span>
-                            <span class="value">${result.fullName || 'Не указано'}</span>
-                        </div>
-                    </div>
-                    <div class="person-info-card">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div>
-                            <span class="label">Дата рождения</span>
-                            <span class="value">${result.birthDate || this.formatDate(calculation.createdAt) || 'Не указана'}</span>
-                        </div>
-                    </div>
-                    <div class="person-info-card">
-                        <i class="fas fa-clock"></i>
-                        <div>
-                            <span class="label">Дата расчета</span>
-                            <span class="value">${new Date(calculation.createdAt).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    ${calculation.targetDate ? `
-                    <div class="person-info-card">
-                        <i class="fas fa-calendar-check"></i>
-                        <div>
-                            <span class="label">Дата прогноза</span>
-                            <span class="value">${this.formatDate(calculation.targetDate)}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    <div class="person-info-card">
-                        <i class="fas fa-coins"></i>
-                        <div>
-                            <span class="label">Стоимость</span>
-                            <span class="value">${calculation.price} ₽</span>
-                        </div>
-                    </div>
-                </div>
-        `;
-
-        // Для полного расчета показываем все данные
-        if (isFull && result.numerology) {
-            html += this.renderFullReport(result);
-        } else {
-            // Для других типов показываем нормальный формат
-            html += this.renderBasicReport(calculation, result);
-        }
-
-        html += '</div>';
-
-        body.innerHTML = html;
-        modal.style.display = 'block';
     }
 
     getZodiacSymbol(signName) {
@@ -1284,11 +1131,28 @@ class HistoryApp {
         return symbols[elementLower] || '✨';
     }
 
-    async downloadPDF(calculationId) {
+    async downloadPDF(calculationId, type) {
         try {
             this.showNotification('📄 Генерируем PDF...', 'info');
 
-            const response = await fetch(`/api/numerology/pdf/${calculationId}`, {
+            let endpoint = '';
+            if (type === 'full') {
+                endpoint = `/api/numerology/pdf/${calculationId}`;
+            } else if (type === 'day') {
+                endpoint = `/api/numerology/pdf/day/${calculationId}`;
+            } else if (type === 'week') {
+                endpoint = `/api/numerology/pdf/week/${calculationId}`;
+            } else if (type === 'month') {
+                endpoint = `/api/numerology/pdf/month/${calculationId}`;
+            } else if (type === 'year') {
+                endpoint = `/api/numerology/pdf/year/${calculationId}`;
+            } else if (type === 'compatibility') {
+                endpoint = `/api/numerology/pdf/compatibility/${calculationId}`;
+            } else {
+                endpoint = `/api/numerology/pdf/${calculationId}`;
+            }
+
+            const response = await fetch(endpoint, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -1303,7 +1167,8 @@ class HistoryApp {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `numerology-report-${new Date().toISOString().split('T')[0]}.pdf`;
+            const filename = `${type}-report-${new Date().toISOString().split('T')[0]}.pdf`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1318,6 +1183,10 @@ class HistoryApp {
     }
 
     showNotification(message, type = 'info') {
+        // Удаляем старые уведомления
+        const oldNotifications = document.querySelectorAll('.notification');
+        oldNotifications.forEach(n => n.remove());
+
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.innerHTML = `
@@ -1333,10 +1202,13 @@ class HistoryApp {
     }
 
     closeModal() {
-        document.getElementById('calculationModal').style.display = 'none';
+        const modal = document.getElementById('calculationModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
     }
 }
 
-// Инициализация
 const historyApp = new HistoryApp();
 window.historyApp = historyApp;
