@@ -922,17 +922,32 @@ async function startServer() {
             res.sendFile(path.join(__dirname, 'modules/Logs/web/index.html'));
         });
 
-        // 3. ПОСЛЕ ВСЕХ МАРШРУТОВ - обработчик 404
-        app.use('*', (req, res) => {
-            if (req.url.startsWith('/api/')) {
-                res.status(404).json({
-                    success: false,
-                    error: 'API маршрут не найден'
-                });
-            } else {
-                res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
-            }
-        });
+        // 3. ПОСЛЕ ВСЕХ МАРШРУТОВ - React frontend (SPA)
+        const frontendDistPath = path.join(__dirname, 'frontend', 'dist');
+        if (fs.existsSync(frontendDistPath)) {
+            app.use(express.static(frontendDistPath));
+            app.get('*', (req, res) => {
+                if (req.url.startsWith('/api/')) {
+                    return res.status(404).json({
+                        success: false,
+                        error: 'API маршрут не найден'
+                    });
+                }
+                res.sendFile(path.join(frontendDistPath, 'index.html'));
+            });
+        } else {
+            // Fallback to old behavior if React build doesn't exist
+            app.use('*', (req, res) => {
+                if (req.url.startsWith('/api/')) {
+                    res.status(404).json({
+                        success: false,
+                        error: 'API маршрут не найден'
+                    });
+                } else {
+                    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+                }
+            });
+        }
         // Запускаем сервер
         const PORT = process.env.PORT || 3000;
         server.listen(PORT, () => {
