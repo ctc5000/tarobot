@@ -34,6 +34,7 @@ export default function AstrologyPage() {
       onSubmit={handleCalculate}
       loading={loading}
       result={result}
+      reportType="astrology"
     />
   );
 }

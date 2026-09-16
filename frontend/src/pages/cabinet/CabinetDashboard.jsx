@@ -1,6 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { balanceAPI, calculationsAPI, subscriptionsAPI } from '../../api/client';
 import { HiChartBar, HiUser, HiCalendar, HiChartSquareBar, HiPresentationChartLine } from 'react-icons/hi';
 
 const cabinetNav = [
@@ -11,8 +13,45 @@ const cabinetNav = [
   { name: 'Подписки', path: '/cabinet/subscriptions', icon: <HiCalendar size={20} /> },
 ];
 
-export default function CabinetLayout() {
+export default function CabinetDashboard() {
   const { user } = useAuth();
+  const location = useLocation();
+  const [balance, setBalance] = useState(null);
+  const [calculationsCount, setCalculationsCount] = useState(null);
+  const [activeSubscription, setActiveSubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [balanceRes, calcRes, subRes] = await Promise.allSettled([
+          balanceAPI.getBalance(),
+          calculationsAPI.getHistory({ limit: 1 }),
+          subscriptionsAPI.getActive(),
+        ]);
+
+        if (balanceRes.status === 'fulfilled') {
+          setBalance(balanceRes.value.data?.data?.balance ?? 0);
+        }
+        if (calcRes.status === 'fulfilled') {
+          setCalculationsCount(calcRes.value.data?.data?.total ?? 0);
+        }
+        if (subRes.status === 'fulfilled') {
+          setActiveSubscription(subRes.value.data?.data ?? null);
+        }
+      } catch (err) {
+        console.error('Error fetching cabinet data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const formatBalance = (val) => {
+    const num = parseFloat(val || 0);
+    return num.toLocaleString('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 });
+  };
 
   return (
     <div className="cabinet-page">
@@ -34,7 +73,7 @@ export default function CabinetLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`cabinet-nav-link ${window.location.pathname === item.path ? 'active' : ''}`}
+                className={`cabinet-nav-link ${location.pathname === item.path ? 'active' : ''}`}
               >
                 <span className="cabinet-nav-icon">{item.icon}</span>
                 <span>{item.name}</span>
@@ -56,7 +95,13 @@ export default function CabinetLayout() {
                     </div>
                     <div className="dashboard-card-info">
                       <span className="dashboard-card-label">Баланс</span>
-                      <span className="dashboard-card-value">0 ₽</span>
+                      <span className="dashboard-card-value">
+                        {loading ? (
+                          <span className="loading-dots">...</span>
+                        ) : (
+                          formatBalance(balance)
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -66,7 +111,13 @@ export default function CabinetLayout() {
                     </div>
                     <div className="dashboard-card-info">
                       <span className="dashboard-card-label">Расчетов</span>
-                      <span className="dashboard-card-value">0</span>
+                      <span className="dashboard-card-value">
+                        {loading ? (
+                          <span className="loading-dots">...</span>
+                        ) : (
+                          `${calculationsCount ?? 0}`
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -76,7 +127,15 @@ export default function CabinetLayout() {
                     </div>
                     <div className="dashboard-card-info">
                       <span className="dashboard-card-label">Подписка</span>
-                      <span className="dashboard-card-value">Нет</span>
+                      <span className="dashboard-card-value">
+                        {loading ? (
+                          <span className="loading-dots">...</span>
+                        ) : activeSubscription ? (
+                          <span className="subscription-active">Активна</span>
+                        ) : (
+                          <span className="subscription-none">Нет</span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>

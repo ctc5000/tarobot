@@ -1,16 +1,7 @@
 // modules/Astrology/Astrology.route.js
-const path = require('path');
 const express = require("express");
 
 const AstrologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
-    // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
-    app.use('/astrology', express.static(path.join(__dirname, 'web')));
-
-    // ========== ВЕБ-ИНТЕРФЕЙС ==========
-    app.get('/astrology', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'index.html'));
-    });
-
     // ========== ПУБЛИЧНЫЕ API ==========
 
     // Получить список тарифов

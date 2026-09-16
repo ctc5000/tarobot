@@ -33,6 +33,7 @@ export default function AstropsychologyPage() {
       onSubmit={handleCalculate}
       loading={loading}
       result={result}
+      reportType="astropsychology"
     />
   );
 }

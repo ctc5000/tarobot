@@ -1,16 +1,7 @@
 // modules/Astropsychology/Astropsychology.route.js
-const path = require('path');
 const express = require("express");
 
 const AstropsychologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
-
-    // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
-    app.use('/astropsychology', express.static(path.join(__dirname, 'web')));
-
-    // ========== ВЕБ-ИНТЕРФЕЙС ==========
-    app.get('/astropsychology', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'index.html'));
-    });
 
     // ========== ПУБЛИЧНЫЕ API ==========
 

@@ -1,16 +1,7 @@
 // modules/Numerology/Numerology.route.js
-const path = require('path');
 const express = require("express");
 
 const NumerologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
-    // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
-    app.use('/numerology', express.static(path.join(__dirname, 'web')));
-
-    // ========== ВЕБ-ИНТЕРФЕЙС ==========
-    app.get('/numerology', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'index.html'));
-    });
-
     // ========== ПУБЛИЧНЫЕ API ==========
 
     // Бесплатный базовый расчет (может быть без авторизации)
@@ -56,6 +47,26 @@ const NumerologyRoute = (app, routeName, routeController, makeHandlerAwareOfAsyn
                 return tokenService.authMiddleware()(req, res, next);
             },
             makeHandlerAwareOfAsyncErrors(routeController.calculateCompatibility)
+        );
+    }
+
+    // Профессиональный расчет (для нумерологов)
+    if (routeController.calculateProfessional) {
+        app.post(
+            '/api/numerology/calculate/professional',
+            (req, res, next) => {
+                const tokenService = new (require('../Core/Services/TokenService'))();
+                return tokenService.authMiddleware()(req, res, next);
+            },
+            makeHandlerAwareOfAsyncErrors(routeController.calculateProfessional)
+        );
+    }
+
+    // Получение тарифов нумерологии
+    if (routeController.getNumerologyServices) {
+        app.get(
+            '/api/numerology/services',
+            makeHandlerAwareOfAsyncErrors(routeController.getNumerologyServices)
         );
     }
 

@@ -9,6 +9,7 @@ const ForecastService = require('./ForecastService');
 const WeekForecastService = require('./weekForecastService');
 const MothForecastService = require('./MonthForecastService');
 const YearForecastService = require('../Services/YearForecastService');
+const NumerologyProService = require('./NumerologyProService');
 
 const PsychologyService = require('../../../services/psychologyService');
 // Инициализация сервисов
@@ -25,6 +26,7 @@ class NumerologyCalculationService {
         this.weekForecastService = new WeekForecastService();
         this.maothForecastService = new MothForecastService();
         this.yearForecastService = new YearForecastService();
+        this.proService = new NumerologyProService();
     }
 
     /**
@@ -53,7 +55,7 @@ class NumerologyCalculationService {
             // Преобразуем дату в нужный формат
             const formattedDate = this.formatDateForCalculation(birthDate);
 
-            // Базовый нумерологический расчет
+            // Базовый нумерологический расчет (классический)
             const numerology = numerologyService.calculate(surname, firstName, patronymic, formattedDate);
 
             // Базовая интерпретация
@@ -68,7 +70,10 @@ class NumerologyCalculationService {
                         base: numerology.base,
                         achilles: numerology.achilles,
                         control: numerology.control,
-                        calls: numerology.calls
+                        calls: numerology.calls,
+                        pinnacles: numerology.pinnacles,
+                        pythagoreanSquare: numerology.pythagoreanSquare,
+                        karmicDebt: numerology.karmicDebt
                     }, interpretation, deepPortrait
                 }, isFree: true, message: 'Бесплатный базовый расчет'
             };
@@ -131,6 +136,9 @@ class NumerologyCalculationService {
                         achilles: numerology.achilles,
                         control: numerology.control,
                         calls: numerology.calls,
+                        pinnacles: numerology.pinnacles,
+                        pythagoreanSquare: numerology.pythagoreanSquare,
+                        karmicDebt: numerology.karmicDebt,
                         interpretations
                     }, zodiac, fengShui, tarot, psychology, patterns, interpretation, deepPortrait
                 }, isFull: true
@@ -138,6 +146,40 @@ class NumerologyCalculationService {
 
         } catch (error) {
             this.logger?.error('numerology', 'Ошибка полного расчета', {error: error.message});
+            throw error;
+        }
+    }
+
+    /**
+     * Профессиональный расчет (для нумерологов)
+     */
+    async calculateProfessional(fullName, birthDate, userId = null, options = {}) {
+        try {
+            this.logger?.info('numerology', 'Профессиональный расчет', {fullName, birthDate, userId, options});
+
+            const nameParts = fullName.trim().split(/\s+/);
+            const [surname, firstName, patronymic] = nameParts;
+
+            const formattedDate = this.formatDateForCalculation(birthDate);
+
+            // Создаем ProService с настройками
+            const proService = new NumerologyProService(
+                options.system || 'pythagorean',
+                options.preserveMasters !== false,
+                options.preserveKarmicDebts !== false
+            );
+
+            const result = proService.calculateProfessional(surname, firstName, patronymic, formattedDate);
+
+            return {
+                success: true,
+                data: result,
+                isProfessional: true,
+                message: 'Профессиональный нумерологический расчет'
+            };
+
+        } catch (error) {
+            this.logger?.error('numerology', 'Ошибка профессионального расчета', {error: error.message});
             throw error;
         }
     }

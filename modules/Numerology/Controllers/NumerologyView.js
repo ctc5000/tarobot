@@ -2,6 +2,7 @@
 const NumerologyCalculationService = require('../Services/NumerologyCalculationService');
 const NumerologyPdfService = require('../Services/NumerologyPdfService');
 const BalanceService = require('../../Core/Services/BalanceService');
+const { models } = require('../../../sequelize');
 
 const calculationService = new NumerologyCalculationService();
 const pdfService = new NumerologyPdfService();
@@ -45,15 +46,54 @@ async function calculateBasic(req, res) {
             const check = await calculationService.checkFreeCalculation(userId, fullName, birthDate);
 
             if (!check.allowed) {
-                return res.status(402).json({
-                    success: false,
-                    error: 'Бесплатный расчет уже использован. Для полного расчета войдите в аккаунт и оплатите услугу.',
-                    requiresPayment: true
+                // Бесплатный расчет уже использован — пытаемся списать со счета
+                const charge = await balanceService.chargeForServiceWithSubscription(userId, 'forecast_basic', {
+                    fullName,
+                    birthDate
                 });
+
+                if (!charge.success) {
+                    return res.status(402).json({
+                        success: false,
+                        error: charge.error || 'Недостаточно средств. Пополните баланс в личном кабинете.',
+                        balance: charge.balance,
+                        price: charge.price,
+                        required: charge.required,
+                        requiresPayment: true
+                    });
+                }
+
+                // Списание прошло успешно — выполняем расчет с оплатой
+                const result = await calculationService.calculateBasic(fullName, birthDate, userId);
+
+                // Сохраняем расчет в историю (платный)
+                const finalPrice = charge.free ? 0 : charge.price;
+                const calculation = await calculationService.saveCalculation(
+                    userId,
+                    'basic',
+                    result.data,
+                    finalPrice,
+                    null,
+                    null
+                );
+
+                result.calculationId = calculation.id;
+                if (charge.newBalance !== undefined) {
+                    result.newBalance = charge.newBalance;
+                }
+                result.finalPrice = finalPrice;
+                result.free = charge.free || false;
+                result.paid = true;
+
+                if (charge.free) {
+                    result.message = 'Расчет предоставлен бесплатно по подписке';
+                }
+
+                return res.json(result);
             }
         }
 
-        // Выполняем базовый расчет
+        // Выполняем базовый расчет (бесплатный)
         const result = await calculationService.calculateBasic(fullName, birthDate, userId);
 
         // Если пользователь авторизован, обновляем профиль
@@ -272,6 +312,147 @@ async function calculateForecast(req, res) {
 
     } catch (error) {
         console.error('Error in calculateForecast:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+// ========== ПРОФЕССИОНАЛЬНЫЙ РАСЧЕТ ==========
+
+async function calculateProfessional(req, res) {
+    try {
+        const { fullName, birthDate, options = {}, serviceCode } = req.body;
+        const userId = req.user?.id || null;
+
+        let userFullName = fullName;
+        let userBirthDate = birthDate;
+
+        if (!userFullName || !userBirthDate) {
+            const profile = await models.NumerologyProfile.findOne({
+                where: { userId }
+            });
+            if (!profile) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Сначала выполните базовый расчет'
+                });
+            }
+            userFullName = profile.fullName;
+            userBirthDate = profile.birthDate;
+        }
+
+        if (!userFullName || !userBirthDate) {
+            return res.status(400).json({
+                success: false,
+                error: 'Необходимо указать ФИО и дату рождения'
+            });
+        }
+
+        const nameParts = userFullName.trim().split(/\s+/);
+        if (nameParts.length < 3) {
+            return res.status(400).json({
+                success: false,
+                error: 'Необходимо указать фамилию, имя и отчество'
+            });
+        }
+
+        // Определяем тариф (serviceCode) — если не указан, используем профессиональный по умолчанию
+        const tariffCode = serviceCode || 'numerology_professional';
+
+        // Если пользователь авторизован — списываем средства
+        if (userId) {
+            const charge = await balanceService.chargeForServiceWithSubscription(userId, tariffCode, {
+                fullName: userFullName,
+                birthDate: userBirthDate,
+                options
+            });
+
+            if (!charge.success) {
+                return res.status(402).json({
+                    success: false,
+                    error: charge.error || 'Недостаточно средств. Пополните баланс в личном кабинете.',
+                    balance: charge.balance,
+                    price: charge.price,
+                    required: charge.required,
+                    requiresPayment: true
+                });
+            }
+
+            // Выполняем профессиональный расчет
+            const result = await calculationService.calculateProfessional(
+                userFullName,
+                userBirthDate,
+                userId,
+                options
+            );
+
+            // Сохраняем расчет в историю
+            const finalPrice = charge.free ? 0 : charge.price;
+            const calculation = await calculationService.saveCalculation(
+                userId,
+                'professional',
+                result.data,
+                finalPrice,
+                null,
+                tariffCode
+            );
+
+            result.calculationId = calculation.id;
+            if (charge.newBalance !== undefined) {
+                result.newBalance = charge.newBalance;
+            }
+            result.finalPrice = finalPrice;
+            result.free = charge.free || false;
+            result.paid = true;
+            result.tariffCode = tariffCode;
+
+            if (charge.free) {
+                result.message = 'Расчет предоставлен бесплатно по подписке';
+            }
+
+            return res.json(result);
+        }
+
+        // Для неавторизованных — просто выполняем расчет
+        const result = await calculationService.calculateProfessional(
+            userFullName,
+            userBirthDate,
+            userId,
+            options
+        );
+
+        result.message = 'Профессиональный расчет для гостя. Зарегистрируйтесь, чтобы сохранять историю и получать полные отчеты.';
+        res.json(result);
+
+    } catch (error) {
+        console.error('Error in calculateProfessional:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+// ========== ПОЛУЧЕНИЕ ТАРИФОВ НУМЕРОЛОГИИ ==========
+
+async function getNumerologyServices(req, res) {
+    try {
+        const services = await models.Service.findAll({
+            where: {
+                section: 'numerology',
+                isActive: true
+            },
+            order: [['sortOrder', 'ASC']]
+        });
+
+        res.json({
+            success: true,
+            data: services
+        });
+    } catch (error) {
+        console.error('Error in getNumerologyServices:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -517,6 +698,8 @@ module.exports = {
     calculateFull,
     calculateForecast,
     calculateCompatibility,
+    calculateProfessional,
+    getNumerologyServices,
     getHistory,
     getCalculation,
     downloadPdf,

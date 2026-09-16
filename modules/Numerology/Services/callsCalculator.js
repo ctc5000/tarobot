@@ -1,47 +1,48 @@
 // services/numerology/callsCalculator.js
 
 /**
- * Калькулятор социальных окликов
+ * Калькулятор социальных окликов (классические)
+ * - Близкие: Число Души (Soul Urge) — как вас знают близкие
+ * - Социум: Число Выражения (Expression) — как вас воспринимают в социуме
+ * - Мир: Число Судьбы (Life Path) — как вас видит мир
+ * - Первое впечатление: Число Личности (Personality) — первое впечатление
  */
 class CallsCalculator {
+    constructor() {
+        this.baseCalculator = null; // будет установлен извне
+    }
+
+    setBaseCalculator(calc) {
+        this.baseCalculator = calc;
+    }
+
     /**
      * Расчет всех окликов
-     * @param {Object} baseNumbers - базовые числа
+     * @param {Object} baseNumbers - базовые числа (содержит soulUrge, expression, lifePath, personality)
      * @returns {Object} объект с окликами
      */
     calculate(baseNumbers) {
-        const close = this.reduceNumber(baseNumbers.fate + baseNumbers.name);
-        const social = this.reduceNumber(baseNumbers.surname + baseNumbers.patronymic);
-        const world = this.reduceNumber(baseNumbers.fate + baseNumbers.patronymic);
+        const close = baseNumbers.soulUrge || baseNumbers.name || 0;
+        const social = baseNumbers.expression || baseNumbers.fate || 0;
+        const world = baseNumbers.lifePath || baseNumbers.fate || 0;
+        const firstImpression = baseNumbers.personality || 0;
 
         return {
             close,
             social,
             world,
+            firstImpression,
             descriptions: {
                 close: this.getDescription(close, 'close'),
                 social: this.getDescription(social, 'social'),
-                world: this.getDescription(world, 'world')
+                world: this.getDescription(world, 'world'),
+                firstImpression: this.getDescription(firstImpression, 'firstImpression')
             }
         };
     }
 
     /**
-     * Редукция числа с сохранением мастер-чисел
-     */
-    reduceNumber(num) {
-        if (num === 11 || num === 22) return num;
-        while (num > 22) {
-            num = String(num).split('').reduce((sum, digit) => sum + parseInt(digit), 0);
-        }
-        return num;
-    }
-
-    /**
      * Получение описания для оклика
-     * @param {number} num - число оклика
-     * @param {string} type - тип оклика (close, social, world)
-     * @returns {string} описание
      */
     getDescription(num, type) {
         const baseDescriptions = {
@@ -54,25 +55,16 @@ class CallsCalculator {
             7: 'целеустремленный, победитель, преодолевающий препятствия',
             8: 'справедливый, авторитетный, внушающий доверие',
             9: 'мудрый, загадочный, немного отстраненный наблюдатель',
-            10: 'харизматичный лидер, удачливый и успешный',
-            11: 'вдохновляющий, сильный, заряжающий энергией',
-            12: 'понимающий, принимающий, готовый выслушать и поддержать',
-            13: 'меняющийся, развивающийся, всегда в движении',
-            14: 'гармоничный, уравновешенный, спокойный',
-            15: 'притягательный, страстный, немного опасный',
-            16: 'основательный, мощный, разрушающий стены',
-            17: 'окрыленный, верящий, вдохновляющий надеждой',
-            18: 'интуитивный, загадочный, чувствующий глубже других',
-            19: 'солнечный, щедрый, согревающий своим теплом',
-            20: 'пробуждающий, заставляющий задуматься',
-            21: 'целостный, завершенный, умиротворяющий',
-            22: 'свободный, легкий, начинающий новое'
+            11: 'вдохновляющий, интуитивный, несущий свет',
+            22: 'масштабный, практичный, воплощающий великие идеи',
+            33: 'исцеляющий, сострадательный, безусловно любящий'
         };
 
         const typePrefix = {
-            close: 'В кругу семьи вы — ',
-            social: 'В коллективе вас видят как ',
-            world: 'Незнакомцы воспринимают вас как '
+            close: 'В кругу близких вы — ',
+            social: 'В социуме вас видят как ',
+            world: 'Мир воспринимает вас как ',
+            firstImpression: 'Первое впечатление о вас — '
         };
 
         return typePrefix[type] + (baseDescriptions[num] || 'многогранная личность, которую сложно описать одной фразой');

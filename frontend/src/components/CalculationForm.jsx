@@ -1,7 +1,18 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import NumerologyReport from './reports/NumerologyReport';
+import AstrologyReport from './reports/AstrologyReport';
+import AstropsychologyReport from './reports/AstropsychologyReport';
+import TarotReport from './reports/TarotReport';
 
-export default function CalculationForm({ title, description, onSubmit, loading, result }) {
+const reportComponents = {
+  numerology: NumerologyReport,
+  astrology: AstrologyReport,
+  astropsychology: AstropsychologyReport,
+  tarot: TarotReport,
+};
+
+export default function CalculationForm({ title, description, onSubmit, loading, result, reportType }) {
   const [formData, setFormData] = useState({
     fullName: '',
     birthDate: '',
@@ -13,6 +24,8 @@ export default function CalculationForm({ title, description, onSubmit, loading,
     e.preventDefault();
     onSubmit(formData);
   };
+
+  const ReportComponent = reportType ? reportComponents[reportType] : null;
 
   return (
     <div className="calculation-page">
@@ -96,29 +109,95 @@ export default function CalculationForm({ title, description, onSubmit, loading,
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            {loading ? (
-              <div className="calculation-loading">
-                <div className="loading-spinner"></div>
-                <p>Выполняется расчет...</p>
-              </div>
-            ) : result ? (
-              <div className="calculation-result">
-                <h2>Результат расчета</h2>
-                <div className="result-content">
-                  {typeof result === 'string' ? (
-                    <p>{result}</p>
+            <AnimatePresence mode="wait">
+              {loading ? (
+                <motion.div
+                  key="loading"
+                  className="calculation-loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <div className="loading-spinner"></div>
+                  <p>Выполняется расчет...</p>
+                </motion.div>
+              ) : result ? (
+                <motion.div
+                  key="result"
+                  className="calculation-result"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                >
+                  {result.error ? (
+                    <div className="calculation-error">
+                      <span className="calculation-error-icon">⚠️</span>
+                      <h3>Ошибка расчета</h3>
+                      <p>{result.error}</p>
+                    </div>
+                  ) : ReportComponent ? (
+                    <ReportComponent data={result} />
                   ) : (
-                    <pre>{JSON.stringify(result, null, 2)}</pre>
+                    <motion.div className="report-container" initial="hidden" animate="visible" variants={{
+                      hidden: { opacity: 0 },
+                      visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+                    }}>
+                      <motion.div className="report-header" variants={{
+                        hidden: { opacity: 0, y: 30 },
+                        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+                      }}>
+                        <span className="report-header-icon">📊</span>
+                        <h2 className="report-title">Результат расчета</h2>
+                        <span className="report-badge">Расчет</span>
+                      </motion.div>
+                      {Object.entries(result).filter(([k]) => !['id','createdAt','updatedAt','userId','serviceId','__v'].includes(k)).map(([key, val], i) => (
+                        <motion.div key={key} className="report-interpretation-block" variants={{
+                          hidden: { opacity: 0, y: 30 },
+                          visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.08 } }
+                        }}>
+                          <h3 className="report-block-title">
+                            <span style={{ fontSize: '1.2em' }}>📋</span>
+                            {key}
+                          </h3>
+                          <div className="report-block-content">
+                            {val === null || val === undefined ? <span className="report-value">—</span> :
+                             typeof val === 'string' ? val.split('\n').map((line, j) => <p key={j} className="report-text-line">{line}</p>) :
+                             typeof val === 'number' ? <span className="report-value">{val}</span> :
+                             Array.isArray(val) ? val.map((item, j) => (
+                               <div key={j} className="report-nested-item">
+                                 {typeof item === 'object' && item !== null
+                                   ? Object.entries(item).map(([k, v]) => <p key={k} className="report-text-line"><strong>{k}:</strong> {String(v)}</p>)
+                                   : <span className="report-value">{String(item)}</span>}
+                               </div>
+                             )) :
+                             typeof val === 'object' ? Object.entries(val).map(([k, v]) => (
+                               <div key={k} className="report-nested-row">
+                                 <span className="report-nested-key">{k}:</span>
+                                 <span className="report-value">{typeof v === 'string' ? v : Array.isArray(v) ? v.join(', ') : String(v)}</span>
+                               </div>
+                             )) :
+                             <span className="report-value">{String(val)}</span>
+                            }
+                          </div>
+                        </motion.div>
+                      ))}
+                    </motion.div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="calculation-placeholder">
-                <span className="placeholder-icon">✦</span>
-                <h3>Заполните форму</h3>
-                <p>Введите данные для расчета и нажмите "Рассчитать"</p>
-              </div>
-            )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="placeholder"
+                  className="calculation-placeholder"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <span className="placeholder-icon">✦</span>
+                  <h3>Заполните форму</h3>
+                  <p>Введите данные для расчета и нажмите "Рассчитать"</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </div>

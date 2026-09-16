@@ -1,17 +1,7 @@
 // modules/Tarot/Tarot.route.js
-const path = require('path');
 const express = require("express");
 
 const TarotRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
-
-    // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
-    app.use('/tarot', express.static(path.join(__dirname, 'web')));
-    app.use('/trot', express.static(path.join(__dirname, 'web')));
-
-    // ========== ВЕБ-ИНТЕРФЕЙС ==========
-    app.get('/tarot', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'index.html'));
-    });
 
     // ========== ПУБЛИЧНЫЕ API ==========
 

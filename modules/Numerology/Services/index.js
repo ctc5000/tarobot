@@ -16,14 +16,22 @@ const PatternsGenerator = require('./interpreters/patternsGenerator');
 /**
  * Главный сервис нумерологии
  * Агрегирует все калькуляторы и интерпретаторы
+ * Использует классические профессиональные формулы
  */
 class NumerologyService {
-    constructor() {
-        // Калькуляторы
-        this.baseCalculator = new BaseCalculator();
+    constructor(system = 'pythagorean') {
+        // Единый базовый калькулятор
+        this.baseCalculator = new BaseCalculator(system);
+        
+        // Калькуляторы (получают ссылку на baseCalculator)
         this.achillesCalculator = new AchillesCalculator();
+        this.achillesCalculator.setBaseCalculator(this.baseCalculator);
+        
         this.callsCalculator = new CallsCalculator();
+        this.callsCalculator.setBaseCalculator(this.baseCalculator);
+        
         this.controlCalculator = new ControlCalculator();
+        this.controlCalculator.setBaseCalculator(this.baseCalculator);
 
         // Интерпретаторы
         this.careerInterpreter = new CareerInterpreter();
@@ -38,7 +46,7 @@ class NumerologyService {
     }
 
     /**
-     * Полный расчет нумерологии
+     * Полный расчет нумерологии (классический профессиональный)
      * @param {string} surname - фамилия
      * @param {string} firstName - имя
      * @param {string} patronymic - отчество
@@ -46,35 +54,91 @@ class NumerologyService {
      * @returns {Object} полный нумерологический расчет
      */
     calculate(surname, firstName, patronymic, birthDate) {
-        // 1. Базовые числа
+        const fullName = `${surname} ${firstName} ${patronymic}`;
+        
+        // 1. Базовые числа (классические)
+        const lifePath = this.baseCalculator.calculateLifePath(birthDate);
+        const birthDay = this.baseCalculator.calculateBirthDay(birthDate);
+        const expression = this.baseCalculator.calculateExpression(fullName);
+        const soulUrge = this.baseCalculator.calculateSoulUrge(fullName);
+        const personality = this.baseCalculator.calculatePersonality(fullName);
+        const maturity = this.baseCalculator.calculateMaturity(expression, lifePath);
+        const balance = this.baseCalculator.calculateBalance(fullName);
+        const hiddenPassion = this.baseCalculator.calculateHiddenPassion(fullName);
+        
+        // 2. Значения отдельных частей имени (для совместимости)
+        const nameValue = this.baseCalculator.calculateWordValue(firstName);
+        const surnameValue = this.baseCalculator.calculateWordValue(surname);
+        const patronymicValue = this.baseCalculator.calculateWordValue(patronymic);
+        
         const baseNumbers = {
-            fate: this.baseCalculator.calculateFateNumber(birthDate),
-            name: this.baseCalculator.calculateWordValue(firstName),
-            surname: this.baseCalculator.calculateWordValue(surname),
-            patronymic: this.baseCalculator.calculateWordValue(patronymic)
+            fate: lifePath, // для обратной совместимости
+            lifePath,
+            birthDay,
+            name: nameValue,
+            surname: surnameValue,
+            patronymic: patronymicValue,
+            expression,
+            soulUrge,
+            personality,
+            maturity,
+            balance,
+            hiddenPassion: hiddenPassion.number,
+            hiddenPassionCount: hiddenPassion.count,
+            digitCount: hiddenPassion.digitCount,
+            birthDate // передаём дату для других калькуляторов
         };
 
-        // 2. Ахиллесова пята
+        // 3. Челленджи (заменяет ахиллесову пяту)
         const achilles = this.achillesCalculator.calculate(baseNumbers);
 
-        // 3. Число управления
+        // 4. Число зрелости (заменяет число управления)
         const control = this.controlCalculator.calculate(baseNumbers);
 
-        // 4. Социальные оклики
+        // 5. Социальные оклики (классические)
         const calls = this.callsCalculator.calculate(baseNumbers);
 
+        // 6. Пинакли (4 жизненных этапа)
+        const pinnacles = this.baseCalculator.calculatePinnacles(birthDate);
+
+        // 7. Квадрат Пифагора
+        const pythagoreanSquare = this.baseCalculator.calculatePythagoreanSquare(birthDate);
+
+        // 8. Кармические долги
+        const karmicDebtLifePath = this.baseCalculator.checkKarmicDebt(lifePath);
+        const karmicDebtExpression = this.baseCalculator.checkKarmicDebt(expression);
+        const karmicDebt = {
+            lifePath: karmicDebtLifePath,
+            expression: karmicDebtExpression,
+            hasDebt: karmicDebtLifePath.hasDebt || karmicDebtExpression.hasDebt
+        };
+
         return {
-            base: baseNumbers,
+            base: {
+                lifePath,
+                birthDay,
+                name: nameValue,
+                surname: surnameValue,
+                patronymic: patronymicValue,
+                expression,
+                soulUrge,
+                personality,
+                maturity,
+                balance,
+                hiddenPassion: hiddenPassion.number
+            },
             achilles,
             control,
-            calls
+            calls,
+            pinnacles,
+            pythagoreanSquare,
+            karmicDebt,
+            system: this.baseCalculator.system
         };
     }
 
     /**
      * Получение всех дополнительных интерпретаций
-     * @param {Object} baseNumbers - базовые числа
-     * @returns {Object} все интерпретации
      */
     getInterpretations(baseNumbers) {
         return {
@@ -89,9 +153,6 @@ class NumerologyService {
 
     /**
      * Получение конкретной интерпретации
-     * @param {string} type - тип интерпретации
-     * @param {Object} baseNumbers - базовые числа
-     * @returns {Object} интерпретация
      */
     getInterpretation(type, baseNumbers) {
         switch(type) {
@@ -114,12 +175,6 @@ class NumerologyService {
 
     /**
      * Генерация паттернов личности
-     * @param {Object} numerology - данные нумерологии
-     * @param {Object} zodiac - данные знака зодиака
-     * @param {Object} fengShui - данные фен-шуй
-     * @param {Object} tarot - данные Таро
-     * @param {Object} psychology - данные психологии
-     * @returns {Array} массив паттернов
      */
     generatePatterns(numerology, zodiac, fengShui, tarot, psychology) {
         return this.patternsGenerator.generate(
@@ -133,12 +188,6 @@ class NumerologyService {
 
     /**
      * Сокращенные паттерны для превью
-     * @param {Object} numerology - данные нумерологии
-     * @param {Object} zodiac - данные знака зодиака
-     * @param {Object} fengShui - данные фен-шуй
-     * @param {Object} tarot - данные Таро
-     * @param {Object} psychology - данные психологии
-     * @returns {Array} массив из 3 паттернов
      */
     getPreviewPatterns(numerology, zodiac, fengShui, tarot, psychology) {
         return this.patternsGenerator.getPreviewPatterns(
@@ -152,8 +201,6 @@ class NumerologyService {
 
     /**
      * Разбор ФИО на составляющие
-     * @param {string} fullName - полное имя
-     * @returns {Object} объект с фамилией, именем и отчеством
      */
     parseFullName(fullName) {
         return this.baseCalculator.parseFullName(fullName);

@@ -1,53 +1,9 @@
 // modules/Core/Core.route.js
 const tokenService = new (require('./Services/TokenService'))();
-const path = require('path');
-const { static } = require("express");
 
 const CoreRoute = (app, routeName, routeController, makeHandlerAwareOfAsyncErrors) => {
     const authMiddleware = tokenService.authMiddleware();
     const adminMiddleware = tokenService.authMiddleware('admin');
-
-    // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
-    app.use('/core', static(path.join(__dirname, 'web')));
-
-    // ========== ПУБЛИЧНЫЕ СТРАНИЦЫ ==========
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'index.html'));
-    });
-
-    app.get('/login', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'auth', 'login.html'));
-    });
-
-    app.get('/register', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'auth', 'register.html'));
-    });
-
-    app.get('/reset-password', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'auth', 'reset-password.html'));
-    });
-
-    // ========== ЗАЩИЩЕННЫЕ СТРАНИЦЫ ==========
-    app.get('/cabinet', (req, res) => {
-       // console.log('🔥 Отдаем страницу кабинета');
-        res.sendFile(path.join(__dirname, 'web', 'cabinet', 'index.html'));
-    });
-
-    app.get('/cabinet/profile', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'cabinet', 'profile.html'));
-    });
-
-    app.get('/cabinet/balance', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'cabinet', 'balance.html'));
-    });
-
-    app.get('/cabinet/history', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'cabinet', 'history.html'));
-    });
-
-    app.get('/cabinet/subscriptions', (req, res) => {
-        res.sendFile(path.join(__dirname, 'web', 'cabinet', 'subscriptions.html'));
-    });
 
     // ========== ПУБЛИЧНЫЕ API ==========
     // Регистрация и авторизация (оба варианта - с core и без)

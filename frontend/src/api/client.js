@@ -69,15 +69,24 @@ export const balanceAPI = {
 // ========== SUBSCRIPTIONS API ==========
 export const subscriptionsAPI = {
   getAll: () => apiClient.get('/subscriptions'),
+  getActive: () => apiClient.get('/subscriptions/active'),
   create: (data) => apiClient.post('/subscriptions', data),
-  cancel: (id) => apiClient.delete(`/subscriptions/${id}`),
+  buy: (data) => apiClient.post('/subscriptions/buy', data),
+  cancel: (id) => apiClient.post(`/subscriptions/${id}/cancel`),
+};
+
+export const profileAPI = {
+  update: (data) => apiClient.put('/profile', data),
+  changePassword: (data) => apiClient.post('/profile/change-password', data),
 };
 
 // ========== MODULE-SPECIFIC API ==========
 export const numerologyAPI = {
   calculateBasic: (data) => apiClient.post('/numerology/calculate/basic', data),
   calculateFull: (data) => apiClient.post('/numerology/calculate/full', data),
+  calculateProfessional: (data) => apiClient.post('/numerology/calculate/professional', data),
   getProfile: (id) => apiClient.get(`/numerology/profile/${id}`),
+  getServices: () => apiClient.get('/numerology/services'),
 };
 
 export const astrologyAPI = {
